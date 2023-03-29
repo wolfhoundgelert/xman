@@ -2,3 +2,4 @@ gitignore/
 /.ipynb_checkpoints/
 /.venv/
 /.idea/
+/src/xman/__pycache__/

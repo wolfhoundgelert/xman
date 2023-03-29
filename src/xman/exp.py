@@ -19,7 +19,7 @@ class ExpStatus(ExpStructStatus):
         return (
             ExpStructStatus.TODO,
             (ExpStructStatus.IN_PROGRESS, ExpStructStatus.IN_PROGRESS_ACTIVE, ExpStructStatus.IN_PROGRESS_NOT_ACTIVE),
-            (ExpStructStatus.DONE, ExpStructStatus.ERROR)
+            (ExpStructStatus.DONE, ExpStructStatus.ERROR),
             (ExpStructStatus.SUCCESS, ExpStructStatus.FAIL)
         )
 
