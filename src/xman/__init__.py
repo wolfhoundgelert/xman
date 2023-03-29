@@ -1,9 +1,14 @@
-from . import proj
+from .proj import ExpProj
+from .tree import _print_dir_tree
 
 
-def create_project(location_dir: str, name: str, descr: str):
-    return proj.ExperimentalProject._create(location_dir, name, descr)
+def make_proj(location_dir: str, name: str, descr: str) -> ExpProj:
+    return ExpProj._make(location_dir, name, descr)
 
 
-def load_project(location_dir: str):
-    return proj.ExperimentalProject._load(location_dir)
+def load_proj(location_dir: str) -> ExpProj:
+    return ExpProj._load(location_dir)
+
+
+def print_dir_tree(target_dir):
+    _print_dir_tree(target_dir)
