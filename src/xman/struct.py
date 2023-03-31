@@ -37,15 +37,16 @@ class ExpStructStatus:
     def __init__(self, status: str, resolution: str = None):
         self.workflow = self._workflow()
         self.__check(status, resolution)
-        self.current = status
+        self.status = status
+        self.current = status  # just for logical support for `next`
         self.next = self.__next()
         self.resolution = resolution
 
     def __str__(self):
-        return self.current
+        return self.status
 
     def __call__(self):
-        return self.current
+        return self.status
 
     def __check(self, status, resolution):
         if not ExpStructStatus.__has_workflow_status(self.workflow, status):
@@ -54,10 +55,10 @@ class ExpStructStatus:
             raise ValueError(f"SUCCESS and FAIL manual statuses require setting resolutions!")
 
     def __next(self):
-        if self.workflow[-1] == self.current:
+        if self.workflow[-1] == self.status:
             return None
         for i, it in enumerate(self.workflow[:-1]):
-            if it == self.current or (type(it) is tuple and self.current in it):
+            if it == self.status or (type(it) is tuple and self.status in it):
                 return self.workflow[i + 1]
 
     # Printing in jupyter notebook - https://stackoverflow.com/a/41454816/9751954
@@ -106,6 +107,10 @@ class ExpStruct:
         self.__last_update = t
         return True
 
-    def print_tree(self):
+    def tree(self):
         self._update()
         _print_dir_tree(self.location_dir)
+
+    def info(self):
+        self._update()
+        print(self)

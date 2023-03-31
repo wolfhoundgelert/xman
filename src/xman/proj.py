@@ -53,8 +53,10 @@ class ExpProj(ExpStruct):
         self._update()
 
     def __str__(self):
-        gl = self.str_groups()
-        return f"Experimental project: name `{self.data.name}`, descr `{self.data.descr}`, status `{self.status}`, groups {gl}"
+        s = f"Proj [{self.status()}] {self.data.name} - {self.data.descr}"
+        for it in self.groups():
+            s += '\n\n    ' + str(it).replace('\n', '\n    ')
+        return s
 
     def _file_path(self):
         return ExpProj._get_proj_file(self.location_dir)
@@ -71,7 +73,7 @@ class ExpProj(ExpStruct):
             group = ExpGroup._load(self.location_dir, num)
             self.__num_to_group[num] = group
             self.__name_to_group[group.data.name] = group
-        self.status = None  # TODO depends on exp groups statuses, which depends on exp statuses
+        self.status = ExpProjStatus(ExpStructStatus.TODO)  # TODO calculate status depends on exps
 
     def has_group(self, num_or_name):
         self._update()
@@ -113,10 +115,6 @@ class ExpProj(ExpStruct):
         self._update()
         return list(self.__num_to_group.values())
 
-    def str_groups(self):
-        self._update()
-        return [str(it) for it in self.groups()]
-
     def has_exp(self, dot_num: float) -> bool:
         self._update()
         group_num, exp_num = util._parse_group_and_exp_num(dot_num)
@@ -144,7 +142,3 @@ class ExpProj(ExpStruct):
         for it in self.groups():
             result.extend(it.exp())
         return result
-
-    def str_exps(self, group_num_or_name=None):
-        self._update()
-        return [str(it) for it in self.exps(group_num_or_name)]

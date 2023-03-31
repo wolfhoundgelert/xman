@@ -1,4 +1,5 @@
 from .struct import ExpStructData, ExpStruct, ExpStructStatus
+from .pipeline import Pipeline
 from . import util
 
 import os
@@ -62,7 +63,7 @@ class Exp(ExpStruct):
         self._update()
 
     def __str__(self):
-        return f"Exp {self.num}, name `{self.data.name}`, descr `{self.data.descr}`, status `{self.status}`"
+        return f"Exp {self.num} [{self.status()}] {self.data.name} - {self.data.descr}"
 
     def _file_path(self):
         return Exp._get_exp_file(self.location_dir)
@@ -97,3 +98,9 @@ class Exp(ExpStruct):
         #  proj.run(exp_dot_num) - run given exact experiment, e.g. 1.1
 
         # TODO raise error if it has manual status, because it can be processed only manually
+
+    def success(self, resolution: str):
+        return self.set_manual_status(ExpStructStatus.SUCCESS, resolution)
+
+    def fail(self, resolution: str):
+        return self.set_manual_status(ExpStructStatus.FAIL, resolution)

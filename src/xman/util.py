@@ -64,6 +64,7 @@ def _get_highest_num_in_dict(target: dict):
     l = target.keys()
     return max(l) if len(l) else 0
 
+
 def _parse_group_and_exp_num(dot_num: float):
     nums = str(dot_num).split('.')
     if len(nums) != 2:

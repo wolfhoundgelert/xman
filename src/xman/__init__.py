@@ -10,5 +10,5 @@ def load_proj(location_dir: str) -> ExpProj:
     return ExpProj._load(location_dir)
 
 
-def print_dir_tree(target_dir):
+def dir_tree(target_dir):
     _print_dir_tree(target_dir)

@@ -64,8 +64,10 @@ class ExpGroup(ExpStruct):
         self._update()
 
     def __str__(self):
-        el = self.str_exps()
-        return f"Group {self.num}, name `{self.data.name}`, descr `{self.data.descr}`, status `{self.status}`, exps {el}"
+        s = f"Group {self.num} [{self.status()}] {self.data.name} - {self.data.descr}"
+        for it in self.exps():
+            s += '\n    ' + str(it)
+        return s
 
     def _file_path(self):
         return ExpGroup._get_group_file(self.location_dir)
@@ -80,7 +82,7 @@ class ExpGroup(ExpStruct):
             exp = Exp._load(self.location_dir, num)
             self.__num_to_exp[num] = exp
             self.__name_to_exp[exp.data.name] = exp
-        self.status = None  # TODO
+        self.status = ExpGroupStatus(ExpStructStatus.TODO)  # TODO calculate status depends on exps
 
     def has_exp(self, num_or_name):
         self._update()
@@ -121,7 +123,3 @@ class ExpGroup(ExpStruct):
     def exps(self):
         self._update()
         return list(self.__num_to_exp.values())
-
-    def str_exps(self):
-        self._update()
-        return [str(it) for it in self.exps()]
