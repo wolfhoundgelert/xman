@@ -3,3 +3,5 @@ gitignore/
 /.venv/
 /.idea/
 /src/xman/__pycache__/
+/src/xman.egg-info/
+/dist/

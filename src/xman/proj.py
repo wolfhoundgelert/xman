@@ -3,57 +3,21 @@ from .group import ExpGroup
 from .exp import Exp
 from . import util
 
-import os
 import shutil
-
-
-class ExpProjData(ExpStructData):
-
-    def __init__(self, name, descr):
-        super().__init__(name, descr)
-
-
-class ExpProjStatus(ExpStructStatus):
-
-    def __init__(self, status: str):
-        super().__init__(status)
-
-    def _workflow(self):
-        return (ExpStructStatus.TODO,
-                ExpStructStatus.IN_PROGRESS,
-                ExpStructStatus.DONE,
-                (ExpStructStatus.SUCCESS, ExpStructStatus.FAIL))
 
 
 class ExpProj(ExpStruct):
 
-    _PROJ_FILE = 'exp_proj.pkl'
-
-    @staticmethod
-    def _get_proj_file(location_dir):
-        return os.path.join(location_dir, ExpProj._PROJ_FILE)
-
     @staticmethod
     def _make(location_dir, name, descr):
-        location_dir = util._make_dir(location_dir)
-        data = ExpProjData(name, descr)
-        proj = ExpProj(location_dir, data)
-        proj._save_data()
-        return proj
+        return ExpStruct._make(ExpStructData, ExpProj, location_dir, name, descr)
 
     @staticmethod
     def _load(location_dir):
-        data = ExpStruct._load_data(location_dir, ExpProj._PROJ_FILE)
-        return ExpProj(location_dir, data)
-
-    def __init__(self, location_dir, data):
-        super().__init__(location_dir, data)
-        self.__num_to_group = None
-        self.__name_to_group = None
-        self._update()
+        return ExpStruct._load(ExpProj, location_dir)
 
     def __str__(self):
-        s = f"Proj [{self.status()}] {self.data.name} - {self.data.descr}"
+        s = f"Proj [{self.status}] {self.data.name} - {self.data.descr}"
         for it in self.groups():
             s += '\n\n    ' + str(it).replace('\n', '\n    ')
         return s
@@ -61,11 +25,9 @@ class ExpProj(ExpStruct):
     def _file_path(self):
         return ExpProj._get_proj_file(self.location_dir)
 
-    # TODO add last changes timestamp for the whole project or exact section and compare the version
-    #  (don't need to update if they are equals)
     def _update(self):
         if not super()._update():
-            return
+            return False
         self.__num_to_group = {}
         self.__name_to_group = {}
         nums = util._get_dir_nums_by_pattern(self.location_dir, ExpGroup._GROUP_DIR_PREFIX)
@@ -73,7 +35,8 @@ class ExpProj(ExpStruct):
             group = ExpGroup._load(self.location_dir, num)
             self.__num_to_group[num] = group
             self.__name_to_group[group.data.name] = group
-        self.status = ExpProjStatus(ExpStructStatus.TODO)  # TODO calculate status depends on exps
+        self.status = ExpStructStatus(ExpStructStatus.EMPTY)  # TODO calculate status depends on exps
+        return True
 
     def has_group(self, num_or_name):
         self._update()
@@ -142,3 +105,9 @@ class ExpProj(ExpStruct):
         for it in self.groups():
             result.extend(it.exp())
         return result
+
+    def start(self):
+        self._update()
+        pass  # TODO
+        #  TODO proj.start() - seeking for the best candidate, or
+        #   proj.start(exp_dot_num) - run given exact experiment, e.g. 1.1

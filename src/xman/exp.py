@@ -9,98 +9,123 @@ class ExpData(ExpStructData):
 
     def __init__(self, name, descr):
         super().__init__(name, descr)
-
-
-class ExpStatus(ExpStructStatus):
-
-    def __init__(self, status: str, resolution: str = None):
-        super().__init__(status, resolution)
-
-    def _workflow(self):
-        return (
-            ExpStructStatus.TODO,
-            (ExpStructStatus.IN_PROGRESS, ExpStructStatus.IN_PROGRESS_ACTIVE, ExpStructStatus.IN_PROGRESS_NOT_ACTIVE),
-            (ExpStructStatus.DONE, ExpStructStatus.ERROR),
-            (ExpStructStatus.SUCCESS, ExpStructStatus.FAIL)
-        )
+        self.pipeline = None  # TODO support it
+        self.result = None  # TODO support it
 
 
 class Exp(ExpStruct):
 
     _EXP_DIR_PREFIX = 'exp'
-    _EXP_FILE = 'exp.pkl'
+    __AUTO_STATUS_RESOLUTION = 'auto status'
 
     @staticmethod
     def _get_exp_dir(group_location_dir, num):
         return os.path.join(group_location_dir, Exp._EXP_DIR_PREFIX + str(num))
 
     @staticmethod
-    def _get_exp_file(location_dir):
-        return os.path.join(location_dir, Exp._EXP_FILE)
-
-    @staticmethod
     def _make(group_location_dir, num, name, descr):
+        util._check_num(num, False)
         location_dir = Exp._get_exp_dir(group_location_dir, num)
-        location_dir = util._make_dir(location_dir)
-        data = ExpData(name, descr)
-        exp = Exp(location_dir, num, data)
-        exp._save_data()
-        return exp
+        return ExpStruct._make(ExpData, Exp, location_dir, name, descr)
 
     @staticmethod
     def _load(group_location_dir, num):
-        location_dir = Exp._get_exp_dir(group_location_dir, num)
-        data = ExpStruct._load_data(location_dir, Exp._EXP_FILE)
-        return Exp(location_dir, num, data)
-
-    def __init__(self, location_dir: str, num: int, data: ExpData):
-        super().__init__(location_dir, data)
         util._check_num(num, False)
-        self.location_dir = location_dir
-        self.num = num
-        self.data = data
-        self.status = None
-        self._update()
+        location_dir = Exp._get_exp_dir(group_location_dir, num)
+        return ExpStruct._load(Exp, location_dir)
 
     def __str__(self):
         return f"Exp {self.num} [{self.status()}] {self.data.name} - {self.data.descr}"
 
-    def _file_path(self):
-        return Exp._get_exp_file(self.location_dir)
-
     def _update(self):
         if not super()._update():
-            return
-        ms = self.data.manual_status
-        if ms is not None:
-            self.status = ms
+            return False
+        if self.data.manual_status is not None:
+            status = self.data.manual_status
+            resolution = self.data.manual_status_resolution
+            manual = True
         else:
-            self.status = ExpStatus(ExpStructStatus.TODO)  # TODO infer by other information
+            resolution = Exp.__AUTO_STATUS_RESOLUTION
+            manual = False
+            pipeline = self.data.pipeline
+            if pipeline is None:
+                status = ExpStructStatus.EMPTY
+            elif not pipeline.started:
+                status = ExpStructStatus.TODO
+            elif pipeline.error is not None:
+                status = ExpStructStatus.ERROR
+                resolution = str(pipeline.error)
+            elif pipeline.finished:
+                status = ExpStructStatus.DONE
+            else:
+                status = ExpStructStatus.IN_PROGRESS
+        self.status = ExpStructStatus(status, resolution, manual)
+        return True
 
-    def set_manual_status(self, status: str, resolution: str) -> ExpStatus:
-        ms = ExpStatus(status, resolution)
-        self.data.manual_status = ms
-        self._save_data()
+    def set_manual_status(self, status: str, resolution: str) -> ExpStructStatus:
         self._update()
-        return ms
+        self.status = ExpStructStatus(status, resolution)
+        self.data.manual_status = status
+        self.data.manual_status_resolution = resolution
+        self._save()
 
     def remove_manual_status(self):
-        ms = self.data.manual_status
-        self.data.manual_status = None
-        self._save_data()
         self._update()
+        if self.data.manual_status is None:
+            raise AssertionError(f"`{self}` doesn't have a manual status!")
+        self.data.manual_status = None
+        self.data.manual_status_resolution = None
+        self._save()
 
-    def run(self):
-        pass  # TODO run experiment
-        # TODO group.run() - seeking the best candidate for running (IN_PROGRESS_NOT_ACTIVE),
-        #  group.run(exp_num) - run given exact experiment, e.g. 1
-        #  proj.run() - seeking for the best candidate,
-        #  proj.run(exp_dot_num) - run given exact experiment, e.g. 1.1
+    def attach_pipeline(self, run_func, params):
+        self._update()
+        if self.data.pipeline is not None:
+            raise AssertionError(f"`{self}` already has a pipeline!")
+        pipeline = Pipeline(self, run_func, params)
+        self.data.pipeline = pipeline
+        self._save()
+        return self
 
-        # TODO raise error if it has manual status, because it can be processed only manually
+    def remove_pipeline(self):
+        self._update()
+        if self.data.pipeline is not None:
+            self.data.pipeline = None
+            self.data.result = None
+            self._save()
+        return self
+
+    def start(self):
+        self._update()
+        pipeline = self.data.pipeline
+        if pipeline is None:
+            raise AssertionError(f"`{self}` doesn't have a pipeline!")
+        if pipeline.started:
+            raise AssertionError(f"`{self}` was already started and the current status is `{self.status}`!")
+        pipeline.start()
+        if pipeline.error is not None:
+            pass  # TODO save error and do something
+        else:
+            self.data.result = pipeline.result
+            self._save()
+            # TODO save result and do something
 
     def success(self, resolution: str):
-        return self.set_manual_status(ExpStructStatus.SUCCESS, resolution)
+        self._update()
+        self.set_manual_status(ExpStructStatus.SUCCESS, resolution)
 
     def fail(self, resolution: str):
-        return self.set_manual_status(ExpStructStatus.FAIL, resolution)
+        self._update()
+        self.set_manual_status(ExpStructStatus.FAIL, resolution)
+
+    @property
+    def result(self):
+        self._update()
+        return self.data.result
+
+    def info(self):
+        self._update()
+        super().info()
+        if self.status.resolution:
+            print(f"    Resolution: {self.status.resolution}")
+        if self.result:
+            print(f"    Result: {self.result}")

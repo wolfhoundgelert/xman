@@ -1,4 +1,5 @@
 from .tree import _print_dir_tree
+from . import util
 
 import os
 import pickle
@@ -11,14 +12,21 @@ class ExpStructData:
         self.name = name
         self.descr = descr
         self.manual_status = None
+        self.manual_status_resolution = None
+
+
+class InProgressType:
+
+    ACTIVE = 'ACTIVE'
+    IDLE = 'IDLE'
+    UNKNOWN = 'UNKNOWN'
 
 
 class ExpStructStatus:
 
+    EMPTY = 'EMPTY'
     TODO = 'TODO'
     IN_PROGRESS = 'IN_PROGRESS'
-    IN_PROGRESS_ACTIVE = 'IN_PROGRESS_ACTIVE'
-    IN_PROGRESS_NOT_ACTIVE = 'IN_PROGRESS_NOT_ACTIVE'
     DONE = 'DONE'
     ERROR = 'ERROR'
     SUCCESS = 'SUCCESS'
@@ -34,13 +42,14 @@ class ExpStructStatus:
                     return True
         return False
 
-    def __init__(self, status: str, resolution: str = None):
+    def __init__(self, status: str, resolution: str = None, manual: bool = False):
         self.workflow = self._workflow()
         self.__check(status, resolution)
         self.status = status
         self.current = status  # just for logical support for `next`
         self.next = self.__next()
         self.resolution = resolution
+        self.manual = manual
 
     def __str__(self):
         return self.status
@@ -66,23 +75,67 @@ class ExpStructStatus:
         p.text(str(self) if not cycle else '...')
 
     def _workflow(self):
-        raise NotImplementedError(f"`workflow` method should be overriden!")
+        return (
+            ExpStructStatus.EMPTY,
+            ExpStructStatus.TODO,
+            ExpStructStatus.IN_PROGRESS,
+            (ExpStructStatus.DONE, ExpStructStatus.ERROR),
+            (ExpStructStatus.SUCCESS, ExpStructStatus.FAIL)
+        )
 
 
 class ExpStruct:
 
+    _DATA_FILE = '.data'
+    _TIME_FILE = '.time'
+
     @staticmethod
-    def _load_data(location_dir, filename):
-        fp = os.path.join(location_dir, filename)
+    def __load_time(location_dir):
+        fp = os.path.join(location_dir, ExpStruct._TIME_FILE)
+        with open(fp, 'rb') as f:
+            time = pickle.load(f)
+        return time
+
+    @staticmethod
+    def _save_data(location_dir, data):
+        fp = os.path.join(location_dir, ExpStruct._DATA_FILE)
+        with open(fp, 'wb') as f:
+            pickle.dump(data, f)
+        fp = os.path.join(location_dir, ExpStruct._TIME_FILE)
+        with open(fp, 'wb') as f:
+            pickle.dump(time.time(), f)
+        # TODO ??? save data structure version to the separated file `version.pkl`, it will help to
+        #  recognize unmatched versions of saved file and xman data structure and maybe it will be
+        #  possible to make some converters from old to the newest versions.
+
+    @staticmethod
+    def _load_data(location_dir):
+        fp = os.path.join(location_dir, ExpStruct._DATA_FILE)
         with open(fp, 'rb') as f:
             data = pickle.load(f)
-            return data
+        return data
+
+    @staticmethod
+    def _make(data_class, struct_class, location_dir, name, descr):
+        location_dir = util._make_dir(location_dir)
+        data = data_class(name, descr)
+        ExpStruct._save_data(location_dir, data)
+        struct = struct_class(location_dir, data)
+        return struct
+
+    @staticmethod
+    def _load(struct_class, location_dir):
+        data = ExpStruct._load_data(location_dir)
+        struct = struct_class(location_dir, data)
+        return struct
 
     def __init__(self, location_dir, data):
         self.location_dir = location_dir
         self.data = data
+        self.num = util._get_dir_num(location_dir)
         self.status = None
-        self.__last_update = -1
+        self.__time = None
+        self._update()
 
     def __str__(self):
         raise NotImplementedError(f"`__str__` method should be overriden!")
@@ -91,21 +144,16 @@ class ExpStruct:
     def _repr_pretty_(self, p, cycle):
         p.text(str(self) if not cycle else '...')
 
-    def _file_path(self):
-        raise NotImplementedError(f"`_get_file_path` method should be overriden!")
-
-    def _save_data(self):
-        fp = self._file_path()
-
-        with open(fp, 'wb') as f:
-            pickle.dump(self.data, f)
-
     def _update(self):
-        t = time.time()
-        if t - self.__last_update < 1:
+        t = ExpStruct.__load_time(self.location_dir)
+        if self.__time == t:
             return False
-        self.__last_update = t
+        self.__time = t
         return True
+
+    def _save(self):
+        ExpStruct._save_data(self.location_dir, self.data)
+        self._update()
 
     def tree(self):
         self._update()
@@ -114,3 +162,6 @@ class ExpStruct:
     def info(self):
         self._update()
         print(self)
+
+    def start(self):
+        raise NotImplementedError(f"`start` method should be overriden!")

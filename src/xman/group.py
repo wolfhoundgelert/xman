@@ -6,75 +6,35 @@ import os
 import shutil
 
 
-class ExpGroupData(ExpStructData):
-
-    def __init__(self, name, descr):
-        super().__init__(name, descr)
-
-
-class ExpGroupStatus(ExpStructStatus):
-
-    def __init__(self, status: str):
-        super().__init__(status)
-
-    def _workflow(self):
-        return (ExpStructStatus.TODO,
-                ExpStructStatus.IN_PROGRESS,
-                ExpStructStatus.DONE,
-                (ExpStructStatus.SUCCESS, ExpStructStatus.FAIL))
-
-
 class ExpGroup(ExpStruct):
 
     _GROUP_DIR_PREFIX = 'group'
-    _GROUP_FILE = 'exp_group.pkl'
 
     @staticmethod
     def _get_group_dir(proj_location_dir, num):
         return os.path.join(proj_location_dir, ExpGroup._GROUP_DIR_PREFIX + str(num))
 
     @staticmethod
-    def _get_group_file(location_dir):
-        return os.path.join(location_dir, ExpGroup._GROUP_FILE)
-
-    @staticmethod
     def _make(proj_location_dir, num, name, descr):
+        util._check_num(num, False)
         location_dir = ExpGroup._get_group_dir(proj_location_dir, num)
-        location_dir = util._make_dir(location_dir)
-        data = ExpGroupData(name, descr)
-        group = ExpGroup(location_dir, num, data)
-        group._save_data()
-        return group
+        return ExpStruct._make(ExpStructData, ExpGroup, location_dir, name, descr)
 
     @staticmethod
     def _load(proj_location_dir, num):
-        location_dir = ExpGroup._get_group_dir(proj_location_dir, num)
-        data = ExpStruct._load_data(location_dir, ExpGroup._GROUP_FILE)
-        return ExpGroup(location_dir, num, data)
-
-    def __init__(self, location_dir: str, num: int, data: ExpGroupData):
-        super().__init__(location_dir, data)
         util._check_num(num, False)
-        self.location_dir = location_dir
-        self.num = num
-        self.data = data
-        self.__num_to_exp = None
-        self.__name_to_exp = None
-        self.status = None
-        self._update()
+        location_dir = ExpGroup._get_group_dir(proj_location_dir, num)
+        return ExpStruct._load(ExpGroup, location_dir)
 
     def __str__(self):
-        s = f"Group {self.num} [{self.status()}] {self.data.name} - {self.data.descr}"
+        s = f"Group {self.num} [{self.status}] {self.data.name} - {self.data.descr}"
         for it in self.exps():
             s += '\n    ' + str(it)
         return s
 
-    def _file_path(self):
-        return ExpGroup._get_group_file(self.location_dir)
-
     def _update(self):
         if not super()._update():
-            return
+            return False
         self.__num_to_exp = {}
         self.__name_to_exp = {}
         nums = util._get_dir_nums_by_pattern(self.location_dir, Exp._EXP_DIR_PREFIX)
@@ -82,7 +42,8 @@ class ExpGroup(ExpStruct):
             exp = Exp._load(self.location_dir, num)
             self.__num_to_exp[num] = exp
             self.__name_to_exp[exp.data.name] = exp
-        self.status = ExpGroupStatus(ExpStructStatus.TODO)  # TODO calculate status depends on exps
+        self.status = ExpStructStatus(ExpStructStatus.EMPTY)  # TODO calculate status depends on exps
+        return True
 
     def has_exp(self, num_or_name):
         self._update()
@@ -123,3 +84,9 @@ class ExpGroup(ExpStruct):
     def exps(self):
         self._update()
         return list(self.__num_to_exp.values())
+
+    def start(self):
+        self._update()
+        pass  # TODO
+        # TODO group.start() - seeking the best candidate for running (IN_PROGRESS_NOT_ACTIVE),
+        #  group.start(exp_num) - run given exact experiment, e.g. 1
