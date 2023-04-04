@@ -2,7 +2,8 @@ from .tree import _print_dir_tree
 from . import util
 
 import os
-import pickle
+import dill  # https://stackoverflow.com/a/28095208/9751954,
+                # https://oegedijk.github.io/blog/pickle/dill/python/2020/11/10/serializing-dill-references.html
 import time
 
 
@@ -93,17 +94,17 @@ class ExpStruct:
     def __load_time(location_dir):
         fp = os.path.join(location_dir, ExpStruct._TIME_FILE)
         with open(fp, 'rb') as f:
-            time = pickle.load(f)
+            time = dill.load(f)
         return time
 
     @staticmethod
     def _save_data(location_dir, data):
         fp = os.path.join(location_dir, ExpStruct._DATA_FILE)
         with open(fp, 'wb') as f:
-            pickle.dump(data, f)
+            dill.dump(data, f)
         fp = os.path.join(location_dir, ExpStruct._TIME_FILE)
         with open(fp, 'wb') as f:
-            pickle.dump(time.time(), f)
+            dill.dump(time.time(), f)
         # TODO ??? save data structure version to the separated file `version.pkl`, it will help to
         #  recognize unmatched versions of saved file and xman data structure and maybe it will be
         #  possible to make some converters from old to the newest versions.
@@ -112,7 +113,7 @@ class ExpStruct:
     def _load_data(location_dir):
         fp = os.path.join(location_dir, ExpStruct._DATA_FILE)
         with open(fp, 'rb') as f:
-            data = pickle.load(f)
+            data = dill.load(f)
         return data
 
     @staticmethod

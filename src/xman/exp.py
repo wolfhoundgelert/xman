@@ -9,8 +9,8 @@ class ExpData(ExpStructData):
 
     def __init__(self, name, descr):
         super().__init__(name, descr)
-        self.pipeline = None  # TODO support it
-        self.result = None  # TODO support it
+        self.pipeline = None
+        self.result = None
 
 
 class Exp(ExpStruct):
