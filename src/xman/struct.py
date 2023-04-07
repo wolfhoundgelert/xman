@@ -2,8 +2,7 @@ from .tree import _print_dir_tree
 from . import util
 
 import os
-import dill  # https://stackoverflow.com/a/28095208/9751954,
-                # https://oegedijk.github.io/blog/pickle/dill/python/2020/11/10/serializing-dill-references.html
+import dill
 import time
 
 
@@ -145,9 +144,10 @@ class ExpStruct:
     def _repr_pretty_(self, p, cycle):
         p.text(str(self) if not cycle else '...')
 
-    def _update(self):
+    # TODO check if I need force
+    def _update(self, force=False):
         t = ExpStruct.__load_time(self.location_dir)
-        if self.__time == t:
+        if not force and self.__time == t:
             return False
         self.__time = t
         return True
@@ -166,3 +166,9 @@ class ExpStruct:
 
     def start(self):
         raise NotImplementedError(f"`start` method should be overriden!")
+
+
+# class ExpStructBox(ExpStruct):
+#
+#     def __init__(self):
+#         super

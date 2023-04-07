@@ -1,6 +1,7 @@
 from .struct import ExpStructData, ExpStruct, ExpStructStatus
 from .exp import Exp
 from . import util
+from . import helper
 
 import os
 import shutil
@@ -35,33 +36,33 @@ class ExpGroup(ExpStruct):
     def _update(self):
         if not super()._update():
             return False
-        self.__num_to_exp = {}
-        self.__name_to_exp = {}
+        self._num_to_child = {}
+        self._name_to_child = {}
         nums = util._get_dir_nums_by_pattern(self.location_dir, Exp._EXP_DIR_PREFIX)
         for num in nums:
             exp = Exp._load(self.location_dir, num)
-            self.__num_to_exp[num] = exp
-            self.__name_to_exp[exp.data.name] = exp
-        self.status = ExpStructStatus(ExpStructStatus.EMPTY)  # TODO calculate status depends on exps
+            self._num_to_child[num] = exp
+            self._name_to_child[exp.data.name] = exp
+        helper._process_status(self)
         return True
 
     def has_exp(self, num_or_name):
         self._update()
-        return util._has_in_num_or_name_dicts(num_or_name, self.__num_to_exp, self.__name_to_exp)
+        return util._has_in_num_or_name_dicts(num_or_name, self._num_to_child, self._name_to_child)
 
     def make_exp(self, name, descr, num=None) -> Exp:
         self._update()
         util._check_num(num, True)
-        if name in self.__name_to_exp:
+        if name in self._name_to_child:
             raise ValueError(f"An experiment with the name `{name}` already exists!")
         if num is not None:
-            if num in self.__num_to_exp:
+            if num in self._num_to_child:
                 raise ValueError(f"An experiment with the num `{num}` already exists!")
         else:
-            num = util._get_highest_num_in_dict(self.__num_to_exp) + 1
+            num = util._get_highest_num_in_dict(self._num_to_child) + 1
         exp = Exp._make(self.location_dir, num, name, descr)
-        self.__num_to_exp[num] = exp
-        self.__name_to_exp[name] = exp
+        self._num_to_child[num] = exp
+        self._name_to_child[name] = exp
         return exp
 
     def remove_exp(self, num_or_name):
@@ -73,17 +74,17 @@ class ExpGroup(ExpStruct):
         response = input(f"ACHTUNG! Remove `{exp_dir}` dir with all its content? (y/n) ")
         if response.lower() != "y":
             return
-        del self.__num_to_exp[num]
-        del self.__name_to_exp[name]
+        del self._num_to_child[num]
+        del self._name_to_child[name]
         shutil.rmtree(exp_dir)
 
     def exp(self, num_or_name) -> Exp:
         self._update()
-        return util._get_by_num_or_name(num_or_name, self.__num_to_exp, self.__name_to_exp)
+        return util._get_by_num_or_name(num_or_name, self._num_to_child, self._name_to_child)
 
     def exps(self):
         self._update()
-        return list(self.__num_to_exp.values())
+        return list(self._num_to_child.values())
 
     def start(self):
         self._update()

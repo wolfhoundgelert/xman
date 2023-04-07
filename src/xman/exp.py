@@ -1,6 +1,7 @@
 from .struct import ExpStructData, ExpStruct, ExpStructStatus
 from .pipeline import Pipeline
 from . import util
+from . import helper
 
 import os
 
@@ -16,7 +17,6 @@ class ExpData(ExpStructData):
 class Exp(ExpStruct):
 
     _EXP_DIR_PREFIX = 'exp'
-    __AUTO_STATUS_RESOLUTION = 'auto status'
 
     @staticmethod
     def _get_exp_dir(group_location_dir, num):
@@ -40,12 +40,13 @@ class Exp(ExpStruct):
     def _update(self):
         if not super()._update():
             return False
+        util.debug(f"Exp.update()")  # TODO remove debug
         if self.data.manual_status is not None:
             status = self.data.manual_status
             resolution = self.data.manual_status_resolution
             manual = True
         else:
-            resolution = Exp.__AUTO_STATUS_RESOLUTION
+            resolution = helper._AUTO_STATUS_RESOLUTION
             manual = False
             pipeline = self.data.pipeline
             if pipeline is None:
@@ -59,16 +60,19 @@ class Exp(ExpStruct):
                 status = ExpStructStatus.DONE
             else:
                 status = ExpStructStatus.IN_PROGRESS
+                # TODO update ACTIVE, IDLE, UNKNOWN type of IN_PROGRESS
         self.status = ExpStructStatus(status, resolution, manual)
         return True
 
-    def set_manual_status(self, status: str, resolution: str) -> ExpStructStatus:
+    # TODO ??? move to ExpStruct, so it will be available for ExpGroup and ExpProj
+    def set_manual_status(self, status: str, resolution: str):
         self._update()
         self.status = ExpStructStatus(status, resolution)
         self.data.manual_status = status
         self.data.manual_status_resolution = resolution
         self._save()
 
+    # TODO ??? move to ExpStruct, so it will be available for ExpGroup and ExpProj
     def remove_manual_status(self):
         self._update()
         if self.data.manual_status is None:
@@ -99,15 +103,13 @@ class Exp(ExpStruct):
         pipeline = self.data.pipeline
         if pipeline is None:
             raise AssertionError(f"`{self}` doesn't have a pipeline!")
+        if pipeline.error:
+            raise AssertionError(f"`{self}` there's an error during the previous start!")
         if pipeline.started:
             raise AssertionError(f"`{self}` was already started and the current status is `{self.status}`!")
+        if pipeline.finished:
+            raise AssertionError(f"`{self}` was already finished!")
         pipeline.start()
-        if pipeline.error is not None:
-            pass  # TODO save error and do something
-        else:
-            self.data.result = pipeline.result
-            self._save()
-            # TODO save result and do something
 
     def success(self, resolution: str):
         self._update()
@@ -117,11 +119,6 @@ class Exp(ExpStruct):
         self._update()
         self.set_manual_status(ExpStructStatus.FAIL, resolution)
 
-    @property
-    def result(self):
-        self._update()
-        return self.data.result
-
     def info(self):
         self._update()
         super().info()
@@ -129,3 +126,14 @@ class Exp(ExpStruct):
             print(f"    Resolution: {self.status.resolution}")
         if self.result:
             print(f"    Result: {self.result}")
+
+    # TODO Check how these props should work in case of manual exp
+    @property
+    def result(self):
+        self._update()
+        return self.data.pipeline.result if self.data.pipeline else None
+
+    @property
+    def error(self):
+        self._update()
+        return self.data.pipeline.error if self.data.pipeline else None

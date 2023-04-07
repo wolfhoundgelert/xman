@@ -14,12 +14,14 @@ class Pulse:
         # TODO save the sequence of timestamps (limit the length, e.g. 10)
         pass  # TODO
 
+    #  TODO save intermediate result and implement resuming mechanics (from the last epoch e.g.)
     def interim_result(self):
         pass  # TODO
 
 
 class Pipeline:
 
+    # TODO Will it be more convenient to require users to inherit Pipeline instead of passing run_func?
     def __init__(self, exp, run_func: Callable[[Pulse, ...], Any], params: dict):
         self.exp = exp
         self.run_func = run_func
@@ -32,15 +34,13 @@ class Pipeline:
 
     def start(self):
         if self.started:
-            raise AssertionError(f"Pipeline is already started!")
+            raise AssertionError(f"Pipeline was already started!")
         self.started = True
-        # TODO save `started` flag to exp.data
-        self.pulse = Pulse(self)  # TODO unchain cycle linking Pipeline <-> Pulse
-        # TODO add try-catch and return status object or PipelineResult
+        self.pulse = Pulse(self)  # TODO ??? unchain cycle linking Pipeline <-> Pulse
+        self.exp._save()
         try:
+            self.finished = True
             self.result = self.run_func(self.pulse, **self.params)
         except Exception as err:
             self.error = err
-            # TODO save `error` flag to exp.data
-        self.finished = True
-        # TODO save `finished` flag to exp.data
+        self.exp._save()

@@ -22,3 +22,10 @@ def load_proj(location_dir: str) -> ExpProj:
     global proj
     proj = ExpProj._load(location_dir)
     return proj
+
+
+# TODO xman.exp(1.1) direct call without project
+# TODO xman.group(1) direct call without project
+# TODO xman.make_group()
+# TODO xman.make_exp(group_num, name, descr)
+# TODO xman.info() and so on

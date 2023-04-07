@@ -2,6 +2,7 @@ from .struct import ExpStructData, ExpStruct, ExpStructStatus
 from .group import ExpGroup
 from .exp import Exp
 from . import util
+from . import helper
 
 import shutil
 
@@ -28,33 +29,35 @@ class ExpProj(ExpStruct):
     def _update(self):
         if not super()._update():
             return False
-        self.__num_to_group = {}
-        self.__name_to_group = {}
+        # TODO the code below (also in group.py) should be a part of the base class ExpStructContainer,
+        #  which should has self._num_to_child and etc. logic of container-children relations.
+        self._num_to_child = {}
+        self._name_to_child = {}
         nums = util._get_dir_nums_by_pattern(self.location_dir, ExpGroup._GROUP_DIR_PREFIX)
         for num in nums:
             group = ExpGroup._load(self.location_dir, num)
-            self.__num_to_group[num] = group
-            self.__name_to_group[group.data.name] = group
-        self.status = ExpStructStatus(ExpStructStatus.EMPTY)  # TODO calculate status depends on exps
+            self._num_to_child[num] = group
+            self._name_to_child[group.data.name] = group
+        helper._process_status(self)
         return True
 
     def has_group(self, num_or_name):
         self._update()
-        return util._has_in_num_or_name_dicts(num_or_name, self.__num_to_group, self.__name_to_group)
+        return util._has_in_num_or_name_dicts(num_or_name, self._num_to_child, self._name_to_child)
 
     def make_group(self, name, descr, num=None) -> ExpGroup:
         self._update()
         util._check_num(num, True)
-        if name in self.__name_to_group:
+        if name in self._name_to_child:
             raise ValueError(f"A group with the name `{name}` already exists!")
         if num is not None:
-            if num in self.__num_to_group:
+            if num in self._num_to_child:
                 raise ValueError(f"A group with the num `{num}` already exists!")
         else:
-            num = util._get_highest_num_in_dict(self.__num_to_group) + 1
+            num = util._get_highest_num_in_dict(self._num_to_child) + 1
         group = ExpGroup._make(self.location_dir, num, name, descr)
-        self.__num_to_group[num] = group
-        self.__name_to_group[name] = group
+        self._num_to_child[num] = group
+        self._name_to_child[name] = group
         return group
 
     def remove_group(self, num_or_name):
@@ -66,17 +69,17 @@ class ExpProj(ExpStruct):
         response = input(f"ACHTUNG! Remove `{group_dir}` dir with all its content? (y/n) ")
         if response.lower() != "y":
             return
-        del self.__num_to_group[num]
-        del self.__name_to_group[name]
+        del self._num_to_child[num]
+        del self._name_to_child[name]
         shutil.rmtree(group_dir)
 
     def group(self, num_or_name) -> ExpGroup:
         self._update()
-        return util._get_by_num_or_name(num_or_name, self.__num_to_group, self.__name_to_group)
+        return util._get_by_num_or_name(num_or_name, self._num_to_child, self._name_to_child)
 
     def groups(self):
         self._update()
-        return list(self.__num_to_group.values())
+        return list(self._num_to_child.values())
 
     def has_exp(self, dot_num: float) -> bool:
         self._update()

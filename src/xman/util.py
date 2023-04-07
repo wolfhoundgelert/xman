@@ -79,3 +79,7 @@ def _parse_group_and_exp_num(dot_num: float):
     _check_num(group_num, False)
     _check_num(exp_num, False)
     return group_num, exp_num
+
+
+def debug(message: str):
+    print('DEBUG: ' + message)
