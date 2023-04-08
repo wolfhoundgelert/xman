@@ -1,14 +1,12 @@
-from .family import Child, Parent
 from .tree import _print_dir_tree
 from . import util
 
 # import pickle
 # import dill as pickle
-import cloudpickle as pickle
+import cloudpickle as pickle  # TODO What is better here - dill or cloudpickle?
 import os
 import time
 import shutil
-from abc import ABC, abstractmethod
 
 
 class ExpStructData:
@@ -49,11 +47,8 @@ class ExpStructStatus:
         return False
 
     def __init__(self, status: str, resolution: str = None, manual: bool = False):
-        self.workflow = self._workflow()
         self.__check(status, resolution)
         self.status = status
-        self.current = status  # just for logical support for `next`
-        self.next = self.__next()
         self.resolution = resolution
         self.manual = manual
 
@@ -69,18 +64,12 @@ class ExpStructStatus:
         if status in (ExpStructStatus.SUCCESS, ExpStructStatus.FAIL) and resolution is None:
             raise ValueError(f"SUCCESS and FAIL manual statuses require setting resolutions!")
 
-    def __next(self):
-        if self.workflow[-1] == self.status:
-            return None
-        for i, it in enumerate(self.workflow[:-1]):
-            if it == self.status or (type(it) is tuple and self.status in it):
-                return self.workflow[i + 1]
-
     # Printing in jupyter notebook - https://stackoverflow.com/a/41454816/9751954
     def _repr_pretty_(self, p, cycle):
         p.text(str(self) if not cycle else '...')
 
-    def _workflow(self):
+    @property
+    def workflow(self):
         return (
             ExpStructStatus.EMPTY,
             ExpStructStatus.TODO,
@@ -89,8 +78,16 @@ class ExpStructStatus:
             (ExpStructStatus.SUCCESS, ExpStructStatus.FAIL)
         )
 
+    @property
+    def next(self):
+        if self.workflow[-1] == self.status:
+            return None
+        for i, it in enumerate(self.workflow[:-1]):
+            if it == self.status or (type(it) is tuple and self.status in it):
+                return self.workflow[i + 1]
 
-class ExpStruct(Child, ABC):
+
+class ExpStruct:
 
     __DATA_FILE = '.data'
     __TIME_FILE = '.time'
@@ -98,13 +95,10 @@ class ExpStruct(Child, ABC):
     _AUTO_STATUS_RESOLUTION = '-= auto status =-'
 
     @staticmethod
-    @abstractmethod
     def _dir_prefix():
-        pass
+        raise NotImplementedError("Should be overriden!")
 
     def __init__(self, location_dir, name, descr):
-        ABC.__init__(self)
-        Child.__init__(self)
         self.location_dir = location_dir
         self.num = util.get_dir_num(location_dir)
         self.status = None
@@ -113,10 +107,11 @@ class ExpStruct(Child, ABC):
             util.make_dir(location_dir)
             self.data = self._data_class(name, descr)
             self._save()
+        self._inited = True
         self._update()
 
     def __str__(self):
-        raise NotImplementedError(f"`__str__` method should be overriden!")
+        raise NotImplementedError("Should be overriden!")
 
     def __load_data(self):
         fp = os.path.join(self.location_dir, ExpStruct.__DATA_FILE)
@@ -155,18 +150,15 @@ class ExpStruct(Child, ABC):
         self._update()
         print(self)
 
-    @abstractmethod
     def start(self):
-        pass
+        raise NotImplementedError("Should be overriden!")
 
 
-class ExpStructBox(ExpStruct, Parent, ABC):
+class ExpStructBox(ExpStruct):
 
     def __init__(self, location_dir, name, descr):
         self.__inited = False
-        ABC.__init__(self)
-        Parent.__init__(self)
-        ExpStruct.__init__(self, location_dir, name, descr)
+        super().__init__(location_dir, name, descr)
         self.__num_to_child = {}
         self.__name_to_child = {}
         self.__inited = True
@@ -175,7 +167,7 @@ class ExpStructBox(ExpStruct, Parent, ABC):
     def __children_has_status(self, status_or_list, all: bool):
         status = status_or_list if type(status_or_list) is str else None
         status_list = status_or_list if type(status_or_list) is list else None
-        for child in self.children():
+        for child in self._children():
             s = child.status()
             if status:
                 if all:
@@ -222,9 +214,16 @@ class ExpStructBox(ExpStruct, Parent, ABC):
                 status = ExpStructStatus.IN_PROGRESS
         self.status = ExpStructStatus(status, resolution, manual)
 
-    @abstractmethod
+    def __add(self, child):
+        self.__num_to_child[child.num] = child
+        self.__name_to_child[child.data.name] = child
+
+    def __remove(self, child):
+        del self.__num_to_child[child.num]
+        del self.__name_to_child[child.data.name]
+
     def _get_child_class(self):
-        pass
+        raise NotImplementedError("Should be overriden!")
 
     def _get_child_dir(self, num):
         return os.path.join(self.location_dir, self._get_child_class()._dir_prefix() + str(num))
@@ -232,6 +231,7 @@ class ExpStructBox(ExpStruct, Parent, ABC):
     def _update(self):
         if not self.__inited:
             return
+        self.__inited = False
         super()._update()
         child_class = self._get_child_class()
         child_dir_prefix = child_class._dir_prefix()
@@ -240,13 +240,14 @@ class ExpStructBox(ExpStruct, Parent, ABC):
             if num not in self.__num_to_child:
                 location_dir = self._get_child_dir(num)
                 child = child_class(location_dir, None, None)
-                self.add(child)
-        for child in self.children():
+                self.__add(child)
+        for child in self._children():
             if child.num not in nums:
-                self.remove(child)
-        for child in self.children():
+                self.__remove(child)
+        for child in self._children():
             child._update()
         self.__process_status()
+        self.__inited = True
 
     def _has_child_num_or_name(self, num_or_name):
         self._update()
@@ -266,6 +267,7 @@ class ExpStructBox(ExpStruct, Parent, ABC):
         raise ValueError(f"There's no item with num or name `{num_or_name}`!")
 
     def _get_child_highest_num(self):
+        self._update()
         nums = self.__num_to_child.keys()
         return max(nums) if len(nums) else 0
 
@@ -282,8 +284,7 @@ class ExpStructBox(ExpStruct, Parent, ABC):
         child_dir = self._get_child_dir(num)
         child_class = self._get_child_class()
         child = child_class(child_dir, name, descr)
-        self.add(child)
-        # self.root._update()  # TODO looks like I don't need it
+        self.__add(child)
         return child
 
     def _remove_child(self, num_or_name):
@@ -293,16 +294,17 @@ class ExpStructBox(ExpStruct, Parent, ABC):
         response = input(f"ACHTUNG! Remove `{child_dir}` dir with all its content? (y/n) ")
         if response.lower() != "y":
             return
-        self.remove(child)
+        self.__remove(child)
         shutil.rmtree(child_dir)
-        # self.root._update()  # TODO looks like I don't need it
 
-    def add(self, child):
-        super().add(child)
-        self.__num_to_child[child.num] = child
-        self.__name_to_child[child.data.name] = child
+    def _children(self):
+        self._update()
+        return list(self.__num_to_child.values())
 
-    def remove(self, child):
-        super().remove(child)
-        del self.__num_to_child[child.num]
-        del self.__name_to_child[child.data.name]
+    def _nums(self):
+        self._update()
+        return list(self.__num_to_child.keys())
+
+    def _names(self):
+        self._update()
+        return list(self.__name_to_child.keys())

@@ -30,7 +30,7 @@ class ExpGroup(ExpStructBox):
         return self._get_child_by_num_or_name(num_or_name)
 
     def exps(self):
-        return self.children()
+        return self._children()
 
     def start(self):
         # self._update()

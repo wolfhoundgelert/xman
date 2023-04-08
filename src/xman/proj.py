@@ -32,7 +32,7 @@ class ExpProj(ExpStructBox):
         return self._get_child_by_num_or_name(num_or_name)
 
     def groups(self):
-        return self.children()
+        return self._children()
 
     def has_exp(self, dot_num: float) -> bool:
         group_num, exp_num = util.parse_group_and_exp_num(dot_num)

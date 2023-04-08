@@ -2,7 +2,7 @@ import xman
 
 proj_dir = '../gitignore/experiments/'
 
-create_new = False
+create_new = True
 if create_new:
     xman.make_proj(proj_dir, 'Test Project', "This is a test experimental project")
     xman.proj.make_group("Test Group", "Test group descr")
@@ -26,5 +26,7 @@ params = {
 }
 
 xman.proj.exp(1.1).remove_pipeline().attach_pipeline(train, params)
+xman.proj.info()
 xman.proj.exp(1.1).start()
 xman.proj.info()
+print(xman.proj.exp(1.1).result)
