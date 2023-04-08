@@ -1,4 +1,4 @@
-from .tree import _print_dir_tree
+from .tree import print_dir_tree
 from . import util
 
 # import pickle
@@ -144,7 +144,7 @@ class ExpStruct:
 
     def tree(self):
         self._update()
-        _print_dir_tree(self.location_dir)
+        print_dir_tree(self.location_dir)
 
     def info(self):
         self._update()

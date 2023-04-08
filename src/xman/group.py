@@ -33,7 +33,6 @@ class ExpGroup(ExpStructBox):
         return self._children()
 
     def start(self):
-        # self._update()
         pass  # TODO
         # TODO group.start() - seeking the best candidate for running (IN_PROGRESS_NOT_ACTIVE),
         #  group.start(exp_num) - run given exact experiment, e.g. 1

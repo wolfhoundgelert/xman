@@ -5,17 +5,20 @@ from typing import Any, Callable
 
 class Pulse:
 
-    def __init__(self, pipeline):
+    def __init__(self, pipeline):  # TODO pipeline or update_callback
         self.pipeline = pipeline  # TODO check if it's needed
+        self._interim = None
         pass  # TODO
 
-    # TODO should be called in run_func for letting xman know that's the exp is still alive
-    def tick(self):
+    def __call__(self, intermediate_checkpoint=None):
+        if intermediate_checkpoint is not None:
+            # TODO save intermediate result and implement resuming mechanics (from the last epoch e.g.)
+            self._interim = intermediate_checkpoint
+        self.__tick()
+
+    # TODO should be called in run_func via pulse() for letting xman know that's the exp is still alive
+    def __tick(self):
         # TODO save the sequence of timestamps (limit the length, e.g. 10)
-        pass  # TODO
-
-    #  TODO save intermediate result and implement resuming mechanics (from the last epoch e.g.)
-    def interim_result(self):
         pass  # TODO
 
 

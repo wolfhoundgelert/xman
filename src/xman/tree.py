@@ -1,11 +1,22 @@
 import os
+import re
 
 
-def __sort_content_by_folders_and_files(target_dir):
-    ld = sorted(os.listdir(target_dir))
+__tab = '    '
+__regex = r'\d+'
+
+
+def __sort_by_number(name):
+    match = re.search(__regex, name)
+    return int(match.group()) if match else 0
+
+
+def __sort_content_by_folders_and_files(target_dir, sort_numbers):
+    names = os.listdir(target_dir)
+    names = sorted(names, key=__sort_by_number) if sort_numbers else sorted(names)
     dirs = []
     files = []
-    for it in ld:
+    for it in names:
         p = os.path.join(target_dir, it)
         if os.path.isdir(p):
             dirs.append(it)
@@ -16,33 +27,44 @@ def __sort_content_by_folders_and_files(target_dir):
     return dirs, files
 
 
-def __process_dir(target_dir, depth, result):
-    tab = '    '
+def __dirs_part(target_dir, depth, result, files_limit, files_first, sort_numbers, dirs):
+    for d in dirs:
+        p = os.path.join(target_dir, d)
+        __process_dir(p, depth + 1, result, files_limit, files_first, sort_numbers)
+
+
+def __files_part(target_dir, depth, result, files):
+    for f in files:
+        p = os.path.join(target_dir, f)
+        if f.startswith('...'):
+            result.append(f"{__tab * (depth + 1)}{f}")
+            continue
+        result.append(f"{__tab * (depth + 1)}{os.path.basename(p)}")
+
+
+def __process_dir(target_dir, depth, result, files_limit, files_first, sort_numbers):
     if target_dir.endswith('/'):
         target_dir = target_dir[:-1]
-    result.append(f"{tab * depth}{os.path.basename(target_dir) + '/'}")
-    dirs, files = __sort_content_by_folders_and_files(target_dir)
+    result.append(f"{__tab * depth}{os.path.basename(target_dir) + '/'}")
+    dirs, files = __sort_content_by_folders_and_files(target_dir, sort_numbers)
     l = len(files)
-    if l > 10:
+    if 0 < files_limit < l:
         trimmed = files[:2]
         trimmed.append(f"... {l - 3} other files are hidden ... ")
         trimmed.append(files[-1])
         files = trimmed
-    for f in files:
-        p = os.path.join(target_dir, f)
-        if f.startswith('...'):
-            result.append(f"{tab * (depth + 1)}{f}")
-            continue
-        result.append(f"{tab * (depth + 1)}{os.path.basename(p)}")
-    for d in dirs:
-        p = os.path.join(target_dir, d)
-        __process_dir(p, depth + 1, result)
+    if files_first:
+        __files_part(target_dir, depth, result, files)
+        __dirs_part(target_dir, depth, result, files_limit, files_first, sort_numbers, dirs)
+    else:
+        __dirs_part(target_dir, depth, result, files_limit, files_first, sort_numbers, dirs)
+        __files_part(target_dir, depth, result, files)
 
 
-def _print_dir_tree(target_dir):
+def print_dir_tree(target_dir, files_limit=10, files_first=True, sort_numbers=True):
     print()
     result = []
-    __process_dir(target_dir, 0, result)
+    __process_dir(target_dir, 0, result, files_limit, files_first, sort_numbers)
     for it in result:
         print(it)
     print()

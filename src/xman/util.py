@@ -45,6 +45,7 @@ def get_dir_nums_by_pattern(location_dir, dir_pattern):
         match = re.search(regex, it)
         if match:
             nums.append(int(match.group(1)))
+    nums.sort()
     return nums
 
 

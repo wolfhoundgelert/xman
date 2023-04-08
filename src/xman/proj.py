@@ -54,11 +54,10 @@ class ExpProj(ExpStructBox):
             return self.group(group_num_or_name).exps()
         result = []
         for it in self.groups():
-            result.extend(it.exp())
+            result.extend(it.exps())
         return result
 
     def start(self):
-        # self._update()
         pass  # TODO
         #  TODO proj.start() - seeking for the best candidate, or
         #   proj.start(exp_dot_num) - run given exact experiment, e.g. 1.1
