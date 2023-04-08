@@ -1,9 +1,5 @@
 from .struct import ExpStructData, ExpStruct, ExpStructStatus
 from .pipeline import Pipeline
-from . import util
-from . import helper
-
-import os
 
 
 class ExpData(ExpStructData):
@@ -16,37 +12,25 @@ class ExpData(ExpStructData):
 
 class Exp(ExpStruct):
 
-    _EXP_DIR_PREFIX = 'exp'
-
     @staticmethod
-    def _get_exp_dir(group_location_dir, num):
-        return os.path.join(group_location_dir, Exp._EXP_DIR_PREFIX + str(num))
-
-    @staticmethod
-    def _make(group_location_dir, num, name, descr):
-        util._check_num(num, False)
-        location_dir = Exp._get_exp_dir(group_location_dir, num)
-        return ExpStruct._make(ExpData, Exp, location_dir, name, descr)
-
-    @staticmethod
-    def _load(group_location_dir, num):
-        util._check_num(num, False)
-        location_dir = Exp._get_exp_dir(group_location_dir, num)
-        return ExpStruct._load(Exp, location_dir)
+    def _dir_prefix():
+        return 'exp'
 
     def __str__(self):
         return f"Exp {self.num} [{self.status()}] {self.data.name} - {self.data.descr}"
 
+    @property
+    def _data_class(self):
+        return ExpData
+
     def _update(self):
-        if not super()._update():
-            return False
-        util.debug(f"Exp.update()")  # TODO remove debug
+        super()._update()
         if self.data.manual_status is not None:
             status = self.data.manual_status
             resolution = self.data.manual_status_resolution
             manual = True
         else:
-            resolution = helper._AUTO_STATUS_RESOLUTION
+            resolution = ExpStruct._AUTO_STATUS_RESOLUTION
             manual = False
             pipeline = self.data.pipeline
             if pipeline is None:
@@ -62,7 +46,6 @@ class Exp(ExpStruct):
                 status = ExpStructStatus.IN_PROGRESS
                 # TODO update ACTIVE, IDLE, UNKNOWN type of IN_PROGRESS
         self.status = ExpStructStatus(status, resolution, manual)
-        return True
 
     # TODO ??? move to ExpStruct, so it will be available for ExpGroup and ExpProj
     def set_manual_status(self, status: str, resolution: str):

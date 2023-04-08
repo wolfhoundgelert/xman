@@ -16,6 +16,7 @@ def _update(self):
 I tried `dill` lib for it, but something went wrong - can't print saved `train` function.
 - Group 1 [IN_PROGRESS] Test Group - Test group descr or
 Group 1 [IN_PROGRESS *] Test Group - Test group descr (* in the status means `manual`)
+-  ??? Save data structure version to the separated file `version.pkl`, it will help to recognize unmatched versions of saved file and xman data structure and maybe it will be possible to make some converters from old to the newest versions.
        
 
 

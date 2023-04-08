@@ -3,16 +3,18 @@ class Child:
     def __init__(self):
         self.parent = None
 
-    def root(self):
+    @property
+    def root(self):  # TODO check usage
         node = self
         while node.parent is not None:
             node = node.parent
         return node
 
 
-class Parent(Child):
+class Parent(Child):  # TODO check if I need this
 
     def __init__(self):
+        super().__init__()
         self.__children = []
 
     def has(self, child: Child):
