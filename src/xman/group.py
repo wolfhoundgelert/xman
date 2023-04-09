@@ -1,4 +1,4 @@
-from .struct import ExpStruct, ExpStructBox
+from .struct import ExpStructStatus, ExpStructBox
 from .exp import Exp
 
 
@@ -32,7 +32,17 @@ class ExpGroup(ExpStructBox):
     def exps(self):
         return self._children()
 
-    def start(self):
-        pass  # TODO
-        # TODO group.start() - seeking the best candidate for running (IN_PROGRESS_NOT_ACTIVE),
-        #  group.start(exp_num) - run given exact experiment, e.g. 1
+    def get_exp_for_start(self):
+        # TODO Support IN_PROGRESS with type IDLE
+        return self._get_child_by_status(ExpStructStatus.TODO)
+
+    def start(self, exp_num=None, autostart_next=False):
+        if exp_num is None:
+            exp = self.get_exp_for_start()
+            if exp is None:
+                raise AssertionError(f"There's nothing to start in the group `{self}`!")
+            exp.start()
+        else:
+            self.exp(exp_num).start()
+        if autostart_next:
+            self.start(autostart_next=True)

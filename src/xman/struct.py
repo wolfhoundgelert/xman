@@ -53,10 +53,10 @@ class ExpStructStatus:
         self.manual = manual
 
     def __str__(self):
-        return self.status
+        return self.status + ' *' if self.manual else self.status
 
     def __call__(self):
-        return self.status
+        return self.__str__()
 
     def __check(self, status, resolution):
         if not ExpStructStatus.__has_workflow_status(self.workflow, status):
@@ -116,7 +116,8 @@ class ExpStruct:
     def __load_data(self):
         fp = os.path.join(self.location_dir, ExpStruct.__DATA_FILE)
         with open(fp, 'rb') as f:
-            self.data = pickle.load(f)
+            loaded_data = pickle.load(f)
+            self._on_load_data(loaded_data)
 
     @property
     def _data_class(self):
@@ -131,8 +132,11 @@ class ExpStruct:
         with open(fp, 'rb') as f:
             t = pickle.load(f)
         if self.__time != t:
+            self.__time = t
             self.__load_data()
-            self.__time == t
+
+    def _on_load_data(self, loaded_data):  # Can be overriden in descendants
+        self.data = loaded_data
 
     def _save(self):
         fp = os.path.join(self.location_dir, ExpStruct.__DATA_FILE)
@@ -140,7 +144,9 @@ class ExpStruct:
             pickle.dump(self.data, f)
         fp = os.path.join(self.location_dir, ExpStruct.__TIME_FILE)
         with open(fp, 'wb') as f:
-            pickle.dump(time.time(), f)
+            self.__time = time.time()
+            pickle.dump(self.__time, f)
+        self._update()
 
     def tree(self):
         self._update()
@@ -164,26 +170,17 @@ class ExpStructBox(ExpStruct):
         self.__inited = True
         self._update()
 
-    def __children_has_status(self, status_or_list, all: bool):
-        status = status_or_list if type(status_or_list) is str else None
-        status_list = status_or_list if type(status_or_list) is list else None
+    def __children_has_status(self, status_or_list, all_children: bool):
+        l = status_or_list if type(status_or_list) is list else [status_or_list]
         for child in self._children():
             s = child.status()
-            if status:
-                if all:
-                    if s != status:
-                        return False
-                else:
-                    if s == status:
-                        return True
+            if all_children:
+                if s not in l:
+                    return False
             else:
-                if all:
-                    if s not in status_list:
-                        return False
-                else:
-                    if s in status_list:
-                        return True
-        return True if all else False
+                if s in l:
+                    return True
+        return True if all_children else False
 
     def __process_status(self):
         if self.data.manual_status is not None:
@@ -308,3 +305,11 @@ class ExpStructBox(ExpStruct):
     def _names(self):
         self._update()
         return list(self.__name_to_child.keys())
+
+    def _get_child_by_status(self, status_or_list):
+        sl = status_or_list if type(status_or_list) is list else [status_or_list]
+        for status in sl:
+            for child in self._children():
+                if child.status == status:
+                    return child
+        return None

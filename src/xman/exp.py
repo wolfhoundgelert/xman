@@ -7,7 +7,7 @@ class ExpData(ExpStructData):
     def __init__(self, name, descr):
         super().__init__(name, descr)
         self.pipeline = None
-        self.result = None
+        self.manual_result = None  # TODO implement
 
 
 class Exp(ExpStruct):
@@ -47,6 +47,10 @@ class Exp(ExpStruct):
                 # TODO update ACTIVE, IDLE, UNKNOWN type of IN_PROGRESS
         self.status = ExpStructStatus(status, resolution, manual)
 
+    def _on_load_data(self, loaded_data):
+        loaded_data.pipeline.exp = self  # Because pipeline.exp is another instance after being loaded
+        super()._on_load_data(loaded_data)
+
     # TODO ??? move to ExpStruct, so it will be available for ExpGroup and ExpProj
     def set_manual_status(self, status: str, resolution: str):
         self._update()
@@ -77,7 +81,6 @@ class Exp(ExpStruct):
         self._update()
         if self.data.pipeline is not None:
             self.data.pipeline = None
-            self.data.result = None
             self._save()
         return self
 
@@ -87,12 +90,12 @@ class Exp(ExpStruct):
         if pipeline is None:
             raise AssertionError(f"`{self}` doesn't have a pipeline!")
         if pipeline.error:
-            raise AssertionError(f"`{self}` there's an error during the previous start!")
+            raise AssertionError(f"`{self}` has an error during the previous start!")
         if pipeline.started:
             raise AssertionError(f"`{self}` was already started and the current status is `{self.status}`!")
         if pipeline.finished:
             raise AssertionError(f"`{self}` was already finished!")
-        pipeline.start()
+        pipeline._start()
 
     def success(self, resolution: str):
         self._update()
@@ -110,9 +113,8 @@ class Exp(ExpStruct):
         if self.result:
             print(f"    Result: {self.result}")
 
-    # TODO Check how these props should work in case of manual exp
     @property
-    def result(self):
+    def result(self):  # TODO Check how these props should work in case of manual exp
         self._update()
         return self.data.pipeline.result if self.data.pipeline else None
 

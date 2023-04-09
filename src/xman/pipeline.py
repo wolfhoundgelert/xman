@@ -1,19 +1,20 @@
-# from .exp import Exp
-
 from typing import Any, Callable
 
 
 class Pulse:
 
-    def __init__(self, pipeline):  # TODO pipeline or update_callback
+    def __init__(self, pipeline):  # TODO ??? pipeline or update_callback
         self.pipeline = pipeline  # TODO check if it's needed
-        self._interim = None
-        pass  # TODO
+        self.interim = []
 
-    def __call__(self, intermediate_checkpoint=None):
+    # Somewhere in the run_func: call pulse() or pulse(*info for saving, replaced or stacked*)
+    def __call__(self, intermediate_checkpoint=None, replace=True):
         if intermediate_checkpoint is not None:
-            # TODO save intermediate result and implement resuming mechanics (from the last epoch e.g.)
-            self._interim = intermediate_checkpoint
+            if replace:
+                self.interim[0] = intermediate_checkpoint
+            else:
+                self.interim.append(intermediate_checkpoint)
+            self.pipeline.exp._save()
         self.__tick()
 
     # TODO should be called in run_func via pulse() for letting xman know that's the exp is still alive
@@ -35,15 +36,13 @@ class Pipeline:
         self.finished = False
         self.error = None
 
-    def start(self):
-        if self.started:
-            raise AssertionError(f"Pipeline was already started!")
+    def _start(self):
         self.started = True
-        self.pulse = Pulse(self)  # TODO ??? unchain cycle linking Pipeline <-> Pulse
+        self.pulse = Pulse(self)
         self.exp._save()
         try:
-            self.finished = True
             self.result = self.run_func(self.pulse, **self.params)
+            self.finished = True
         except Exception as err:
             self.error = err
         self.exp._save()

@@ -57,7 +57,16 @@ class ExpProj(ExpStructBox):
             result.extend(it.exps())
         return result
 
-    def start(self):
-        pass  # TODO
-        #  TODO proj.start() - seeking for the best candidate, or
-        #   proj.start(exp_dot_num) - run given exact experiment, e.g. 1.1
+    def start(self, exp_dot_num=None, autostart_next=False):
+        if exp_dot_num is None:
+            for group in self.groups():
+                exp = group.get_exp_for_start()
+                if exp is not None:
+                    exp.start()
+                    break;
+            if exp is None:
+                raise AssertionError(f"There's nothing to start in the proj `{self}`!")
+        else:
+            self.exp(exp_dot_num).start()
+        if autostart_next:
+            self.start(autostart_next=True)
