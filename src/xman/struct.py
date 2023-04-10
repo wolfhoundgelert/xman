@@ -134,6 +134,8 @@ class ExpStruct:
         if self.__time != t:
             self.__time = t
             self.__load_data()
+        if self.data.manual_status is not None:
+            self.status = ExpStructStatus(self.data.manual_status, self.data.manual_status_resolution, manual=True)
 
     def _on_load_data(self, loaded_data):  # Can be overriden in descendants
         self.data = loaded_data
@@ -159,6 +161,18 @@ class ExpStruct:
     def start(self):
         raise NotImplementedError("Should be overriden!")
 
+    def set_manual_status(self, status: str, resolution: str):
+        self._update()
+        self.data.manual_status = status
+        self.data.manual_status_resolution = resolution
+        self._save()
+
+    def remove_manual_status(self):
+        self._update()
+        self.data.manual_status = None
+        self.data.manual_status_resolution = None
+        self._save()
+
 
 class ExpStructBox(ExpStruct):
 
@@ -171,25 +185,20 @@ class ExpStructBox(ExpStruct):
         self._update()
 
     def __children_has_status(self, status_or_list, all_children: bool):
-        l = status_or_list if type(status_or_list) is list else [status_or_list]
+        sl = status_or_list if type(status_or_list) is list else [status_or_list]
         for child in self._children():
-            s = child.status()
+            s = child.status.status
             if all_children:
-                if s not in l:
+                if s not in sl:
                     return False
             else:
-                if s in l:
+                if s in sl:
                     return True
         return True if all_children else False
 
     def __process_status(self):
-        if self.data.manual_status is not None:
-            status = self.data.manual_status
-            resolution = self.data.manual_status_resolution
-            manual = True
-        else:
+        if self.data.manual_status is None:
             resolution = ExpStruct._AUTO_STATUS_RESOLUTION
-            manual = False
             if self.__children_has_status(ExpStructStatus.ERROR, False):
                 status = ExpStructStatus.ERROR
             elif self.__children_has_status(ExpStructStatus.IN_PROGRESS, False):
@@ -204,12 +213,14 @@ class ExpStructBox(ExpStruct):
                 status = ExpStructStatus.SUCCESS
             elif self.__children_has_status(ExpStructStatus.FAIL, True):
                 status = ExpStructStatus.FAIL
+            elif self.__children_has_status([ExpStructStatus.EMPTY, ExpStructStatus.TODO], True):
+                status = ExpStructStatus.TODO
             elif self.__children_has_status(
                     [ExpStructStatus.DONE, ExpStructStatus.SUCCESS, ExpStructStatus.FAIL], True):
                 status = ExpStructStatus.DONE
             else:
                 status = ExpStructStatus.IN_PROGRESS
-        self.status = ExpStructStatus(status, resolution, manual)
+            self.status = ExpStructStatus(status, resolution, manual=False)
 
     def __add(self, child):
         self.__num_to_child[child.num] = child
@@ -310,6 +321,6 @@ class ExpStructBox(ExpStruct):
         sl = status_or_list if type(status_or_list) is list else [status_or_list]
         for status in sl:
             for child in self._children():
-                if child.status == status:
+                if child.status.status == status:
                     return child
         return None

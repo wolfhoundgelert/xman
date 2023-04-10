@@ -1,13 +1,18 @@
 ### CURRENT:
 
-- 
+
 
 
 ### TODO:
 
+- Prompt for removing anything - remove_manual_status, remove_manual_result, remove_pipeline, remove_group, remove_exp, etc...
+
 - Config for xman and/or xman.mode(STRICT/PROMPT/CAREFREE) Settings in config for exp starting mode: STRICT - all prev should be closed, PROMPT - show prompt for proceeding if something wasn't closed, CAREFREE - no control at all
+
 - IN_PROGRESS types ACTIVE, IDLE, UNKNOWN - need to implement pulse.__tick() method which saves timestamps for predicting current state of IN_PROGRESS (ACTIVE, IDLE, UNKNOWN)
+
 - Start exp with IN_PROGRESS status and IDLE type (was started but died somehow)
+
 -  ??? Save data structure version to the separated file `version.pkl`, it will help to recognize unmatched versions of saved file and xman data structure and maybe it will be possible to make some converters from old to the newest versions.
        
 
