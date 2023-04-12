@@ -1,26 +1,32 @@
 from typing import Any, Callable
 
+import time
+
 
 class Pulse:
 
-    def __init__(self, pipeline):  # TODO ??? pipeline or update_callback
-        self.pipeline = pipeline  # TODO check if it's needed
-        self.interim = []
+    _TIMESTAMPS_AMOUNT = 3
+
+    def __init__(self, exp):
+        self.exp = exp
+        self.intermediate_checkpoints = []
+        self.timestamps = []
 
     # Somewhere in the run_func: call pulse() or pulse(*info for saving, replaced or stacked*)
     def __call__(self, intermediate_checkpoint=None, replace=True):
         if intermediate_checkpoint is not None:
             if replace:
-                self.interim[0] = intermediate_checkpoint
+                self.intermediate_checkpoints[0] = intermediate_checkpoint
             else:
-                self.interim.append(intermediate_checkpoint)
-            self.pipeline.exp._save()
+                self.intermediate_checkpoints.append(intermediate_checkpoint)
         self.__tick()
 
-    # TODO should be called in run_func via pulse() for letting xman know that's the exp is still alive
+    # Should be called in run_func via pulse() for letting xman know that's the exp is still alive
     def __tick(self):
-        # TODO save the sequence of timestamps (limit the length, e.g. 10)
-        pass  # TODO
+        self.timestamps.append(time.time())
+        if len(self.timestamps) > Pulse._TIMESTAMPS_AMOUNT:
+            self.timestamps = self.timestamps[-Pulse._TIMESTAMPS_AMOUNT:]
+        self.exp._save()
 
 
 class Pipeline:
@@ -38,8 +44,8 @@ class Pipeline:
 
     def _start(self):
         self.started = True
-        self.pulse = Pulse(self)
-        self.exp._save()
+        self.pulse = Pulse(self.exp)
+        self.pulse()
         try:
             self.result = self.run_func(self.pulse, **self.params)
             self.finished = True

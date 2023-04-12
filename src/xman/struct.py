@@ -18,7 +18,6 @@ class ExpStructData:
         self.manual_status_resolution = None
 
 
-# TODO support it
 class InProgressType:
 
     ACTIVE = 'ACTIVE'

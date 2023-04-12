@@ -1,5 +1,8 @@
+import time
+
 from .struct import ExpStructData, ExpStruct, ExpStructStatus
-from .pipeline import Pipeline
+from .pipeline import Pipeline, Pulse
+from . import util
 
 
 class ExpData(ExpStructData):
@@ -7,7 +10,34 @@ class ExpData(ExpStructData):
     def __init__(self, name, descr):
         super().__init__(name, descr)
         self.pipeline = None
-        self.manual_result = None  # TODO implement
+        self.manual_result = None
+
+
+class InProgressType:
+
+    ACTIVE = 'ACTIVE'
+    IDLE = 'IDLE'
+    UNKNOWN = 'UNKNOWN'
+
+
+class ExpStatus(ExpStructStatus):
+
+    def __init__(self, status: str, resolution: str = None, manual: bool = False, in_progress_type: str = None):
+        super().__init__(status, resolution, manual)
+        self.in_progress_type = in_progress_type
+
+    def __str__(self):
+        if self.manual:
+            return self.status + ' *'
+        if self.status == ExpStructStatus.IN_PROGRESS:
+            return self.status + f': {self.in_progress_type}'
+        return self.status
+
+
+class ExpConfig:
+
+    UNKNOWN_TO_IDLE_TIME = 8 * util.HOUR
+    ACTIVE_FROM_START = 60 * util.SECOND
 
 
 class Exp(ExpStruct):
@@ -19,6 +49,33 @@ class Exp(ExpStruct):
     def __str__(self):
         return f"Exp {self.num} [{self.status()}] {self.data.name} - {self.data.descr}"
 
+    def __process_in_progress_type(self):
+        in_progress_type = InProgressType.UNKNOWN
+        timestamps = self.data.pipeline.pulse.timestamps
+        t = time.time()
+        elapsed = t - timestamps[-1]
+        ts_len = len(timestamps)
+        if ts_len > 1:
+            average = (timestamps[-1] - timestamps[0]) / (ts_len - 1)
+            if average < util.SECOND:
+                in_progress_type = InProgressType.ACTIVE if elapsed < 10 * util.SECOND else InProgressType.IDLE
+            elif average < util.MINUTE:
+                in_progress_type = InProgressType.ACTIVE if elapsed < max(1.5 * average,
+                                                                          10 * util.SECOND) else InProgressType.IDLE
+            elif average < util.HOUR:
+                in_progress_type = InProgressType.ACTIVE if elapsed < max(1.1 * average,
+                                                                          2 * util.MINUTE) else InProgressType.IDLE
+            else:
+                in_progress_type = InProgressType.ACTIVE if elapsed < max(1.05 * average,
+                                                                          5 * util.MINUTE) else InProgressType.IDLE
+        else:
+            if elapsed < ExpConfig.ACTIVE_FROM_START:
+                in_progress_type = InProgressType.ACTIVE
+        if in_progress_type == InProgressType.UNKNOWN:
+            if elapsed > ExpConfig.UNKNOWN_TO_IDLE_TIME:
+                in_progress_type = InProgressType.IDLE
+        return in_progress_type
+
     @property
     def _data_class(self):
         return ExpData
@@ -27,6 +84,7 @@ class Exp(ExpStruct):
         super()._update()
         if self.data.manual_status is None:
             resolution = ExpStruct._AUTO_STATUS_RESOLUTION
+            in_progress_type = None
             pipeline = self.data.pipeline
             if pipeline is None:
                 status = ExpStructStatus.EMPTY
@@ -39,8 +97,8 @@ class Exp(ExpStruct):
                 status = ExpStructStatus.DONE
             else:
                 status = ExpStructStatus.IN_PROGRESS
-                # TODO update ACTIVE, IDLE, UNKNOWN type of IN_PROGRESS
-            self.status = ExpStructStatus(status, resolution, manual=False)
+                in_progress_type = self.__process_in_progress_type()
+            self.status = ExpStatus(status, resolution, manual=False, in_progress_type=in_progress_type)
 
     def _on_load_data(self, loaded_data):
         loaded_data.pipeline.exp = self  # Because pipeline.exp is another instance after being loaded

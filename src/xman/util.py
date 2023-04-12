@@ -2,6 +2,12 @@ import os
 import re
 
 
+SECOND = 1
+MINUTE = 60 * SECOND
+HOUR = 60 * MINUTE
+DAY = 24 * HOUR
+
+
 def make_dir(dir_path):
     if os.path.exists(dir_path):
         if not os.path.isdir(dir_path):
