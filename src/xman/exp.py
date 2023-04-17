@@ -57,6 +57,7 @@ class Exp(ExpStruct):
         ts_len = len(timestamps)
         if ts_len > 1:
             average = (timestamps[-1] - timestamps[0]) / (ts_len - 1)
+            # TODO ??? Simplify with one config param?
             if average < util.SECOND:
                 in_progress_type = InProgressType.ACTIVE if elapsed < 10 * util.SECOND else InProgressType.IDLE
             elif average < util.MINUTE:
@@ -101,7 +102,8 @@ class Exp(ExpStruct):
             self.status = ExpStatus(status, resolution, manual=False, in_progress_type=in_progress_type)
 
     def _on_load_data(self, loaded_data):
-        loaded_data.pipeline.exp = self  # Because pipeline.exp is another instance after being loaded
+        if loaded_data.pipeline is not None:
+            loaded_data.pipeline.exp = self  # Because pipeline.exp is another instance after being loaded
         super()._on_load_data(loaded_data)
 
     def set_manual_result(self, result):
