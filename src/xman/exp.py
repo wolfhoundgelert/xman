@@ -156,10 +156,12 @@ class Exp(ExpStruct):
     def info(self):
         self._update()
         super().info()
+        spaces = '    '
         if self.status.resolution:
-            print(f"    Resolution: {self.status.resolution}")
+            print(f"{spaces}Resolution: {self.status.resolution}")
         if self.result:
-            print(f"    Result: {self.result}")
+            result = str(self.result).replace('\n', f"\n{spaces * 2}")
+            print(f"{spaces}Result:\n{spaces * 2}{result}")
 
     @property
     def result(self):
