@@ -108,7 +108,7 @@ class Exp(ExpStruct):
 
     def set_manual_result(self, result):
         self._update()
-        self.data.manual_result = result
+        self.data.manual_result = result  # TODO Add guard for keeping the previous result
         self._save()
 
     def remove_manual_result(self):
