@@ -5,6 +5,8 @@
 
 ### TODO:
 
+- BUG: Work from 2 accounts in parallel, sometimes the second one doesn't see the last exp started from the first one and it starts exp with the same number. If delete the first one exp in acc one, it won't be deleted under account two until deleting it manually in the second acc too. INVESTIGATION_RESULT: too long update ping at google drive that exp was deleted. And google drive make `folder(1)` (or `folder (1)` with space?) names for duplicates
+
 - BUG: After I manually set statuses for exps in a group, I set a status for the group itself and it was showed as an old EMPTY status. Opened another notebook  - there everything was ok.
 
 - BUG: after setting unsupported manual status (e.g. FAILED instead of FAIL), exp is corrupted and it is not possibly to set or remove status (only with illegal surgery on exp.data fields). Add checking for the status before assigning or smth like that
@@ -107,6 +109,11 @@
 - Think about not saving the whole experiment (huge storage memory consumption and low speed of save-load operations), but provide a mechanic for saving checkpoints for long exp-s.
 
 - Raname attach_pipeline to make_pipeline
+
+- Return exp in methods like set_manual_status: `xman.proj.group(4).exp(1).set_manual_status(...).info()`
+
+- Reassign group, num, name, descr to exp
+
 
 
 
