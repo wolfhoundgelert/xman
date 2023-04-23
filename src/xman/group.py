@@ -9,7 +9,7 @@ class ExpGroup(ExpStructBox):
         return 'group'
 
     def __str__(self):
-        s = f"Group {self.num} [{self.status}] {self.data.name} - {self.data.descr}"
+        s = f"Group {self.num} [{self.status}] {self._data.name} - {self._data.descr}"
         for it in self.exps():
             s += '\n    ' + str(it)
         return s

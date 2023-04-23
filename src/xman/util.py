@@ -7,6 +7,8 @@ MINUTE = 60 * SECOND
 HOUR = 60 * MINUTE
 DAY = 24 * HOUR
 
+DOT_NUM_REGEX = r'^([1-9]\d*)\.([1-9]\d*)$'
+
 
 def make_dir(dir_path):
     if os.path.exists(dir_path):
@@ -55,13 +57,11 @@ def get_dir_nums_by_pattern(location_dir, dir_pattern):
     return nums
 
 
-def parse_group_and_exp_num(dot_num: float):
-    nums = str(dot_num).split('.')
-    if len(nums) != 2:
-        raise ValueError(f"dot_num should be dotted float like 1.1, 2.3, etc, but `{dot_num}` was given")
-    group_num, exp_num = int(nums[0]), int(nums[1])
-    check_num(group_num, False)
-    check_num(exp_num, False)
+def parse_group_and_exp_num(dot_num: str):
+    match = re.match(DOT_NUM_REGEX, dot_num)
+    if match is None:
+        raise ValueError(f"`dot_num` should be a string like `1.1`, `2.3`, etc, but `{dot_num}` was given")
+    group_num, exp_num = int(match[1]), int(match[2])
     return group_num, exp_num
 
 

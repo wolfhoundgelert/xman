@@ -1,8 +1,8 @@
 import time
 
-from .struct import ExpStructData, ExpStruct, ExpStructStatus
-from .pipeline import Pipeline, Pulse
 from . import util
+from .pipeline import Pipeline
+from .struct import ExpStructData, ExpStruct, ExpStructStatus
 
 
 class ExpData(ExpStructData):
@@ -47,11 +47,11 @@ class Exp(ExpStruct):
         return 'exp'
 
     def __str__(self):
-        return f"Exp {self.num} [{self.status()}] {self.data.name} - {self.data.descr}"
+        return f"Exp {self.num} [{self.status()}] {self._data.name} - {self._data.descr}"
 
     def __process_in_progress_type(self):
         in_progress_type = InProgressType.UNKNOWN
-        timestamps = self.data.pipeline.pulse.timestamps
+        timestamps = self._data.pipeline.pulse.timestamps
         t = time.time()
         elapsed = t - timestamps[-1]
         ts_len = len(timestamps)
@@ -83,10 +83,10 @@ class Exp(ExpStruct):
 
     def _update(self):
         super()._update()
-        if self.data.manual_status is None:
+        if self._data.manual_status is None:
             resolution = ExpStruct._AUTO_STATUS_RESOLUTION
             in_progress_type = None
-            pipeline = self.data.pipeline
+            pipeline = self._data.pipeline
             if pipeline is None:
                 status = ExpStructStatus.EMPTY
             elif not pipeline.started:
@@ -108,33 +108,33 @@ class Exp(ExpStruct):
 
     def set_manual_result(self, result):
         self._update()
-        self.data.manual_result = result  # TODO Add guard for keeping the previous result
+        self._data.manual_result = result  # TODO Add guard for keeping the previous result
         self._save()
 
     def remove_manual_result(self):
         self._update()
-        self.data.manual_result = None
+        self._data.manual_result = None
         self._save()
 
-    def attach_pipeline(self, run_func, params):
+    def make_pipeline(self, run_func, params):
         self._update()
-        if self.data.pipeline is not None:
+        if self._data.pipeline is not None:
             raise AssertionError(f"`{self}` already has a pipeline!")
         pipeline = Pipeline(self, run_func, params)
-        self.data.pipeline = pipeline
+        self._data.pipeline = pipeline
         self._save()
         return self
 
     def remove_pipeline(self):
         self._update()
-        if self.data.pipeline is not None:
-            self.data.pipeline = None
+        if self._data.pipeline is not None:
+            self._data.pipeline = None
             self._save()
         return self
 
     def start(self):
         self._update()
-        pipeline = self.data.pipeline
+        pipeline = self._data.pipeline
         if pipeline is None:
             raise AssertionError(f"`{self}` doesn't have a pipeline!")
         if pipeline.error:
@@ -166,13 +166,13 @@ class Exp(ExpStruct):
     @property
     def result(self):
         self._update()
-        if self.data.manual_result is not None:
-            return self.data.manual_result
-        if self.data.pipeline is not None:
-            return self.data.pipeline.result
+        if self._data.manual_result is not None:
+            return self._data.manual_result
+        if self._data.pipeline is not None:
+            return self._data.pipeline.result
         return None
 
     @property
     def error(self):
         self._update()
-        return self.data.pipeline.error if self.data.pipeline else None
+        return self._data.pipeline.error if self._data.pipeline else None

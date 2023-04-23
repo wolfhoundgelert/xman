@@ -13,8 +13,6 @@
 
 - BUG: two competting experiments (Exp 33 - here https://colab.research.google.com/drive/1fLUSxfhYe3iksLkaFRj2CLlEaEwKHK1H#scrollTo=ZQaM79timfej&uniqifier=8 and here https://colab.research.google.com/drive/1DW7nAIs7l4jOryjO4Tax_3hxB7cEOrjV?authuser=2#scrollTo=M1mHCEJnkzYp) One exp shadowed another one, but in google drive there are two folders `exp33` from different users
 
-- BUG: xman.proj.exp(3.10).info() returned Exp 1, not Exp 10
-
 - BUG: Proj has status `DONE`, but should be `IN_PROGRESS`:
   ```
   # xman.proj.make_group('Tokenization', 'Try several tokenization technics')
@@ -118,6 +116,8 @@
 
 
 ### Q-A:
+
+- How to parallel a huge grid-search (gs) exp? gs has number of experiments, but they all have the same env, so don't need to save each env separately. Does a group assume having the same env for all its children (exps)? 
 
 
 

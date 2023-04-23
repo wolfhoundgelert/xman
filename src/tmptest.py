@@ -1,9 +1,13 @@
+import shutil
+import os
 import xman
 
 proj_dir = '../gitignore/experiments/'
 
-create_new = False
+create_new = True
 if create_new:
+    if os.path.exists(proj_dir):
+        shutil.rmtree(proj_dir)
     xman.make_proj(proj_dir, 'Test Project', "This is a test experimental project")
     xman.proj.make_group("Test Group", "Test group descr")
     xman.proj.group(1).make_exp("Test Exp", "Test Exp Descr")
@@ -30,12 +34,12 @@ params = {
     'np2': 4,
 }
 
-# xman.proj.exp(1.1).remove_pipeline().attach_pipeline(train, params)
-# xman.proj.info()
-# xman.proj.exp(1.1).start()
-# xman.proj.info()
-# print(xman.proj.exp(1.1).result)
+xman.proj.exp('1.1').remove_pipeline().make_pipeline(train, params)
+xman.proj.info()
+xman.proj.exp('1.1').start()
+xman.proj.info()
+print(xman.proj.exp('1.1').result)
 
 # xman.proj.exp(1.1).set_manual_result('DCG@   1: 0.250 | Hits@   1: 0.250\nDCG@   5: 0.316 | Hits@   5: 0.376\nDCG@  10: 0.339 | Hits@  10: 0.448\nDCG@ 100: 0.389 | Hits@ 100: 0.691\nDCG@ 500: 0.419 | Hits@ 500: 0.927\nDCG@1000: 0.427 | Hits@1000: 1.000\n')
-xman.proj.exp(1.1).info()
+# xman.proj.exp('1.1').info()
 # xman.proj.info()

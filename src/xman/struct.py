@@ -104,7 +104,7 @@ class ExpStruct:
         self.__time = None
         if name is not None and descr is not None:  # make a new data
             util.make_dir(location_dir)
-            self.data = self._data_class(name, descr)
+            self._data = self._data_class(name, descr)
             self._save()
         self._inited = True
         self._update()
@@ -133,21 +133,29 @@ class ExpStruct:
         if self.__time != t:
             self.__time = t
             self.__load_data()
-        if self.data.manual_status is not None:
-            self.status = ExpStructStatus(self.data.manual_status, self.data.manual_status_resolution, manual=True)
+        if self._data.manual_status is not None:
+            self.status = ExpStructStatus(self._data.manual_status, self._data.manual_status_resolution, manual=True)
 
     def _on_load_data(self, loaded_data):  # Can be overriden in descendants
-        self.data = loaded_data
+        self._data = loaded_data
 
     def _save(self):
         fp = os.path.join(self.location_dir, ExpStruct.__DATA_FILE)
         with open(fp, 'wb') as f:
-            pickle.dump(self.data, f)
+            pickle.dump(self._data, f)
         fp = os.path.join(self.location_dir, ExpStruct.__TIME_FILE)
         with open(fp, 'wb') as f:
             self.__time = time.time()
             pickle.dump(self.__time, f)
         self._update()
+
+    @property
+    def name(self):
+        return self._data.name
+
+    @property
+    def descr(self):
+        return self._data.descr
 
     def tree(self):
         self._update()
@@ -162,14 +170,14 @@ class ExpStruct:
 
     def set_manual_status(self, status: str, resolution: str):
         self._update()
-        self.data.manual_status = status
-        self.data.manual_status_resolution = resolution
+        self._data.manual_status = status
+        self._data.manual_status_resolution = resolution
         self._save()
 
     def remove_manual_status(self):
         self._update()
-        self.data.manual_status = None
-        self.data.manual_status_resolution = None
+        self._data.manual_status = None
+        self._data.manual_status_resolution = None
         self._save()
 
 
@@ -196,7 +204,7 @@ class ExpStructBox(ExpStruct):
         return True if all_children else False
 
     def __process_status(self):
-        if self.data.manual_status is None:
+        if self._data.manual_status is None:
             resolution = ExpStruct._AUTO_STATUS_RESOLUTION
             if self.__children_has_status(ExpStructStatus.ERROR, False):
                 status = ExpStructStatus.ERROR
@@ -223,11 +231,11 @@ class ExpStructBox(ExpStruct):
 
     def __add(self, child):
         self.__num_to_child[child.num] = child
-        self.__name_to_child[child.data.name] = child
+        self.__name_to_child[child._data.name] = child
 
     def __remove(self, child):
         del self.__num_to_child[child.num]
-        del self.__name_to_child[child.data.name]
+        del self.__name_to_child[child._data.name]
 
     def _get_child_class(self):
         raise NotImplementedError("Should be overriden!")
