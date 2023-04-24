@@ -2,39 +2,21 @@
 
 
 
-
-### TODO:
+### BUGS:
 
 - BUG: Work from 2 accounts in parallel, sometimes the second one doesn't see the last exp started from the first one and it starts exp with the same number. If delete the first one exp in acc one, it won't be deleted under account two until deleting it manually in the second acc too. INVESTIGATION_RESULT: too long update ping at google drive that exp was deleted. And google drive make `folder(1)` (or `folder (1)` with space?) names for duplicates
 
-- BUG: After I manually set statuses for exps in a group, I set a status for the group itself and it was showed as an old EMPTY status. Opened another notebook  - there everything was ok.
-
-- BUG: after setting unsupported manual status (e.g. FAILED instead of FAIL), exp is corrupted and it is not possibly to set or remove status (only with illegal surgery on exp.data fields). Add checking for the status before assigning or smth like that
-
 - BUG: two competting experiments (Exp 33 - here https://colab.research.google.com/drive/1fLUSxfhYe3iksLkaFRj2CLlEaEwKHK1H#scrollTo=ZQaM79timfej&uniqifier=8 and here https://colab.research.google.com/drive/1DW7nAIs7l4jOryjO4Tax_3hxB7cEOrjV?authuser=2#scrollTo=M1mHCEJnkzYp) One exp shadowed another one, but in google drive there are two folders `exp33` from different users
 
-- BUG: Proj has status `DONE`, but should be `IN_PROGRESS`:
-  ```
-  # xman.proj.make_group('Tokenization', 'Try several tokenization technics')
-  # xman.proj.group(1).make_exp('Default', 'Default settings: just split on words, vector_size=200, min_count=5, window=5')
-  # xman.proj.group(1).make_exp('Punctuation', 'Remove punctuation')
-  # xman.proj.group(1).make_exp('Stopwords', 'Remove stopwords (and punctuation)')
-  # xman.proj.group(1).make_exp('Lemmatization', 'Lemmatize words (after removing stopwords and punctuation)')
-  # xman.proj.group(1).make_exp('Lemmatization-2', 'Lemmatize words with nltk after fail with spacy (with removing stopwords and punctuation)')
-  xman.proj.group(1).make_exp('Lowercase', 'Lowercase input')
-  xman.proj
-  ```
-  ```
-  Proj [DONE] hw_3-1 - https://stepik.org/lesson/940785/step/1?unit=946946
 
-    Group 1 [IN_PROGRESS] Tokenization - Try several tokenization technics
-        Exp 1 [SUCCESS *] Default - Default settings: just split on words, vector_size=200, min_count=5, window=5
-        Exp 2 [SUCCESS *] Punctuation - Remove punctuation
-        Exp 3 [SUCCESS *] Stopwords - Remove stopwords (and punctuation)
-        Exp 4 [FAIL *] Lemmatization - Lemmatize words (after removing stopwords and punctuation)
-        Exp 5 [FAIL *] Lemmatization-2 - Lemmatize words with nltk after fail with spacy (with removing stopwords and punctuation)
-        Exp 6 [EMPTY] Lowercase - Lowercase input
-  ```
+
+### TODO:
+
+- Redo dirty hacks in ExpStructBox._make_child/_remove_child (xman.proj._update()). What about events for updating status?
+
+- Getting status is not from @property with updating on each call, but should be?
+
+- Add destructors for structures and over classes
 
 - Add group info with verbose exp information:
   ```
@@ -106,13 +88,15 @@
 
 - Think about not saving the whole experiment (huge storage memory consumption and low speed of save-load operations), but provide a mechanic for saving checkpoints for long exp-s.
 
-- Raname attach_pipeline to make_pipeline
-
 - Return exp in methods like set_manual_status: `xman.proj.group(4).exp(1).set_manual_status(...).info()`
 
 - Reassign group, num, name, descr to exp
 
 
+
+### BUGS CAN'T REPRODUCE:
+
+- (24.04.2023) After I manually set statuses for exps in a group, I set a status for the group itself and it was showed as an old EMPTY status. Opened another notebook  - there everything was ok.
 
 
 ### Q-A:

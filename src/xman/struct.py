@@ -1,6 +1,9 @@
 from .tree import print_dir_tree
 from . import util
 
+# TODO Remove in the future
+import xman  # For dirty hack in ExpStructBox._make_child/_remove_child
+
 # import pickle
 # import dill as pickle
 import cloudpickle as pickle  # TODO What is better here - dill or cloudpickle?
@@ -44,6 +47,11 @@ class ExpStructStatus:
                 if ExpStructStatus.__has_workflow_status(it, status):
                     return True
         return False
+
+    @staticmethod
+    def _fit_parameters(status_obj, status, resolution, manual):
+        return status_obj is not None and status_obj.status == status \
+                and status_obj.resolution == resolution and status_obj.manual == manual
 
     def __init__(self, status: str, resolution: str = None, manual: bool = False):
         self.__check(status, resolution)
@@ -134,7 +142,9 @@ class ExpStruct:
             self.__time = t
             self.__load_data()
         if self._data.manual_status is not None:
-            self.status = ExpStructStatus(self._data.manual_status, self._data.manual_status_resolution, manual=True)
+            if not ExpStructStatus._fit_parameters(self.status, self._data.manual_status,
+                    self._data.manual_status_resolution, True):
+                self.status = ExpStructStatus(self._data.manual_status, self._data.manual_status_resolution, manual=True)
 
     def _on_load_data(self, loaded_data):  # Can be overriden in descendants
         self._data = loaded_data
@@ -170,6 +180,7 @@ class ExpStruct:
 
     def set_manual_status(self, status: str, resolution: str):
         self._update()
+        self.status = ExpStructStatus(status, resolution, True)
         self._data.manual_status = status
         self._data.manual_status_resolution = resolution
         self._save()
@@ -300,6 +311,11 @@ class ExpStructBox(ExpStruct):
         child_class = self._get_child_class()
         child = child_class(child_dir, name, descr)
         self.__add(child)
+
+        # TODO Dirty hack! Redo another way. Pass root in the constructor or implement once again
+        #  Family class (parents and children)
+        xman.proj._update()
+
         return child
 
     def _remove_child(self, num_or_name):
@@ -311,6 +327,10 @@ class ExpStructBox(ExpStruct):
             return
         self.__remove(child)
         shutil.rmtree(child_dir)
+
+        # TODO Dirty hack! Redo another way. Pass root in the constructor or implement once again
+        #  Family class (parents and children)
+        xman.proj._update();
 
     def _children(self):
         self._update()

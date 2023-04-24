@@ -45,7 +45,7 @@ class ExpProj(ExpStructBox):
         group_num, exp_num = util.parse_group_and_exp_num(dot_num)
         self.group(group_num).remove_exp(exp_num)
 
-    def exp(self, dot_num: str) -> Exp:  # dot_num: 1.1, 1.2, 2.3...
+    def exp(self, dot_num: str) -> Exp:  # dot_num: '1.1', '1.10', '2.3'...
         group_num, exp_num = util.parse_group_and_exp_num(dot_num)
         return self.group(group_num).exp(exp_num)
 
