@@ -12,8 +12,6 @@
 
 ### TODO:
 
-- Getting status is not from @property with updating on each call, but should be as status can be changed in time from some parallel run
-
 - Add destructors for structures and over classes
 
 - Add group info with verbose exp information:

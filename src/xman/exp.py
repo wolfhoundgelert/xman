@@ -47,7 +47,7 @@ class Exp(ExpStruct):
         return 'exp'
 
     def __str__(self):
-        return f"Exp {self.num} [{self.status()}] {self._data.name} - {self._data.descr}"
+        return f"Exp {self.num} [{self._status}] {self._data.name} - {self._data.descr}"
 
     def __process_in_progress_type(self):
         in_progress_type = InProgressType.UNKNOWN
@@ -99,7 +99,7 @@ class Exp(ExpStruct):
             else:
                 status = ExpStructStatus.IN_PROGRESS
                 in_progress_type = self.__process_in_progress_type()
-            self.status = ExpStatus(status, resolution, manual=False, in_progress_type=in_progress_type)
+            self._status = ExpStatus(status, resolution, manual=False, in_progress_type=in_progress_type)
 
     def _on_load_data(self, loaded_data):
         if loaded_data.pipeline is not None:
@@ -140,7 +140,7 @@ class Exp(ExpStruct):
         if pipeline.error:
             raise AssertionError(f"`{self}` has an error during the previous start!")
         if pipeline.started:
-            raise AssertionError(f"`{self}` was already started and the current status is `{self.status}`!")
+            raise AssertionError(f"`{self}` was already started and the current status is `{self._status}`!")
         if pipeline.finished:
             raise AssertionError(f"`{self}` was already finished!")
         pipeline._start()

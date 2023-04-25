@@ -12,7 +12,7 @@ class ExpProj(ExpStructBox):
         raise ValueError(f"Isn't supported by logic!")
 
     def __str__(self):
-        s = f"Proj [{self.status}] {self._data.name} - {self._data.descr}"
+        s = f"Proj [{self._status}] {self._data.name} - {self._data.descr}"
         for it in self.groups():
             s += '\n\n    ' + str(it).replace('\n', '\n    ')
         return s

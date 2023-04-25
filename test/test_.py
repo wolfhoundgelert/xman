@@ -65,7 +65,6 @@ def test__bug__exp_broken_after_setting_wrong_status():
     exp = make_exp_from_nothing()
     with pytest.raises(ValueError, match="doesn't have status"):
         exp.set_manual_status('FAILED', "There's no `FAILED` status - should be `FAIL`")
-    exp._update()
     assert exp.status.status == 'EMPTY'
     exp.set_manual_status('FAIL', "Acceptable status")
     assert exp.status.status == 'FAIL'
@@ -73,7 +72,6 @@ def test__bug__exp_broken_after_setting_wrong_status():
 
 def test__bug__exp_struct_box_set_manual_status_doesnt_work_after_exp_wrong_status_setting():
     exp = make_exp_from_nothing()
-    xman.proj._update()
     try:
         exp.set_manual_status('FAILED', "There's no `FAILED` status - should be `FAIL`")
     except:

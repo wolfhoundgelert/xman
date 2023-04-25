@@ -107,7 +107,7 @@ class ExpStruct(EventDispatcher):
         super().__init__()
         self.location_dir = location_dir
         self.num = util.get_dir_num(location_dir)
-        self.status = None
+        self._status = None
         self.__time = None
         if name is not None and descr is not None:  # make a new data
             util.make_dir(location_dir)
@@ -141,9 +141,9 @@ class ExpStruct(EventDispatcher):
             self.__time = t
             self.__load_data()
         if self._data.manual_status is not None:
-            if not ExpStructStatus._fit_parameters(self.status, self._data.manual_status,
-                    self._data.manual_status_resolution, True):
-                self.status = ExpStructStatus(self._data.manual_status, self._data.manual_status_resolution, manual=True)
+            if not ExpStructStatus._fit_parameters(self._status, self._data.manual_status,
+                                                   self._data.manual_status_resolution, True):
+                self._status = ExpStructStatus(self._data.manual_status, self._data.manual_status_resolution, manual=True)
 
     def _on_load_data(self, loaded_data):  # Can be overriden in descendants
         self._data = loaded_data
@@ -160,11 +160,18 @@ class ExpStruct(EventDispatcher):
 
     @property
     def name(self):
+        self._update()
         return self._data.name
 
     @property
     def descr(self):
+        self._update()
         return self._data.descr
+
+    @property
+    def status(self):
+        self._update()
+        return self._status
 
     def tree(self):
         self._update()
@@ -179,7 +186,7 @@ class ExpStruct(EventDispatcher):
 
     def set_manual_status(self, status: str, resolution: str):
         self._update()
-        self.status = ExpStructStatus(status, resolution, True)
+        self._status = ExpStructStatus(status, resolution, True)
         self._data.manual_status = status
         self._data.manual_status_resolution = resolution
         self._save()
@@ -204,7 +211,7 @@ class ExpStructBox(ExpStruct):
     def __children_has_status(self, status_or_list, all_children: bool):
         sl = status_or_list if type(status_or_list) is list else [status_or_list]
         for child in self._children():
-            s = child.status.status
+            s = child._status.status
             if all_children:
                 if s not in sl:
                     return False
@@ -237,7 +244,7 @@ class ExpStructBox(ExpStruct):
                 status = ExpStructStatus.DONE
             else:
                 status = ExpStructStatus.IN_PROGRESS
-            self.status = ExpStructStatus(status, resolution, manual=False)
+            self._status = ExpStructStatus(status, resolution, manual=False)
 
     def __add(self, child):
         self.__num_to_child[child.num] = child
@@ -341,7 +348,7 @@ class ExpStructBox(ExpStruct):
         sl = status_or_list if type(status_or_list) is list else [status_or_list]
         for status in sl:
             for child in self._children():
-                if child.status.status == status:
+                if child._status.status == status:
                     return child
         return None
 
