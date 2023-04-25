@@ -330,7 +330,7 @@ class ExpStructBox(ExpStruct):
 
         # TODO Dirty hack! Redo another way. Pass root in the constructor or implement once again
         #  Family class (parents and children)
-        xman.proj._update();
+        xman.proj._update()
 
     def _children(self):
         self._update()

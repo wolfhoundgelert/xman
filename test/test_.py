@@ -85,22 +85,13 @@ def test__bug__exp_struct_box_set_manual_status_doesnt_work_after_exp_wrong_stat
 
 
 def test__bug__wrong_proj_status():
-    proj = make_proj_from_nothing()
-    group = proj.make_group('Tokenization', 'Try several tokenization technics')
-    group.make_exp('Default', 'Default settings: just split on words, vector_size=200, min_count=5, window=5')
-    group.make_exp('Punctuation', 'Remove punctuation')
-    group.make_exp('Stopwords', 'Remove stopwords (and punctuation)')
-    group.make_exp('Lemmatization', 'Lemmatize words (after removing stopwords and punctuation)')
-    group.make_exp('Lemmatization-2', 'Lemmatize words with nltk after fail with spacy (with removing stopwords and punctuation)')
-    group.exp(1).set_manual_status('SUCCESS', 'Success')
-    group.exp(2).set_manual_status('SUCCESS', 'Success')
-    group.exp(3).set_manual_status('SUCCESS', 'Success')
-    group.exp(4).set_manual_status('FAIL', 'Fail')
-    group.exp(5).set_manual_status('FAIL', 'Fail')
+    exp = make_exp_from_nothing()
+    exp.set_manual_status('SUCCESS', 'Success')
+    proj = xman.proj
+    group = proj.group(1)
     group.make_exp('Lowercase', 'Lowercase input')
     assert group.status.status == 'IN_PROGRESS'
     assert proj.status.status == 'IN_PROGRESS'
-
     # TODO There are 2 issues:
     #  1: [DIRTY HACKED in ExpStructBox._make_child/_remove_child] The group status wasn't updated after creating an exp - calling group.info() before
     #       getting the status gives the correct status;
