@@ -1,8 +1,6 @@
+from .event import EventDispatcher, UpdateEvent
 from .tree import print_dir_tree
 from . import util
-
-# TODO Remove in the future
-import xman  # For dirty hack in ExpStructBox._make_child/_remove_child
 
 # import pickle
 # import dill as pickle
@@ -94,7 +92,7 @@ class ExpStructStatus:
                 return self.workflow[i + 1]
 
 
-class ExpStruct:
+class ExpStruct(EventDispatcher):
 
     __DATA_FILE = '.data'
     __TIME_FILE = '.time'
@@ -106,6 +104,7 @@ class ExpStruct:
         raise NotImplementedError("Should be overriden!")
 
     def __init__(self, location_dir, name, descr):
+        super().__init__()
         self.location_dir = location_dir
         self.num = util.get_dir_num(location_dir)
         self.status = None
@@ -311,11 +310,7 @@ class ExpStructBox(ExpStruct):
         child_class = self._get_child_class()
         child = child_class(child_dir, name, descr)
         self.__add(child)
-
-        # TODO Dirty hack! Redo another way. Pass root in the constructor or implement once again
-        #  Family class (parents and children)
-        xman.proj._update()
-
+        child._add_listener(UpdateEvent, self._update_listener)
         return child
 
     def _remove_child(self, num_or_name):
@@ -327,10 +322,8 @@ class ExpStructBox(ExpStruct):
             return
         self.__remove(child)
         shutil.rmtree(child_dir)
-
-        # TODO Dirty hack! Redo another way. Pass root in the constructor or implement once again
-        #  Family class (parents and children)
-        xman.proj._update()
+        child._remove_listener(UpdateEvent, self._update_listener)
+        return child
 
     def _children(self):
         self._update()
@@ -351,3 +344,6 @@ class ExpStructBox(ExpStruct):
                 if child.status.status == status:
                     return child
         return None
+
+    def _update_listener(self, event: UpdateEvent):
+        raise NotImplementedError("Should be overriden!")

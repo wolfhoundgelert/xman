@@ -1,7 +1,7 @@
+import pytest
 import os
 import sys
 import shutil
-import pytest
 
 xman_path = os.path.abspath(os.path.join('src'))
 if xman_path not in sys.path:
@@ -65,7 +65,7 @@ def test__bug__exp_broken_after_setting_wrong_status():
     exp = make_exp_from_nothing()
     with pytest.raises(ValueError, match="doesn't have status"):
         exp.set_manual_status('FAILED', "There's no `FAILED` status - should be `FAIL`")
-    exp.info()
+    exp._update()
     assert exp.status.status == 'EMPTY'
     exp.set_manual_status('FAIL', "Acceptable status")
     assert exp.status.status == 'FAIL'
@@ -73,7 +73,7 @@ def test__bug__exp_broken_after_setting_wrong_status():
 
 def test__bug__exp_struct_box_set_manual_status_doesnt_work_after_exp_wrong_status_setting():
     exp = make_exp_from_nothing()
-    xman.proj.info()
+    xman.proj._update()
     try:
         exp.set_manual_status('FAILED', "There's no `FAILED` status - should be `FAIL`")
     except:
@@ -92,7 +92,3 @@ def test__bug__wrong_proj_status():
     group.make_exp('Lowercase', 'Lowercase input')
     assert group.status.status == 'IN_PROGRESS'
     assert proj.status.status == 'IN_PROGRESS'
-    # TODO There are 2 issues:
-    #  1: [DIRTY HACKED in ExpStructBox._make_child/_remove_child] The group status wasn't updated after creating an exp - calling group.info() before
-    #       getting the status gives the correct status;
-    #  2: [TODO] Getting status is not from @property with updating on each call.

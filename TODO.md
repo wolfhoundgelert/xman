@@ -12,9 +12,7 @@
 
 ### TODO:
 
-- Redo dirty hacks in ExpStructBox._make_child/_remove_child (xman.proj._update()). What about events for updating status?
-
-- Getting status is not from @property with updating on each call, but should be?
+- Getting status is not from @property with updating on each call, but should be as status can be changed in time from some parallel run
 
 - Add destructors for structures and over classes
 

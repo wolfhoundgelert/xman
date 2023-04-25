@@ -1,6 +1,7 @@
-from .struct import ExpStruct, ExpStructBox
+from .struct import ExpStructBox
 from .group import ExpGroup
 from .exp import Exp
+from .event import UpdateEvent
 from . import util
 
 
@@ -18,6 +19,9 @@ class ExpProj(ExpStructBox):
 
     def _get_child_class(self):
         return ExpGroup
+
+    def _update_listener(self, event: UpdateEvent):
+        self._update()
 
     def has_group(self, num_or_name):
         return self._has_child_num_or_name(num_or_name)
