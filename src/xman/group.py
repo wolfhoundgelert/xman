@@ -26,6 +26,7 @@ class ExpGroup(ExpStructBox):
     def remove_exp(self, num_or_name):
         exp = self._remove_child(num_or_name)
         self._dispatch(UpdateEvent(exp, self))
+        return exp
 
     def exp(self, num_or_name) -> Exp: return self._get_child_by_num_or_name(num_or_name)
 

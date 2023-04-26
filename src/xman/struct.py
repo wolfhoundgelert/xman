@@ -187,12 +187,14 @@ class ExpStruct(EventDispatcher):
         self._data.manual_status = status
         self._data.manual_status_resolution = resolution
         self._save()
+        return self
 
     def remove_manual_status(self):
         self._update()
         self._data.manual_status = None
         self._data.manual_status_resolution = None
         self._save()
+        return self
 
 
 class ExpStructBox(ExpStruct):

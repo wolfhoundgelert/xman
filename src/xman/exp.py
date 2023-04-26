@@ -113,11 +113,13 @@ class Exp(ExpStruct):
         self._update()
         self._data.manual_result = result  # TODO Add guard for keeping the previous result
         self._save()
+        return self
 
     def remove_manual_result(self):
         self._update()
         self._data.manual_result = None
         self._save()
+        return self
 
     def make_pipeline(self, run_func, params):
         self._update()
@@ -151,10 +153,12 @@ class Exp(ExpStruct):
     def success(self, resolution: str):
         self._update()
         self.set_manual_status(ExpStructStatus.SUCCESS, resolution)
+        return self
 
     def fail(self, resolution: str):
         self._update()
         self.set_manual_status(ExpStructStatus.FAIL, resolution)
+        return self
 
     @property
     def result(self):

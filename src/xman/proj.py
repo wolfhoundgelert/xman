@@ -20,7 +20,8 @@ class ExpProj(ExpStructBox):
 
     def make_group(self, name, descr, num=None) -> ExpGroup: return self._make_child(name, descr, num)
 
-    def remove_group(self, num_or_name): self._remove_child(num_or_name)
+    def remove_group(self, num_or_name): return self._remove_child(num_or_name)
+
 
     def group(self, num_or_name) -> ExpGroup: return self._get_child_by_num_or_name(num_or_name)
 
@@ -35,7 +36,7 @@ class ExpProj(ExpStructBox):
 
     def remove_exp(self, dot_num: str):
         group_num, exp_num = util.parse_group_and_exp_num(dot_num)
-        self.group(group_num).remove_exp(exp_num)
+        return self.group(group_num).remove_exp(exp_num)
 
     def exp(self, dot_num: str) -> Exp:  # dot_num: '1.1', '1.10', '2.3'...
         group_num, exp_num = util.parse_group_and_exp_num(dot_num)
