@@ -8,35 +8,23 @@ from . import util
 class ExpProj(ExpStructBox):
 
     @staticmethod
-    def _dir_prefix():
-        raise ValueError(f"Isn't supported by logic!")
+    def _dir_prefix(): raise ValueError(f"Isn't supported by logic!")
 
-    def __str__(self):
-        s = f"Proj [{self._status}] {self._data.name} - {self._data.descr}"
-        for it in self.groups():
-            s += '\n\n    ' + str(it).replace('\n', '\n    ')
-        return s
+    def __str__(self): return f"Proj [{self._status}] {self._data.name} - {self._data.descr}"
 
-    def _get_child_class(self):
-        return ExpGroup
+    def _get_child_class(self): return ExpGroup
 
-    def _update_listener(self, event: UpdateEvent):
-        self._update()
+    def _update_listener(self, event: UpdateEvent): self._update()
 
-    def has_group(self, num_or_name):
-        return self._has_child_num_or_name(num_or_name)
+    def has_group(self, num_or_name): return self._has_child_num_or_name(num_or_name)
 
-    def make_group(self, name, descr, num=None) -> ExpGroup:
-        return self._make_child(name, descr, num)
+    def make_group(self, name, descr, num=None) -> ExpGroup: return self._make_child(name, descr, num)
 
-    def remove_group(self, num_or_name):
-        self._remove_child(num_or_name)
+    def remove_group(self, num_or_name): self._remove_child(num_or_name)
 
-    def group(self, num_or_name) -> ExpGroup:
-        return self._get_child_by_num_or_name(num_or_name)
+    def group(self, num_or_name) -> ExpGroup: return self._get_child_by_num_or_name(num_or_name)
 
-    def groups(self):
-        return self._children()
+    def groups(self): return self._children()
 
     def has_exp(self, dot_num: str) -> bool:
         group_num, exp_num = util.parse_group_and_exp_num(dot_num)

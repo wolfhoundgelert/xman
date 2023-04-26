@@ -6,24 +6,17 @@ from .exp import Exp
 class ExpGroup(ExpStructBox):
 
     @staticmethod
-    def _dir_prefix():
-        return 'group'
+    def _dir_prefix(): return 'group'
 
-    def __str__(self):
-        s = f"Group {self.num} [{self._status}] {self._data.name} - {self._data.descr}"
-        for it in self.exps():
-            s += '\n    ' + str(it)
-        return s
+    def __str__(self): return f"Group {self.num} [{self._status}] {self._data.name} - {self._data.descr}"
 
-    def _get_child_class(self):
-        return Exp
+    def _get_child_class(self): return Exp
 
     def _update_listener(self, event: UpdateEvent):
         event.group = self
         self._dispatch(event)
 
-    def has_exp(self, num_or_name):
-        return self._has_child_num_or_name(num_or_name)
+    def has_exp(self, num_or_name): return self._has_child_num_or_name(num_or_name)
 
     def make_exp(self, name, descr, num=None) -> Exp:
         exp = self._make_child(name, descr, num)
@@ -34,11 +27,9 @@ class ExpGroup(ExpStructBox):
         exp = self._remove_child(num_or_name)
         self._dispatch(UpdateEvent(exp, self))
 
-    def exp(self, num_or_name) -> Exp:
-        return self._get_child_by_num_or_name(num_or_name)
+    def exp(self, num_or_name) -> Exp: return self._get_child_by_num_or_name(num_or_name)
 
-    def exps(self):
-        return self._children()
+    def exps(self): return self._children()
 
     def get_exp_for_start(self):
         # TODO Support IN_PROGRESS with type IDLE

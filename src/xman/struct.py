@@ -57,11 +57,7 @@ class ExpStructStatus:
         self.resolution = resolution
         self.manual = manual
 
-    def __str__(self):
-        return self.status + ' *' if self.manual else self.status
-
-    def __call__(self):
-        return self.__str__()
+    def __str__(self): return self.status + ' *' if self.manual else self.status
 
     def __check(self, status, resolution):
         if not ExpStructStatus.__has_workflow_status(self.workflow, status):
@@ -70,8 +66,7 @@ class ExpStructStatus:
             raise ValueError(f"SUCCESS and FAIL manual statuses require setting resolutions!")
 
     # Printing in jupyter notebook - https://stackoverflow.com/a/41454816/9751954
-    def _repr_pretty_(self, p, cycle):
-        p.text(str(self) if not cycle else '...')
+    def _repr_pretty_(self, p, cycle): p.text(str(self) if not cycle else '...')
 
     @property
     def workflow(self):
@@ -100,8 +95,7 @@ class ExpStruct(EventDispatcher):
     _AUTO_STATUS_RESOLUTION = '-= auto status =-'
 
     @staticmethod
-    def _dir_prefix():
-        raise NotImplementedError("Should be overriden!")
+    def _dir_prefix(): util.override_it()
 
     def __init__(self, location_dir, name, descr):
         super().__init__()
@@ -116,8 +110,7 @@ class ExpStruct(EventDispatcher):
         self._inited = True
         self._update()
 
-    def __str__(self):
-        raise NotImplementedError("Should be overriden!")
+    def __str__(self): util.override_it()
 
     def __load_data(self):
         fp = os.path.join(self.location_dir, ExpStruct.__DATA_FILE)
@@ -126,12 +119,10 @@ class ExpStruct(EventDispatcher):
             self._on_load_data(loaded_data)
 
     @property
-    def _data_class(self):
-        return ExpStructData
+    def _data_class(self): return ExpStructData
 
     # Printing in jupyter notebook - https://stackoverflow.com/a/41454816/9751954
-    def _repr_pretty_(self, p, cycle):
-        p.text(str(self) if not cycle else '...')
+    def _repr_pretty_(self, p, cycle): p.text(str(self) if not cycle else '...')
 
     def _update(self):
         fp = os.path.join(self.location_dir, ExpStruct.__TIME_FILE)
@@ -145,8 +136,8 @@ class ExpStruct(EventDispatcher):
                                                    self._data.manual_status_resolution, True):
                 self._status = ExpStructStatus(self._data.manual_status, self._data.manual_status_resolution, manual=True)
 
-    def _on_load_data(self, loaded_data):  # Can be overriden in descendants
-        self._data = loaded_data
+    # Can be overriden in descendants
+    def _on_load_data(self, loaded_data): self._data = loaded_data
 
     def _save(self):
         fp = os.path.join(self.location_dir, ExpStruct.__DATA_FILE)
@@ -157,6 +148,12 @@ class ExpStruct(EventDispatcher):
             self.__time = time.time()
             pickle.dump(self.__time, f)
         self._update()
+
+    def _info(self):
+        text = str(self)
+        if self.status.resolution:
+            text += util.tab(f"\nResolution: {self.status.resolution}")
+        return text
 
     @property
     def name(self):
@@ -179,10 +176,10 @@ class ExpStruct(EventDispatcher):
 
     def info(self):
         self._update()
-        print(self)
+        text = self._info()
+        print(text)
 
-    def start(self):
-        raise NotImplementedError("Should be overriden!")
+    def start(self): util.override_it()
 
     def set_manual_status(self, status: str, resolution: str):
         self._update()
@@ -254,8 +251,7 @@ class ExpStructBox(ExpStruct):
         del self.__num_to_child[child.num]
         del self.__name_to_child[child._data.name]
 
-    def _get_child_class(self):
-        raise NotImplementedError("Should be overriden!")
+    def _get_child_class(self): util.override_it()
 
     def _get_child_dir(self, num):
         return os.path.join(self.location_dir, self._get_child_class()._dir_prefix() + str(num))
@@ -329,7 +325,7 @@ class ExpStructBox(ExpStruct):
             return
         self.__remove(child)
         shutil.rmtree(child_dir)
-        child._remove_listener(UpdateEvent, self._update_listener)
+        child._destroy()
         return child
 
     def _children(self):
@@ -352,5 +348,10 @@ class ExpStructBox(ExpStruct):
                     return child
         return None
 
-    def _update_listener(self, event: UpdateEvent):
-        raise NotImplementedError("Should be overriden!")
+    def _info(self):
+        text = super()._info()
+        for child in self._children():
+            text += util.tab(f"\n\n{child._info()}")
+        return text
+
+    def _update_listener(self, event: UpdateEvent): util.override_it()

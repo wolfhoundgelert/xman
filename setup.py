@@ -2,14 +2,14 @@ from setuptools import setup
 
 setup(
     name='xman',
-    version='0.0.4',
+    version='0.0.5',
     packages=['xman'],
     package_dir={'': 'src'},
     url='https://github.com/wolfhoundgelert/xman',
-    license='MIT',
+    license='BSD 3-clause',
     author='Andrei Polkanov',
     author_email='andrey.polkanoff@gmail.com',
-    description='Project Manager (in progress)'
+    description='Experiment Manager (xman) [IN_PROGRESS]'
 )
 
 # TODO https://github.com/pypi/support/issues/2738

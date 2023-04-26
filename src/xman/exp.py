@@ -43,11 +43,9 @@ class ExpConfig:
 class Exp(ExpStruct):
 
     @staticmethod
-    def _dir_prefix():
-        return 'exp'
+    def _dir_prefix(): return 'exp'
 
-    def __str__(self):
-        return f"Exp {self.num} [{self._status}] {self._data.name} - {self._data.descr}"
+    def __str__(self): return f"Exp {self.num} [{self._status}] {self._data.name} - {self._data.descr}"
 
     def __process_in_progress_type(self):
         in_progress_type = InProgressType.UNKNOWN
@@ -78,8 +76,7 @@ class Exp(ExpStruct):
         return in_progress_type
 
     @property
-    def _data_class(self):
-        return ExpData
+    def _data_class(self): return ExpData
 
     def _update(self):
         super()._update()
@@ -105,6 +102,12 @@ class Exp(ExpStruct):
         if loaded_data.pipeline is not None:
             loaded_data.pipeline.exp = self  # Because pipeline.exp is another instance after being loaded
         super()._on_load_data(loaded_data)
+
+    def _info(self):
+        text = super()._info()
+        if self.result is not None:
+            text += util.tab(f"\nResult:\n{util.tab(str(self.result))}")
+        return text
 
     def set_manual_result(self, result):
         self._update()
@@ -152,16 +155,6 @@ class Exp(ExpStruct):
     def fail(self, resolution: str):
         self._update()
         self.set_manual_status(ExpStructStatus.FAIL, resolution)
-
-    def info(self):
-        self._update()
-        super().info()
-        spaces = '    '
-        if self.status.resolution:
-            print(f"{spaces}Resolution: {self.status.resolution}")
-        if self.result:
-            result = str(self.result).replace('\n', f"\n{spaces * 2}")
-            print(f"{spaces}Result:\n{spaces * 2}{result}")
 
     @property
     def result(self):

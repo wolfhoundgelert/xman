@@ -9,6 +9,14 @@ DAY = 24 * HOUR
 
 DOT_NUM_REGEX = r'^([1-9]\d*)\.([1-9]\d*)$'
 
+TAB = '    '
+
+
+def tab(text, num=1):
+    tab = TAB * num
+    text = text.replace('\n', f'\n{tab}')
+    return f"{tab}{text}"
+
 
 def make_dir(dir_path):
     if os.path.exists(dir_path):
@@ -20,12 +28,10 @@ def make_dir(dir_path):
         os.mkdir(dir_path)
 
 
-def is_num(num_or_name):
-    return type(num_or_name) is int and num_or_name >= 1
+def is_num(num_or_name): return type(num_or_name) is int and num_or_name >= 1
 
 
-def is_name(num_or_name):
-    return type(num_or_name) is str
+def is_name(num_or_name): return type(num_or_name) is str
 
 
 def check_num(num, allow_none: bool):
@@ -65,5 +71,7 @@ def parse_group_and_exp_num(dot_num: str):
     return group_num, exp_num
 
 
-def debug(message: str):
-    print('DEBUG: ' + message)
+def override_it(): raise NotImplementedError("Should be overriden!")
+
+
+def debug(message: str): print('DEBUG: ' + message)
