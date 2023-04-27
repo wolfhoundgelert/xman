@@ -38,26 +38,17 @@
 
 
 
+### ON HOLD:
+
+
 
 ### TODO:
-
-- [PRIO] Implement 1 and 2 competing folders issue solving points:
-  1) I can check such situations and ask users for solving. 
-  2) I can recommend users to initially create (register) experiments in one place, then execute them under different accounts.
 
 - [PRIO] [!!!] README.md
 
 - [PRIO] How to parallel a huge grid-search (gs) exp? gs has number of experiments, but they all have the same env, so don't need to save each env separately. Does a group assume having the same env for all its children (exps)? 
 
 - [PRIO] Possibility to change name or descr
-
-- [PRIO] ??? Add possibility to make manual `force` update, save, load when we got stuck for somehow? Need to investigate:
-  ```
-  Proj [ERROR] hw_3-1 - https://stepik.org/lesson/940785/step/1?unit=946946
-  
-      Group 1 [ERROR] Tokenization - Try several tokenization technics
-          Exp 1 [TODO] Punctuation - Remove punctuation
-  ```
 
 - [PRIO] [!!!] Each exp takes ~ 2GB of disk size. Need to investigate how to reduce memory consumption. Maybe save separately proj-env, group-env, exp-env. Other related issues: long saving and extremely long initialization on exp.start(). Separate project structure and status data loading from pipeline data loading - too long project loading. Loading exp pipeline data on demand.
 
@@ -70,6 +61,14 @@
 
 
 ### BACKLOG:
+
+- [???] Add possibility to make manual `force` update, save, load when we got stuck for somehow? Need to investigate:
+  ```
+  Proj [ERROR] hw_3-1 - https://stepik.org/lesson/940785/step/1?unit=946946
+  
+      Group 1 [ERROR] Tokenization - Try several tokenization technics
+          Exp 1 [TODO] Punctuation - Remove punctuation
+  ```
 
 - [???] Add printable info about timings on exp execution, savings, loadings
 - 

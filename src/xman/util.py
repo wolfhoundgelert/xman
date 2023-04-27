@@ -80,3 +80,6 @@ def override_it(): raise NotImplementedError("Should be overriden!")
 
 
 def debug(message: str): print('DEBUG: ' + message)
+
+
+def warning(message: str): print('\nWARNING! ' + message + '\n')
