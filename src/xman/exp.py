@@ -109,18 +109,24 @@ class Exp(ExpStruct):
             text += util.tab(f"\nResult:\n{util.tab(str(self.result))}")
         return text
 
-    def set_manual_result(self, result):
+    def set_manual_result(self, result, confirm=True):
         self._update()
-        self._data.manual_result = result  # TODO Add guard for keeping the previous result
+        if self._data.manual_result is not None:
+            if confirm and not util.response(f"Do you want to rewrite the previous result of the exp `{self}`?"):
+                return None
+        self._data.manual_result = result
         self._save()
         return self
 
-    def remove_manual_result(self):
+    def remove_manual_result(self, confirm=True):
         self._update()
-        if util.response(f"ACHTUNG! Remove the manual result of exp `{self}`?"):
+        if self._data.manual_result is None:
+            raise AssertionError(f"There's no manual result in exp `{self}`!")
+        if not confirm or util.response(f"ACHTUNG! Remove the manual result of exp `{self}`?"):
             self._data.manual_result = None
             self._save()
-        return self
+            return self
+        return None
 
     def make_pipeline(self, run_func, params):
         self._update()
@@ -131,12 +137,15 @@ class Exp(ExpStruct):
         self._save()
         return self
 
-    def remove_pipeline(self):
+    def remove_pipeline(self, confirm=True):
         self._update()
-        if self._data.pipeline is not None and util.response(f"ACHTUNG! Remove the pipeline of exp `{self}`?"):
+        if self._data.pipeline is None:
+            raise AssertionError(f"There's no pipeline in exp `{self}`!")
+        if not confirm or util.response(f"ACHTUNG! Remove the pipeline of exp `{self}`?"):
             self._data.pipeline = None
             self._save()
-        return self
+            return self
+        return None
 
     def start(self):
         self._update()
