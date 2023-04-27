@@ -71,6 +71,11 @@ def parse_group_and_exp_num(dot_num: str):
     return group_num, exp_num
 
 
+def response(question):
+    r = input(f"{question} (y/n) ")
+    return r.lower() == "y"
+
+
 def override_it(): raise NotImplementedError("Should be overriden!")
 
 

@@ -117,8 +117,9 @@ class Exp(ExpStruct):
 
     def remove_manual_result(self):
         self._update()
-        self._data.manual_result = None
-        self._save()
+        if util.response(f"ACHTUNG! Remove the manual result of exp `{self}`?"):
+            self._data.manual_result = None
+            self._save()
         return self
 
     def make_pipeline(self, run_func, params):
@@ -132,7 +133,7 @@ class Exp(ExpStruct):
 
     def remove_pipeline(self):
         self._update()
-        if self._data.pipeline is not None:
+        if self._data.pipeline is not None and util.response(f"ACHTUNG! Remove the pipeline of exp `{self}`?"):
             self._data.pipeline = None
             self._save()
         return self

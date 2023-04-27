@@ -44,15 +44,6 @@
 
 - Add guard to `exp.set_manual_result()` for keeping the previous result. Need to manually remove the previous one with `exp.remove_manual_result()`
 
-- Project status should be IN_PROGRESS:
-  ```
-  Proj [SUCCESS] hw_3-1 - https://stepik.org/lesson/940785/step/1?unit=946946
-
-    Group 1 [IN_PROGRESS] Tokenization - Try several tokenization technics
-        Exp 1 [SUCCESS *] Default - Default settings: just split on words, vector_size=200, min_count=5, window=5
-        Exp 2 [EMPTY] Punctuation - Remove punctuation
-  ```
-
 - Possibility to change name or descr
 
 - ??? Add possibility to make manual `force` update, save, load when we got stuck for somehow? Need to investigate:
@@ -77,8 +68,6 @@
 
 - Add popular methods (`exp('1.1')` and others) to the xman root: `xman.exp('1.1')` - now it's only `xman.proj.exp('1.1')`
 
-- Prompt for removing anything - remove_manual_status, remove_manual_result, remove_pipeline, remove_group, remove_exp, etc...
-
 - Config for xman and/or xman.mode(STRICT/PROMPT/CAREFREE) Settings in config for exp starting mode: STRICT - all prev should be closed, PROMPT - show prompt for proceeding if something wasn't closed, CAREFREE - no control at all. Other settings for different behavioural features.
 
 - Start exp with IN_PROGRESS status and IDLE type (was started but died somehow)
@@ -88,8 +77,6 @@
 - Add runner info (link on notebook and colab account or mail) - from which notebook and who started an exp
 
 - Think about not saving the whole experiment (huge storage memory consumption and low speed of save-load operations), but provide a mechanic for saving checkpoints for long exp-s.
-
-- Return exp in methods like set_manual_status: `xman.proj.group(4).exp(1).set_manual_status(...).info()`
 
 - Reassign group, num, name, descr to exp
 
@@ -104,6 +91,15 @@
 ### BUGS CAN'T REPRODUCE:
 
 - (24.04.2023) After I manually set statuses for exps in a group, I set a status for the group itself and it was showed as an old EMPTY status. Opened another notebook  - there everything was ok.
+
+- (27.04.2023) Project status should be IN_PROGRESS:
+  ```
+  Proj [SUCCESS] hw_3-1 - https://stepik.org/lesson/940785/step/1?unit=946946
+
+    Group 1 [IN_PROGRESS] Tokenization - Try several tokenization technics
+        Exp 1 [SUCCESS *] Default - Default settings: just split on words, vector_size=200, min_count=5, window=5
+        Exp 2 [EMPTY] Punctuation - Remove punctuation
+  ```
 
 
 ### Q-A:

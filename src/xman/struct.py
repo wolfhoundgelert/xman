@@ -191,9 +191,10 @@ class ExpStruct(EventDispatcher):
 
     def remove_manual_status(self):
         self._update()
-        self._data.manual_status = None
-        self._data.manual_status_resolution = None
-        self._save()
+        if util.response(f"ACHTUNG! Remove the manual status of exp `{self}`?"):
+            self._data.manual_status = None
+            self._data.manual_status_resolution = None
+            self._save()
         return self
 
 
@@ -322,12 +323,10 @@ class ExpStructBox(ExpStruct):
         self._update()
         child = self._get_child_by_num_or_name(num_or_name)
         child_dir = self._get_child_dir(child.num)
-        response = input(f"ACHTUNG! Remove `{child_dir}` dir with all its content? (y/n) ")
-        if response.lower() != "y":
-            return
-        self.__remove(child)
-        shutil.rmtree(child_dir)
-        child._destroy()
+        if util.response(f"ACHTUNG! Remove `{child_dir}` dir with all its content?"):
+            self.__remove(child)
+            shutil.rmtree(child_dir)
+            child._destroy()
         return child
 
     def _children(self):
