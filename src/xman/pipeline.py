@@ -26,7 +26,7 @@ class Pulse:
         self.timestamps.append(time.time())
         if len(self.timestamps) > Pulse._TIMESTAMPS_AMOUNT:
             self.timestamps = self.timestamps[-Pulse._TIMESTAMPS_AMOUNT:]
-        self.exp._save()
+        self.exp._save_and_update()
 
 
 class Pipeline:
@@ -51,4 +51,4 @@ class Pipeline:
             self.finished = True
         except Exception as err:
             self.error = err
-        self.exp._save()
+        self.exp._save_and_update()

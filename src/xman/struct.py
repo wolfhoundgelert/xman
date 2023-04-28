@@ -1,10 +1,8 @@
-from .event import EventDispatcher, UpdateEvent
+from .event import EventDispatcher, Event
 from .tree import print_dir_tree
 from . import util
 
-# import pickle
-# import dill as pickle
-import cloudpickle as pickle  # TODO What is better here - dill or cloudpickle?
+import cloudpickle as pickle  # dill as pickle, pickle
 import os
 import time
 import shutil
@@ -19,13 +17,6 @@ class ExpStructData:
         self.manual_status_resolution = None
 
 
-class InProgressType:
-
-    ACTIVE = 'ACTIVE'
-    IDLE = 'IDLE'
-    UNKNOWN = 'UNKNOWN'
-
-
 class ExpStructStatus:
 
     EMPTY = 'EMPTY'
@@ -36,15 +27,21 @@ class ExpStructStatus:
     SUCCESS = 'SUCCESS'
     FAIL = 'FAIL'
 
+    __WORKFLOW = (EMPTY, TODO, IN_PROGRESS, (DONE, ERROR), (SUCCESS, FAIL))
+
     @staticmethod
-    def __has_workflow_status(workflow, status):
-        for it in workflow:
-            if it == status:
+    def __has_status_in_workflow(status):
+        for it in ExpStructStatus.__WORKFLOW:
+            if it == status or status in it:
                 return True
-            if type(it) is tuple:
-                if ExpStructStatus.__has_workflow_status(it, status):
-                    return True
         return False
+
+    @staticmethod
+    def _check(status, resolution):
+        if not ExpStructStatus.__has_status_in_workflow(status):
+            raise ValueError(f"The workflow `{ExpStructStatus.__WORKFLOW}` doesn't have status `{status}`!")
+        if status in (ExpStructStatus.SUCCESS, ExpStructStatus.FAIL) and resolution is None:
+            raise ValueError(f"SUCCESS and FAIL manual statuses require setting resolutions!")
 
     @staticmethod
     def _fit_parameters(status_obj, status, resolution, manual):
@@ -52,39 +49,47 @@ class ExpStructStatus:
                 and status_obj.resolution == resolution and status_obj.manual == manual
 
     def __init__(self, status: str, resolution: str = None, manual: bool = False):
-        self.__check(status, resolution)
+        ExpStructStatus._check(status, resolution)
         self.status = status
         self.resolution = resolution
         self.manual = manual
 
     def __str__(self): return self.status + ' *' if self.manual else self.status
 
-    def __check(self, status, resolution):
-        if not ExpStructStatus.__has_workflow_status(self.workflow, status):
-            raise ValueError(f"The workflow `{self.workflow}` doesn't have status `{status}`!")
-        if status in (ExpStructStatus.SUCCESS, ExpStructStatus.FAIL) and resolution is None:
-            raise ValueError(f"SUCCESS and FAIL manual statuses require setting resolutions!")
-
     # Printing in jupyter notebook - https://stackoverflow.com/a/41454816/9751954
     def _repr_pretty_(self, p, cycle): p.text(str(self) if not cycle else '...')
 
     @property
-    def workflow(self):
-        return (
-            ExpStructStatus.EMPTY,
-            ExpStructStatus.TODO,
-            ExpStructStatus.IN_PROGRESS,
-            (ExpStructStatus.DONE, ExpStructStatus.ERROR),
-            (ExpStructStatus.SUCCESS, ExpStructStatus.FAIL)
-        )
+    def workflow(self): return ExpStructStatus.__WORKFLOW.copy()
 
     @property
     def next(self):
-        if self.workflow[-1] == self.status:
+        if ExpStructStatus.__WORKFLOW[-1] == self.status:
             return None
-        for i, it in enumerate(self.workflow[:-1]):
+        for i, it in enumerate(ExpStructStatus.__WORKFLOW[:-1]):
             if it == self.status or (type(it) is tuple and self.status in it):
-                return self.workflow[i + 1]
+                return ExpStructStatus.__WORKFLOW[i + 1]
+
+
+class ExpStructEvent(Event):
+
+    EDIT_STRUCT = 'EDIT_STRUCT'
+    REQUEST_CHANGE_NAME = 'REQUEST_CHANGE_NAME'
+    UPDATE_STATUS = 'UPDATE_STATUS'
+
+    _KINDS = [EDIT_STRUCT, REQUEST_CHANGE_NAME, UPDATE_STATUS]
+
+    def __init__(self, target, kind, request=None):
+        super().__init__(target)
+        self.kind = kind
+        self._check_kind()
+        self.request = request 
+        self.respondent = None
+        self.response = None
+
+    def _check_kind(self):
+        if self.kind not in self._KINDS:
+            raise ValueError(f"Wrong type `{self.kind}`, should be one of `{self._KINDS}`")
 
 
 class ExpStruct(EventDispatcher):
@@ -101,14 +106,15 @@ class ExpStruct(EventDispatcher):
         super().__init__()
         self.location_dir = location_dir
         self.num = util.get_dir_num(location_dir)
-        self._status = None
+        self.__status = None
         self.__time = None
+        self.__updating = False
         if name is not None and descr is not None:  # make a new data
             util.make_dir(location_dir)
             self._data = self._data_class(name, descr)
-            self._save()
-        self._inited = True
-        self._update()
+            self._save_and_update()
+        else:
+            self._update()
 
     def __str__(self): util.override_it()
 
@@ -121,25 +127,43 @@ class ExpStruct(EventDispatcher):
     @property
     def _data_class(self): return ExpStructData
 
+    @property
+    def _status(self): return self.__status
+
+    def _update_status(self):
+        manual = self._data.manual_status is not None
+        if manual:
+            status, resolution = self._data.manual_status, self._data.manual_status_resolution
+        else:
+            status, resolution = self._process_auto_status()
+        if not ExpStructStatus._fit_parameters(self.__status, status, resolution, manual):
+            self.__status = ExpStructStatus(status, resolution, manual)
+            self._dispatch(ExpStructEvent, ExpStructEvent.UPDATE_STATUS)
+
+    def _process_auto_status(self): util.override_it()
+
     # Printing in jupyter notebook - https://stackoverflow.com/a/41454816/9751954
     def _repr_pretty_(self, p, cycle): p.text(str(self) if not cycle else '...')
 
     def _update(self):
+        if self.__updating:
+            return
+        self.__updating = True
         fp = os.path.join(self.location_dir, ExpStruct.__TIME_FILE)
         with open(fp, 'rb') as f:
             t = pickle.load(f)
         if self.__time != t:
             self.__time = t
             self.__load_data()
-        if self._data.manual_status is not None:
-            if not ExpStructStatus._fit_parameters(self._status, self._data.manual_status,
-                                                   self._data.manual_status_resolution, True):
-                self._status = ExpStructStatus(self._data.manual_status, self._data.manual_status_resolution, manual=True)
+        # Status should be updated at the end of the inherited updating hierarchy
+        if type(self) == ExpStruct:
+            self._update_status()
+        self.__updating = False
 
     # Can be overriden in descendants
     def _on_load_data(self, loaded_data): self._data = loaded_data
 
-    def _save(self):
+    def _save_and_update(self):
         fp = os.path.join(self.location_dir, ExpStruct.__DATA_FILE)
         with open(fp, 'wb') as f:
             pickle.dump(self._data, f)
@@ -183,33 +207,55 @@ class ExpStruct(EventDispatcher):
 
     def set_manual_status(self, status: str, resolution: str):
         self._update()
-        self._status = ExpStructStatus(status, resolution, True)
+        ExpStructStatus._check(status, resolution)
         self._data.manual_status = status
         self._data.manual_status_resolution = resolution
-        self._save()
+        self._save_and_update()
         return self
 
-    def remove_manual_status(self, confirm=True):
+    def delete_manual_status(self, confirm=True):
         self._update()
         if not self._status.manual:
             raise AssertionError(f"There's no manual status in exp `{self}`")
-        if not confirm or util.response(f"ACHTUNG! Remove the manual status `{self._data}` of exp `{self}`?"):
+        if not confirm or util.response(f"ACHTUNG! Remove the manual status `{self._data.manual_status}` of exp `{self}`?"):
             self._data.manual_status = None
             self._data.manual_status_resolution = None
-            self._save()
+            self._save_and_update()
             return self
         return None
+
+    def edit(self, name=None, descr=None):
+        need_update = need_save = False
+        if self._data.name != name:
+            event = self._dispatch(ExpStructEvent, ExpStructEvent.REQUEST_CHANGE_NAME, request=name)
+            if event is not None and not event.response:
+                raise ValueError(f"There's another child with the name=`{name}` in the parent `{event.respondent}`")
+            self._data.name = name
+            need_update = need_save = True
+        if self._data.descr != descr:
+            self._data.descr = descr
+            need_save = True
+        if need_save:
+            self._save_and_update()
+        if need_update:
+            self._dispatch(ExpStructEvent, ExpStructEvent.EDIT_STRUCT)
+
+
+class ExpStructBoxEvent(ExpStructEvent):
+
+    MAKE_CHILD = 'MAKE_CHILD'
+    DESTROY_CHIlD = 'DESTROY_CHIlD'
+
+    _KINDS = [MAKE_CHILD, DESTROY_CHIlD]
 
 
 class ExpStructBox(ExpStruct):
 
     def __init__(self, location_dir, name, descr):
-        self.__inited = False
-        super().__init__(location_dir, name, descr)
         self.__num_to_child = {}
         self.__name_to_child = {}
-        self.__inited = True
-        self._update()
+        self.__updating = False
+        super().__init__(location_dir, name, descr)
 
     def __children_has_status(self, status_or_list, all_children: bool):
         sl = status_or_list if type(status_or_list) is list else [status_or_list]
@@ -223,49 +269,54 @@ class ExpStructBox(ExpStruct):
                     return True
         return True if all_children else False
 
-    def __process_status(self):
-        if self._data.manual_status is None:
-            resolution = ExpStruct._AUTO_STATUS_RESOLUTION
-            if self.__children_has_status(ExpStructStatus.ERROR, False):
-                status = ExpStructStatus.ERROR
-            elif self.__children_has_status(ExpStructStatus.IN_PROGRESS, False):
-                status = ExpStructStatus.IN_PROGRESS
-            elif self.__children_has_status(ExpStructStatus.EMPTY, True):
-                status = ExpStructStatus.EMPTY
-            elif self.__children_has_status(ExpStructStatus.TODO, True):
-                status = ExpStructStatus.TODO
-            elif self.__children_has_status(ExpStructStatus.DONE, True):
-                status = ExpStructStatus.DONE
-            elif self.__children_has_status(ExpStructStatus.SUCCESS, True):
-                status = ExpStructStatus.SUCCESS
-            elif self.__children_has_status(ExpStructStatus.FAIL, True):
-                status = ExpStructStatus.FAIL
-            elif self.__children_has_status([ExpStructStatus.EMPTY, ExpStructStatus.TODO], True):
-                status = ExpStructStatus.TODO
-            elif self.__children_has_status(
-                    [ExpStructStatus.DONE, ExpStructStatus.SUCCESS, ExpStructStatus.FAIL], True):
-                status = ExpStructStatus.DONE
-            else:
-                status = ExpStructStatus.IN_PROGRESS
-            self._status = ExpStructStatus(status, resolution, manual=False)
-
     def __add(self, child):
         self.__num_to_child[child.num] = child
         self.__name_to_child[child._data.name] = child
+        child._add_listener(ExpStructEvent, self._ExpStructEvent_listener)
+        if isinstance(child, ExpStructBox):
+            child._add_listener(ExpStructBoxEvent, self._ExpStructBoxEvent_listener)
 
     def __remove(self, child):
         del self.__num_to_child[child.num]
         del self.__name_to_child[child._data.name]
+        child._remove_listener(ExpStructEvent, self._ExpStructEvent_listener)
+        if isinstance(child, ExpStructBox):
+            child._remove_listener(ExpStructBoxEvent, self._ExpStructBoxEvent_listener)
+        child._destroy()
 
     def _get_child_class(self): util.override_it()
 
     def _get_child_dir(self, num):
         return os.path.join(self.location_dir, self._get_child_class()._dir_prefix() + str(num))
 
+    def _process_auto_status(self):
+        resolution = ExpStruct._AUTO_STATUS_RESOLUTION
+        if self.__children_has_status(ExpStructStatus.ERROR, False):
+            status = ExpStructStatus.ERROR
+        elif self.__children_has_status(ExpStructStatus.IN_PROGRESS, False):
+            status = ExpStructStatus.IN_PROGRESS
+        elif self.__children_has_status(ExpStructStatus.EMPTY, True):
+            status = ExpStructStatus.EMPTY
+        elif self.__children_has_status(ExpStructStatus.TODO, True):
+            status = ExpStructStatus.TODO
+        elif self.__children_has_status(ExpStructStatus.DONE, True):
+            status = ExpStructStatus.DONE
+        elif self.__children_has_status(ExpStructStatus.SUCCESS, True):
+            status = ExpStructStatus.SUCCESS
+        elif self.__children_has_status(ExpStructStatus.FAIL, True):
+            status = ExpStructStatus.FAIL
+        elif self.__children_has_status([ExpStructStatus.EMPTY, ExpStructStatus.TODO], True):
+            status = ExpStructStatus.TODO
+        elif self.__children_has_status([ExpStructStatus.DONE, ExpStructStatus.SUCCESS, ExpStructStatus.FAIL], True):
+            status = ExpStructStatus.DONE
+        else:
+            status = ExpStructStatus.IN_PROGRESS
+        return status, resolution
+
     def _update(self):
-        if not self.__inited:
+        if self.__updating:
             return
-        self.__inited = False
+        self.__updating = True
         super()._update()
         child_class = self._get_child_class()
         child_dir_prefix = child_class._dir_prefix()
@@ -278,10 +329,15 @@ class ExpStructBox(ExpStruct):
         for child in self._children():
             if child.num not in nums:
                 self.__remove(child)
+        for name in list(self.__name_to_child.keys()):
+            del self.__name_to_child[name]
         for child in self._children():
+            self.__name_to_child[child._data.name] = child
             child._update()
-        self.__process_status()
-        self.__inited = True
+        # Status should be updated at the end of the inherited updating hierarchy
+        if type(self) == ExpStructBox:
+            self._update_status()
+        self.__updating = False
 
     def _has_child_num_or_name(self, num_or_name):
         self._update()
@@ -319,17 +375,18 @@ class ExpStructBox(ExpStruct):
         child_class = self._get_child_class()
         child = child_class(child_dir, name, descr)
         self.__add(child)
-        child._add_listener(UpdateEvent, self._update_listener)
+        self._dispatch(ExpStructBoxEvent, ExpStructBoxEvent.MAKE_CHILD)
         return child
 
-    def _remove_child(self, num_or_name, confirm=True):
+    # TODO rename _destroy_child, destroy_exp, destroy_group
+    def _destroy_child(self, num_or_name, confirm=True):
         self._update()
         child = self._get_child_by_num_or_name(num_or_name)
         child_dir = self._get_child_dir(child.num)
         if not confirm or util.response(f"ACHTUNG! Remove `{child}` and its `{child_dir}` dir with all its content?"):
             self.__remove(child)
             shutil.rmtree(child_dir)
-            child._destroy()
+            self._dispatch(ExpStructBoxEvent, ExpStructBoxEvent.DESTROY_CHIlD)
             return child
         return None
 
@@ -359,4 +416,10 @@ class ExpStructBox(ExpStruct):
             text += util.tab(f"\n\n{child._info()}")
         return text
 
-    def _update_listener(self, event: UpdateEvent): util.override_it()
+    def _ExpStructEvent_listener(self, event: ExpStructEvent):
+        self._update()
+        if event.kind == ExpStructEvent.REQUEST_CHANGE_NAME:
+            event.respondent = self
+            event.response = event.request not in self.__name_to_child
+
+    def _ExpStructBoxEvent_listener(self, event: ExpStructBoxEvent): self._update()

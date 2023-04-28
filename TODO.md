@@ -1,5 +1,36 @@
 ### CURRENT:
 
++ [PRIO] Check forked folder for proj.make_group and for group.make_exp - forgot to add it
+
++ [PRIO] Add self.__updating to ExpStruct and Exp updates
+
++ [PRIO] rename _destroy_child, destroy_exp, destroy_group
+
++ [PRIO] Possibility to change name or descr
+
+
+
+### BUGS:
+
+
+
+### TODO:
+
+- [PRIO] [!!!] README.md
+
+- [PRIO] How to parallel a huge grid-search (gs) exp? gs has number of experiments, but they all have the same env, so don't need to save each env separately. Does a group assume having the same env for all its children (exps)? 
+
+
+- [PRIO] [!!!] Each exp takes ~ 2GB of disk size. Need to investigate how to reduce memory consumption. Maybe save separately proj-env, group-env, exp-env. Other related issues: long saving and extremely long initialization on exp.start(). Separate project structure and status data loading from pipeline data loading - too long project loading. Loading exp pipeline data on demand.
+
+- [PRIO] When an error occurs, there's only the final string of the error without a stack. Perhaps, it's better to raise the full error (Is it about an error during a pipeline execution?)
+
+- [PRIO] [!!!] Think about not saving the whole experiment (huge storage memory consumption and low speed of save-load operations), but provide a mechanic for saving checkpoints for long exp-s.
+
+
+
+### ON HOLD:
+
 - BUG: Two competing experiments (Exp 33 - here https://colab.research.google.com/drive/1fLUSxfhYe3iksLkaFRj2CLlEaEwKHK1H#scrollTo=ZQaM79timfej&uniqifier=8 and here https://colab.research.google.com/drive/1DW7nAIs7l4jOryjO4Tax_3hxB7cEOrjV?authuser=2#scrollTo=M1mHCEJnkzYp) One exp shadowed another one, but in google drive there are two folders `exp33` from different users.
 
   Work from 2 accounts in parallel, sometimes the second one doesn't see the last exp started from the first one and it starts exp with the same number. If delete the first one exp in acc one, it won't be deleted under account two until deleting it manually in the second acc too. INVESTIGATION_RESULT: too long update ping at google drive that exp was deleted. And google drive makes `folder (1)` with space for duplicates: 
@@ -34,33 +65,15 @@
 
   I've sent an email to a guy from the Colab team.
 
-### BUGS:
-
-
-
-### ON HOLD:
-
-
-
-### TODO:
-
-- [PRIO] [!!!] README.md
-
-- [PRIO] How to parallel a huge grid-search (gs) exp? gs has number of experiments, but they all have the same env, so don't need to save each env separately. Does a group assume having the same env for all its children (exps)? 
-
-- [PRIO] Possibility to change name or descr
-
-- [PRIO] [!!!] Each exp takes ~ 2GB of disk size. Need to investigate how to reduce memory consumption. Maybe save separately proj-env, group-env, exp-env. Other related issues: long saving and extremely long initialization on exp.start(). Separate project structure and status data loading from pipeline data loading - too long project loading. Loading exp pipeline data on demand.
-
-- [PRIO] When an error occurs, there's only the final string of the error without a stack. Perhaps, it's better to raise the full error (Is it about an error during a pipeline execution?)
-
-- [PRIO] [!!!] Think about not saving the whole experiment (huge storage memory consumption and low speed of save-load operations), but provide a mechanic for saving checkpoints for long exp-s.
-
-- [PRIO] Reassign group, num, name, descr to exp
-
 
 
 ### BACKLOG:
+
+- [LOW] change exp or group num
+
+- [LOW] Move exp into another group
+
+- [LOW] Separate ExpStruct and ExpStructBox (struct.py and structbox.py)
 
 - [???] Add possibility to make manual `force` update, save, load when we got stuck for somehow? Need to investigate:
   ```

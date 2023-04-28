@@ -22,7 +22,12 @@ def make_proj(location_dir: str, name: str, descr: str) -> ExpProj:
 def load_proj(location_dir: str) -> ExpProj:
     global proj
     proj = ExpProj(location_dir, None, None)
-    return proj if platform.check_forked_folders(proj) else None
+    if not platform.check_forked_folders(proj):
+        return None
+    for group in proj.groups():
+        if not platform.check_forked_folders(group):
+            return None
+    return True
 
 
 # TODO xman.exp(1.1) direct call without project

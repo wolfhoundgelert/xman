@@ -34,7 +34,7 @@ params = {
     'np2': 4,
 }
 
-xman.proj.exp('1.1').remove_pipeline().make_pipeline(train, params)
+xman.proj.exp('1.1').destroy_pipeline().make_pipeline(train, params)
 xman.proj.info()
 xman.proj.exp('1.1').start()
 xman.proj.info()

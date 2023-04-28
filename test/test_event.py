@@ -10,7 +10,7 @@ from xman.event import Event, EventDispatcher
 
 
 def test__dispatching():
-    event = Event()
+    event = Event(None)
     dispatcher = EventDispatcher()
 
     def listener(e: Event):
