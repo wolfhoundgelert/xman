@@ -1,6 +1,7 @@
 import time
 
 from . import util
+from .error import NotExistsXManError, AlreadyExistsXManError, IllegalOperationXManError
 from .pipeline import Pipeline
 from .struct import ExpStructData, ExpStruct, ExpStructStatus
 
@@ -127,7 +128,7 @@ class Exp(ExpStruct):
     def delete_manual_result(self, confirm=True):
         self._update()
         if self._data.manual_result is None:
-            raise AssertionError(f"There's no manual result in exp `{self}`!")
+            raise NotExistsXManError(f"There's no manual result in exp `{self}`!")
         if not confirm or util.response(f"ACHTUNG! Remove the manual result of exp `{self}`?"):
             self._data.manual_result = None
             self._save_and_update()
@@ -137,7 +138,7 @@ class Exp(ExpStruct):
     def make_pipeline(self, run_func, params):
         self._update()
         if self._data.pipeline is not None:
-            raise AssertionError(f"`{self}` already has a pipeline!")
+            raise AlreadyExistsXManError(f"`{self}` already has a pipeline!")
         pipeline = Pipeline(self, run_func, params)
         self._data.pipeline = pipeline
         self._save_and_update()
@@ -146,7 +147,7 @@ class Exp(ExpStruct):
     def destroy_pipeline(self, confirm=True):
         self._update()
         if self._data.pipeline is None:
-            raise AssertionError(f"There's no pipeline in exp `{self}`!")
+            raise NotExistsXManError(f"There's no pipeline in exp `{self}`!")
         if not confirm or util.response(f"ACHTUNG! Remove the pipeline of exp `{self}`?"):
             self._data.pipeline = None
             self._save_and_update()
@@ -157,13 +158,13 @@ class Exp(ExpStruct):
         self._update()
         pipeline = self._data.pipeline
         if pipeline is None:
-            raise AssertionError(f"`{self}` doesn't have a pipeline!")
+            raise NotExistsXManError(f"`{self}` doesn't have a pipeline!")
         if pipeline.error:
-            raise AssertionError(f"`{self}` has an error during the previous start!")
+            raise IllegalOperationXManError(f"`{self}` has an error during the previous start!")
         if pipeline.started:
-            raise AssertionError(f"`{self}` was already started and the current status is `{self._status}`!")
+            raise IllegalOperationXManError(f"`{self}` was already started and the current status is `{self._status}`!")
         if pipeline.finished:
-            raise AssertionError(f"`{self}` was already finished!")
+            raise IllegalOperationXManError(f"`{self}` was already finished!")
         pipeline._start()
 
     def success(self, resolution: str):

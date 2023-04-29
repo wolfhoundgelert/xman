@@ -1,6 +1,8 @@
 from inspect import signature
 from typing import Type
 
+from .error import WasDestroyedXManError
+
 
 class Event:
 
@@ -23,7 +25,7 @@ class EventDispatcher:
 
     def __check_destroyed(self):
         if self._destroyed:
-            raise AssertionError(f"'{self}' was destroyed before!")
+            raise WasDestroyedXManError(f"'{self}' was destroyed before!")
 
     def _has_listener(self, event_type, listener):
         self.__check_destroyed()

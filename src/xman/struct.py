@@ -1,5 +1,6 @@
 from .event import EventDispatcher, Event
 from .tree import print_dir_tree
+from .error import NotExistsXManError, ArgumentsXManError, AlreadyExistsXManError
 from . import util
 
 import cloudpickle as pickle  # dill as pickle, pickle
@@ -39,9 +40,9 @@ class ExpStructStatus:
     @staticmethod
     def _check(status, resolution):
         if not ExpStructStatus.__has_status_in_workflow(status):
-            raise ValueError(f"The workflow `{ExpStructStatus.__WORKFLOW}` doesn't have status `{status}`!")
+            raise ArgumentsXManError(f"The workflow `{ExpStructStatus.__WORKFLOW}` doesn't have status `{status}`!")
         if status in (ExpStructStatus.SUCCESS, ExpStructStatus.FAIL) and resolution is None:
-            raise ValueError(f"SUCCESS and FAIL manual statuses require setting resolutions!")
+            raise ArgumentsXManError(f"SUCCESS and FAIL manual statuses require setting resolutions!")
 
     @staticmethod
     def _fit_parameters(status_obj, status, resolution, manual):
@@ -89,7 +90,7 @@ class ExpStructEvent(Event):
 
     def _check_kind(self):
         if self.kind not in self._KINDS:
-            raise ValueError(f"Wrong type `{self.kind}`, should be one of `{self._KINDS}`")
+            raise ArgumentsXManError(f"Wrong type `{self.kind}`, should be one of `{self._KINDS}`")
 
 
 class ExpStruct(EventDispatcher):
@@ -216,7 +217,7 @@ class ExpStruct(EventDispatcher):
     def delete_manual_status(self, confirm=True):
         self._update()
         if not self._status.manual:
-            raise AssertionError(f"There's no manual status in exp `{self}`")
+            raise NotExistsXManError(f"There's no manual status in exp `{self}`")
         if not confirm or util.response(f"ACHTUNG! Remove the manual status `{self._data.manual_status}` of exp `{self}`?"):
             self._data.manual_status = None
             self._data.manual_status_resolution = None
@@ -229,7 +230,7 @@ class ExpStruct(EventDispatcher):
         if self._data.name != name:
             event = self._dispatch(ExpStructEvent, ExpStructEvent.REQUEST_CHANGE_NAME, request=name)
             if event is not None and not event.response:
-                raise ValueError(f"There's another child with the name=`{name}` in the parent `{event.respondent}`")
+                raise AlreadyExistsXManError(f"There's another child with the name=`{name}` in the parent `{event.respondent}`")
             self._data.name = name
             need_update = need_save = True
         if self._data.descr != descr:
@@ -346,7 +347,7 @@ class ExpStructBox(ExpStruct):
         elif util.is_name(num_or_name):
             return num_or_name in self.__name_to_child
         else:
-            raise ValueError(f"`num_or_name` should be num >= 1 (int) or name (str), but `{num_or_name}` was given!")
+            raise ArgumentsXManError(f"`num_or_name` should be num >= 1 (int) or name (str), but `{num_or_name}` was given!")
 
     def _get_child_by_num_or_name(self, num_or_name):
         self._update()
@@ -354,7 +355,7 @@ class ExpStructBox(ExpStruct):
             return self.__num_to_child[num_or_name]
         elif util.is_name(num_or_name) and num_or_name in self.__name_to_child:
             return self.__name_to_child[num_or_name]
-        raise ValueError(f"There's no item with num or name `{num_or_name}`!")
+        raise NotExistsXManError(f"There's no item with num or name `{num_or_name}`!")
 
     def _get_child_highest_num(self):
         self._update()
@@ -365,10 +366,10 @@ class ExpStructBox(ExpStruct):
         self._update()
         util.check_num(num, True)
         if self._has_child_num_or_name(name):
-            raise ValueError(f"A child with the name `{name}` already exists!")
+            raise AlreadyExistsXManError(f"A child with the name `{name}` already exists!")
         if num is not None:
             if self._has_child_num_or_name(num):
-                raise ValueError(f"A child with the num `{num}` already exists!")
+                raise AlreadyExistsXManError(f"A child with the num `{num}` already exists!")
         else:
             num = self._get_child_highest_num() + 1
         child_dir = self._get_child_dir(num)

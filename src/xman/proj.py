@@ -1,3 +1,4 @@
+from .error import NothingToDoXManError, NotImplementedDoXManError
 from .struct import ExpStructBox
 from .group import ExpGroup
 from .exp import Exp
@@ -7,7 +8,7 @@ from . import util, platform
 class ExpProj(ExpStructBox):
 
     @staticmethod
-    def _dir_prefix(): raise ValueError(f"Isn't supported by logic!")
+    def _dir_prefix(): raise NotImplementedDoXManError(f"Isn't supported by logic!")
 
     def __init__(self, location_dir, name, descr):
         self.__updating = False
@@ -73,7 +74,7 @@ class ExpProj(ExpStructBox):
                     exp.start()
                     break
             if exp is None:
-                raise AssertionError(f"There's nothing to start in the proj `{self}`!")
+                raise NothingToDoXManError(f"There's nothing to start in the proj `{self}`!")
         else:
             self.exp(exp_dot_num).start()
         if autostart_next:

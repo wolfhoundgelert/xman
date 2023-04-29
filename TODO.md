@@ -23,8 +23,6 @@
 
 - [PRIO] [!!!] Each exp takes ~ 2GB of disk size. Need to investigate how to reduce memory consumption. Maybe save separately proj-env, group-env, exp-env. Other related issues: long saving and extremely long initialization on exp.start(). Separate project structure and status data loading from pipeline data loading - too long project loading. Loading exp pipeline data on demand.
 
-- [PRIO] When an error occurs, there's only the final string of the error without a stack. Perhaps, it's better to raise the full error (Is it about an error during a pipeline execution?)
-
 - [PRIO] [!!!] Think about not saving the whole experiment (huge storage memory consumption and low speed of save-load operations), but provide a mechanic for saving checkpoints for long exp-s.
 
 
@@ -68,6 +66,8 @@
 
 
 ### BACKLOG:
+
+- [LOW] XManError.__process_stack: Limit stack len via a config tb.format_stack()[:STACK_LIMIT]
 
 - [LOW] change exp or group num
 

@@ -3,6 +3,8 @@ import os
 import sys
 import shutil
 
+from xman.error import ArgumentsXManError
+
 xman_path = os.path.abspath(os.path.join('src'))
 if xman_path not in sys.path:
     sys.path.insert(0, xman_path)
@@ -48,7 +50,7 @@ def test__make_proj():
 def test__parse_group_and_exp_num():
     assert 1, 1 == util.parse_group_and_exp_num('1.1')
     assert 1, 10 == util.parse_group_and_exp_num('1.10')
-    with pytest.raises(ValueError, match="`dot_num` should be a string like"):
+    with pytest.raises(ArgumentsXManError, match="`dot_num` should be a string like"):
         util.parse_group_and_exp_num('1.0')
         util.parse_group_and_exp_num('0.1')
         util.parse_group_and_exp_num('dsfsadf')
@@ -63,7 +65,7 @@ def test__bug__getting_tenth_exp_with_dotted_num():
 
 def test__bug__exp_broken_after_setting_wrong_status():
     exp = make_exp_from_nothing()
-    with pytest.raises(ValueError, match="doesn't have status"):
+    with pytest.raises(ArgumentsXManError, match="doesn't have status"):
         exp.set_manual_status('FAILED', "There's no `FAILED` status - should be `FAIL`")
     assert exp.status.status == 'EMPTY'
     exp.set_manual_status('FAIL', "Acceptable status")

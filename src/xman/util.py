@@ -1,6 +1,7 @@
 import os
 import re
 
+from xman.error import OverrideXManError, ArgumentsXManError, IllegalOperationXManError
 
 SECOND = 1
 MINUTE = 60 * SECOND
@@ -21,9 +22,9 @@ def tab(text, num=1):
 def make_dir(dir_path):
     if os.path.exists(dir_path):
         if not os.path.isdir(dir_path):
-            raise NotADirectoryError(f"`{dir_path}` is not a directory!")
+            raise ArgumentsXManError(f"`{dir_path}` is not a directory!")
         elif len(os.listdir(dir_path)) > 0:
-            raise AssertionError(f"Directory `{dir_path}` should be empty!")
+            raise IllegalOperationXManError(f"Directory `{dir_path}` should be empty!")
     else:
         os.mkdir(dir_path)
 
@@ -40,8 +41,8 @@ def check_num(num, allow_none: bool):
     if allow_none:
         if num is None:
             return
-        raise ValueError(f"num={num} should be None or an integer that greater or equal 1!")
-    raise ValueError(f"num={num} should be an integer that greater or equal 1!")
+        raise ArgumentsXManError(f"num={num} should be None or an integer that greater or equal 1!")
+    raise ArgumentsXManError(f"num={num} should be an integer that greater or equal 1!")
 
 
 def get_dir_num(target_dir):
@@ -66,7 +67,7 @@ def get_dir_nums_by_pattern(location_dir, dir_pattern):
 def parse_group_and_exp_num(dot_num: str):
     match = re.match(DOT_NUM_REGEX, dot_num)
     if match is None:
-        raise ValueError(f"`dot_num` should be a string like `1.1`, `2.3`, etc, but `{dot_num}` was given")
+        raise ArgumentsXManError(f"`dot_num` should be a string like `1.1`, `2.3`, etc, but `{dot_num}` was given")
     group_num, exp_num = int(match[1]), int(match[2])
     return group_num, exp_num
 
@@ -76,7 +77,7 @@ def response(question):
     return r.lower() == "y"
 
 
-def override_it(): raise NotImplementedError("Should be overriden!")
+def override_it(): raise OverrideXManError("Should be overriden!")
 
 
 def warning(message: str): print('\nWARNING! ' + message + '\n')

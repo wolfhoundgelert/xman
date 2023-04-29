@@ -1,3 +1,4 @@
+from .error import NothingToDoXManError
 from .struct import ExpStructStatus, ExpStructBox
 from .exp import Exp
 from . import platform
@@ -48,7 +49,7 @@ class ExpGroup(ExpStructBox):
         if exp_num is None:
             exp = self.get_exp_for_start()
             if exp is None:
-                raise AssertionError(f"There's nothing to start in the group `{self}`!")
+                raise NothingToDoXManError(f"There's nothing to start in the group `{self}`!")
             exp.start()
         else:
             self.exp(exp_num).start()

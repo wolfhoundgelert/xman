@@ -1,6 +1,7 @@
 from typing import Any, Callable
-
 import time
+
+from . import error as err
 
 
 class Pulse:
@@ -41,14 +42,26 @@ class Pipeline:
         self.started = False
         self.finished = False
         self.error = None
+        self.error_stack = None
+
+    def __process_error(self, error):
+        self.error = err.get_error_str(error)
+        self.error_stack = err. get_error_stack_str(error)
 
     def _start(self):
         self.started = True
         self.pulse = Pulse(self.exp)
         self.pulse()
+        error = None
         try:
             self.result = self.run_func(self.pulse, **self.params)
             self.finished = True
-        except Exception as err:
-            self.error = err
+        except Exception as e:
+            error = e
+            self.__process_error(e)
         self.exp._save_and_update()
+        if error is not None:
+            raise error
+
+    def _destroy(self):
+        pass  # TODO
