@@ -65,7 +65,7 @@ def test__bug__getting_tenth_exp_with_dotted_num():
 
 def test__bug__exp_broken_after_setting_wrong_status():
     exp = make_exp_from_nothing()
-    with pytest.raises(ArgumentsXManError, match="doesn't have status"):
+    with pytest.raises(ArgumentsXManError, match="Wrong value"):
         exp.set_manual_status('FAILED', "There's no `FAILED` status - should be `FAIL`")
     assert exp.status.status == 'EMPTY'
     exp.set_manual_status('FAIL', "Acceptable status")

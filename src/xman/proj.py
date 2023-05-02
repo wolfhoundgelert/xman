@@ -1,5 +1,6 @@
 from .error import NothingToDoXManError, NotImplementedDoXManError
-from .struct import ExpStructBox
+from .struct import ExpStructData, ExpStruct
+from .structbox import ExpStructBox
 from .group import ExpGroup
 from .exp import Exp
 from . import util, platform

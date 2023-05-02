@@ -1,5 +1,6 @@
 import os
 import re
+import cloudpickle as pickle  # dill as pickle, pickle
 
 from xman.error import OverrideXManError, ArgumentsXManError, IllegalOperationXManError
 
@@ -27,6 +28,28 @@ def make_dir(dir_path):
             raise IllegalOperationXManError(f"Directory `{dir_path}` should be empty!")
     else:
         os.mkdir(dir_path)
+
+
+def save(obj, location_dir, fname):
+    fp = os.path.join(location_dir, fname)
+    with open(fp, 'wb') as f:
+        pickle.dump(obj, f)
+
+
+def load(location_dir, fname):
+    fp = os.path.join(location_dir, fname)
+    with open(fp, 'rb') as f:
+        return pickle.load(f)
+
+
+def check_has_value_in_class_public_constants(value, instance_or_cls):
+    t = type(instance_or_cls)
+    # Check is this a class or an instance of some class (we need to take class)
+    cls = instance_or_cls if t == type else t
+    constants = [v for it in vars(cls).items() if isinstance(v := it[1], str) and v.upper() == v
+                 and not v.startswith(('_', '__'))]
+    if value not in constants:
+        raise ArgumentsXManError(f"Wrong value `{value}`, should be one of `{constants}`")
 
 
 def is_num(num_or_name): return type(num_or_name) is int and num_or_name >= 1

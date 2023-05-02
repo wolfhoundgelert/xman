@@ -1,6 +1,7 @@
 import os
 import sys
 
+from xman.struct import ExpStructEvent
 
 xman_path = os.path.abspath(os.path.join('src'))
 if xman_path not in sys.path:
@@ -10,7 +11,7 @@ from xman.event import Event, EventDispatcher
 
 
 def test__dispatching():
-    event = Event(None)
+    event = ExpStructEvent(None, ExpStructEvent.STATUS_CHANGED)
     dispatcher = EventDispatcher()
 
     def listener(e: Event):

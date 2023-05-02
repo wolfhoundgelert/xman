@@ -1,5 +1,6 @@
 from .error import NothingToDoXManError
-from .struct import ExpStructStatus, ExpStructBox
+from .struct import ExpStructStatus
+from .structbox import ExpStructBox
 from .exp import Exp
 from . import platform
 

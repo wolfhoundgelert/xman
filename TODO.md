@@ -1,12 +1,10 @@
 ### CURRENT:
 
-+ [PRIO] Check forked folder for proj.make_group and for group.make_exp - forgot to add it
+- `def make_pipeline(self, run_func, params, save=False):` - check how `save` should work
 
-+ [PRIO] Add self.__updating to ExpStruct and Exp updates
+- [PRIO] Other related issues: long saving and extremely long initialization on exp.start(). Separate project structure and status data loading from pipeline data loading - too long project loading. Loading exp pipeline data on demand.
 
-+ [PRIO] rename _destroy_child, destroy_exp, destroy_group
-
-+ [PRIO] Possibility to change name or descr
+- Remove pipeline_run_data after exp is finished
 
 
 
@@ -14,16 +12,10 @@
 
 
 
+
 ### TODO:
 
 - [PRIO] [!!!] README.md
-
-- [PRIO] How to parallel a huge grid-search (gs) exp? gs has number of experiments, but they all have the same env, so don't need to save each env separately. Does a group assume having the same env for all its children (exps)? 
-
-
-- [PRIO] [!!!] Each exp takes ~ 2GB of disk size. Need to investigate how to reduce memory consumption. Maybe save separately proj-env, group-env, exp-env. Other related issues: long saving and extremely long initialization on exp.start(). Separate project structure and status data loading from pipeline data loading - too long project loading. Loading exp pipeline data on demand.
-
-- [PRIO] [!!!] Think about not saving the whole experiment (huge storage memory consumption and low speed of save-load operations), but provide a mechanic for saving checkpoints for long exp-s.
 
 
 
@@ -66,6 +58,20 @@
 
 
 ### BACKLOG:
+
+- [PRIO] Implement `_destroy` for the all inheritance chain of ExpStruct
+
+- [PRIO] Make data, then instances of ExpStruct. ExpStruct._make_data(name, descr): make and save
+
+- [PRIO] How to parallel a huge grid-search (gs) exp? gs has number of experiments, but they all have the same env, so don't need to save each env separately. Does a group assume having the same env for all its children (exps)? 
+
+- [PRIO] [!!!] Each exp takes ~ 2GB of disk size. Need to investigate how to reduce memory consumption. Maybe save separately proj-env, group-env, exp-env.
+
+- [PRIO] [!!!] Think about not saving the whole experiment (huge storage memory consumption and low speed of save-load operations), but provide a mechanic for saving checkpoints for long exp-s.
+
+- [LOW] Implement filter: `xman.filter(...what to filter...)` - see `filter.py`
+
+- [LOW] Save data classes in json format for human reading availability
 
 - [LOW] XManError.__process_stack: Limit stack len via a config tb.format_stack()[:STACK_LIMIT]
 

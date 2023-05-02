@@ -2,7 +2,7 @@ import time
 
 from . import util
 from .error import NotExistsXManError, AlreadyExistsXManError, IllegalOperationXManError
-from .pipeline import Pipeline
+from .pipeline import PipelineData, PipelineRunData, Pipeline, PipelineEvent
 from .struct import ExpStructData, ExpStruct, ExpStructStatus
 
 
@@ -10,7 +10,7 @@ class ExpData(ExpStructData):
 
     def __init__(self, name, descr):
         super().__init__(name, descr)
-        self.pipeline = None
+        self.pipeline: PipelineData = None
         self.manual_result = None
 
 
@@ -29,11 +29,14 @@ class ExpConfig:
 
 class Exp(ExpStruct):
 
+    __RUN_FILE = '.run'
+
     @staticmethod
     def _dir_prefix(): return 'exp'
 
     def __init__(self, location_dir, name, descr):
         self.__state = None
+        self.__pipeline = None
         self.__updating = False
         super().__init__(location_dir, name, descr)
 
@@ -49,15 +52,15 @@ class Exp(ExpStruct):
 
     def _process_auto_status(self):
         resolution = ExpStruct._AUTO_STATUS_RESOLUTION
-        pipeline = self._data.pipeline
-        if pipeline is None:
+        pipeline_data = self._data.pipeline
+        if pipeline_data is None:
             status = ExpStructStatus.EMPTY
-        elif not pipeline.started:
+        elif not pipeline_data.started:
             status = ExpStructStatus.TODO
-        elif pipeline.error is not None:
+        elif pipeline_data.error is not None:
             status = ExpStructStatus.ERROR
-            resolution = str(pipeline.error)
-        elif pipeline.finished:
+            resolution = str(pipeline_data.error)
+        elif pipeline_data.finished:
             status = ExpStructStatus.DONE
         else:
             status = ExpStructStatus.IN_PROGRESS
@@ -105,16 +108,13 @@ class Exp(ExpStruct):
             self._update_state()
         self.__updating = False
 
-    def _on_load_data(self, loaded_data):
-        if loaded_data.pipeline is not None:
-            loaded_data.pipeline.exp = self  # Because pipeline.exp is another instance after being loaded
-        super()._on_load_data(loaded_data)
-
     def _info(self):
         text = super()._info()
         if self.result is not None:
             text += util.tab(f"\nResult:\n{util.tab(str(self.result))}")
         return text
+
+    def _PipelineEvent_listener(self, event: PipelineEvent): self._save_and_update()
 
     def set_manual_result(self, result, confirm=True):
         self._update()
@@ -135,12 +135,17 @@ class Exp(ExpStruct):
             return self
         return None
 
-    def make_pipeline(self, run_func, params):
+    def make_pipeline(self, run_func, params, save=False):
         self._update()
         if self._data.pipeline is not None:
             raise AlreadyExistsXManError(f"`{self}` already has a pipeline!")
-        pipeline = Pipeline(self, run_func, params)
-        self._data.pipeline = pipeline
+        pipeline_data = PipelineData(False, False, None, None, None, None)
+        self._data.pipeline = pipeline_data
+        pipeline_run_data = PipelineRunData(run_func, params, None)
+        if save:
+            util.save(pipeline_run_data, self.location_dir, Exp.__RUN_FILE)
+        self.__pipeline = Pipeline(self.location_dir, pipeline_data, pipeline_run_data)
+        self.__pipeline._add_listener(PipelineEvent, self._PipelineEvent_listener)
         self._save_and_update()
         return self
 
@@ -149,6 +154,10 @@ class Exp(ExpStruct):
         if self._data.pipeline is None:
             raise NotExistsXManError(f"There's no pipeline in exp `{self}`!")
         if not confirm or util.response(f"ACHTUNG! Remove the pipeline of exp `{self}`?"):
+            if self.__pipeline is not None:
+                self.__pipeline._remove_listener(PipelineEvent, self._PipelineEvent_listener)
+                self.__pipeline._destroy()
+                self.__pipeline == None
             self._data.pipeline = None
             self._save_and_update()
             return self
@@ -156,17 +165,18 @@ class Exp(ExpStruct):
 
     def start(self):
         self._update()
-        pipeline = self._data.pipeline
-        if pipeline is None:
+        pipeline_data = self._data.pipeline
+        if pipeline_data is None:
             raise NotExistsXManError(f"`{self}` doesn't have a pipeline!")
-        if pipeline.error:
+        if pipeline_data.error:
             raise IllegalOperationXManError(f"`{self}` has an error during the previous start!")
-        if pipeline.started:
+        if pipeline_data.started:
             raise IllegalOperationXManError(f"`{self}` was already started and the current status is `{self._status}`!")
-        if pipeline.finished:
+        if pipeline_data.finished:
             raise IllegalOperationXManError(f"`{self}` was already finished!")
-        pipeline._start()
+        self.__pipeline._start()
 
+    # TODO Need to check that exp isn't run from another acc, check other places
     def success(self, resolution: str):
         self._update()
         self.set_manual_status(ExpStructStatus.SUCCESS, resolution)

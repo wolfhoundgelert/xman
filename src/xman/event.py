@@ -1,12 +1,16 @@
 from inspect import signature
 from typing import Type
 
+from . import util
 from .error import WasDestroyedXManError
 
 
-class Event:
+class Event:  # Generic event, can't be used as is - other `xman` events should inherit from this one.
 
-    def __init__(self, target): self.target = target
+    def __init__(self, target, kind):
+        self.target = target
+        self.kind = kind
+        util.check_has_value_in_class_public_constants(kind, self)
 
     def __str__(self):
         cls = self.__class__
