@@ -1,9 +1,10 @@
 import time
 
-from . import util
-from .error import NotExistsXManError, AlreadyExistsXManError, IllegalOperationXManError
-from .pipeline import PipelineData, PipelineRunData, Pipeline, PipelineEvent
+from .error import NotExistsXManError, IllegalOperationXManError
+from .pipeline import PipelineData, PipelineEvent
 from .struct import ExpStructData, ExpStruct, ExpStructStatus
+from . import util
+from . import maker
 
 
 class ExpData(ExpStructData):
@@ -38,6 +39,13 @@ class Exp(ExpStruct):
     def __str__(self):
         state = f": {self._state}" if self._status == ExpStructStatus.IN_PROGRESS else ''
         return f"Exp {self.num} [{self._status}{state}] {self._data.name} - {self._data.descr}"
+
+    def __destroy_pipeline(self, keep_data: bool):
+        maker._destroy_pipeline(self, self.__pipeline, keep_data)
+        if self.__pipeline is not None:
+            self.__pipeline._remove_listener(PipelineEvent, self._PipelineEvent_listener)
+            self.__pipeline == None
+        self._save_and_update()
 
     @property
     def _state(self): return self.__state
@@ -127,33 +135,20 @@ class Exp(ExpStruct):
             return self
         return None
 
-    # TODO Implement in maker.py
     def make_pipeline(self, run_func, params, save=False):
         self._update()
-        if self._data.pipeline is not None:
-            raise AlreadyExistsXManError(f"`{self}` already has a pipeline!")
-        pipeline_data = PipelineData(False, False, None, None, None, None)
-        self._data.pipeline = pipeline_data
-        pipeline_run_data = PipelineRunData(run_func, params, None)
-        if save:
-            util.save(pipeline_run_data, self.location_dir, Exp.__RUN_FILE)
-        self.__pipeline = Pipeline(self.location_dir, pipeline_data, pipeline_run_data)
+        self.__pipeline = maker._make_pipeline(self, run_func, params, save)
         self.__pipeline._add_listener(PipelineEvent, self._PipelineEvent_listener)
         self._save_and_update()
         return self
 
-    # TODO Implement in maker.py
     def destroy_pipeline(self, confirm=True):
         self._update()
+        # TODO Check if not in progress and ask to proceed if it is
         if self._data.pipeline is None:
             raise NotExistsXManError(f"There's no pipeline in exp `{self}`!")
         if not confirm or util.response(f"ATTENTION! Remove the pipeline of exp `{self}`?"):
-            if self.__pipeline is not None:
-                self.__pipeline._remove_listener(PipelineEvent, self._PipelineEvent_listener)
-                self.__pipeline._destroy()
-                self.__pipeline == None
-            self._data.pipeline = None
-            self._save_and_update()
+            self.__destroy_pipeline(False)
             return self
         return None
 
@@ -168,7 +163,12 @@ class Exp(ExpStruct):
             raise IllegalOperationXManError(f"`{self}` was already started and the current status is `{self._status}`!")
         if pipeline_data.finished:
             raise IllegalOperationXManError(f"`{self}` was already finished!")
-        self.__pipeline._start()
+        if self.__pipeline is None:
+            self.__pipeline = maker._recreate_pipeline(self)
+        try:
+            self.__pipeline._start()
+        finally:
+            self.__destroy_pipeline(True)
 
     # TODO Need to check that exp isn't run from another acc, check other places
     def success(self, resolution: str):

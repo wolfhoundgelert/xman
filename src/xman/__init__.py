@@ -1,16 +1,17 @@
 from .proj import ExpProj
-from .tree import print_dir_tree
-from . import platform, maker
+from . import tree
+from . import platform
+from . import maker
 
 
-__version__ = '0.0.7'  #TODO support auto setting from setup.py
+__version__ = '0.0.8'  #TODO support auto setting from setup.py
 
 
 proj: ExpProj = None
 
 
 def dir_tree(target_dir, files_limit=10, files_first=True, sort_numbers=True):
-    print_dir_tree(target_dir, files_limit, files_first, sort_numbers)
+    tree.print_dir_tree(target_dir, files_limit, files_first, sort_numbers)
 
 
 def make_proj(location_dir: str, name: str, descr: str) -> ExpProj:

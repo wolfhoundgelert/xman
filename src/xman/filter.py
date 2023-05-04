@@ -1,7 +1,7 @@
 # TODO Implement xman.filter(xman.filter.Query.EXP_WITH_PIPELINE or 'EXP_WITH_PIPELINE')
 #   or xman.filter(['EXP', 'DONE', 'MANUAL_STATUS'], 'OR' or 'AND') or xman.filter.Mode.OR.
 #   Or maybe it's better use tuples (Query, Mode) to describe modes for any queries?
-from xman.struct import ExpStruct
+from .struct import ExpStruct
 
 
 class Query:

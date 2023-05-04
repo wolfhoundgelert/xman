@@ -1,4 +1,3 @@
-import os
 import re
 
 from xman.error import OverrideXManError, ArgumentsXManError
@@ -8,25 +7,12 @@ MINUTE = 60 * SECOND
 HOUR = 60 * MINUTE
 DAY = 24 * HOUR
 
-__DOT_NUM_REGEX = r'^([1-9]\d*)\.([1-9]\d*)$'
 
-TAB = '    '
-
-
-def tab(text, num=1):
-    t = TAB * num
+def tab(text, deep=1):
+    num_spaces = 4
+    t = ' ' * num_spaces * deep
     text = text.replace('\n', f'\n{t}')
     return f"{t}{text}"
-
-
-def check_has_value_in_class_public_constants(value, instance_or_cls):
-    t = type(instance_or_cls)
-    # Check is this a class or an instance of some class (we need to take class)
-    cls = instance_or_cls if t == type else t
-    constants = [v for it in vars(cls).items() if isinstance(v := it[1], str) and v.upper() == v
-                 and not v.startswith(('_', '__'))]
-    if value not in constants:
-        raise ArgumentsXManError(f"Wrong value `{value}`, should be one of `{constants}`")
 
 
 def is_num(num_or_name): return type(num_or_name) is int and num_or_name >= 1
@@ -46,7 +32,7 @@ def check_num(num, allow_none: bool):
 
 
 def parse_group_and_exp_num(dot_num: str):
-    match = re.match(__DOT_NUM_REGEX, dot_num)
+    match = re.match(r'^([1-9]\d*)\.([1-9]\d*)$', dot_num)
     if match is None:
         raise ArgumentsXManError(f"`dot_num` should be a string like `1.1`, `2.3`, etc, but `{dot_num}` was given")
     group_num, exp_num = int(match[1]), int(match[2])
@@ -61,6 +47,15 @@ def response(question):
 def get_cls(target_obj_or_cls):
     t = type(target_obj_or_cls)
     return target_obj_or_cls if t == type else t
+
+
+def check_has_value_in_class_public_constants(value, instance_or_cls):
+    cls = get_cls(instance_or_cls)
+    constants = [v for it in vars(cls).items() if isinstance(v := it[1], str) and v.upper() == v
+                 and not v.startswith(('_', '__'))]
+    if value not in constants:
+        raise ArgumentsXManError(f"Wrong value `{value}`, should be one of {constants}")
+
 
 
 def override_it(): raise OverrideXManError("Should be overriden!")

@@ -1,12 +1,14 @@
-from . import util, maker, filesystem
 from .error import ArgumentsXManError, NotExistsXManError
 from .struct import ExpStructEvent, ExpStruct, ExpStructStatus
+from . import util
+from . import maker
+from . import filesystem
 
 
 class ExpStructBoxEvent(ExpStructEvent):
 
-    MAKE_CHILD = 'MAKE_CHILD'
-    DESTROY_CHIlD = 'DESTROY_CHIlD'
+    CHILD_MADE = 'CHILD_MADE'
+    CHILD_DESTROYED = 'CHILD_DESTROYED'
 
 
 class ExpStructBox(ExpStruct):
@@ -113,15 +115,15 @@ class ExpStructBox(ExpStruct):
         child = maker._make_new_child(self, name, descr, num)
         if child is not None:
             self.__add(child)
-            self._dispatch(ExpStructBoxEvent, ExpStructBoxEvent.MAKE_CHILD)
+            self._dispatch(ExpStructBoxEvent, ExpStructBoxEvent.CHILD_MADE)
         return child
 
     def _destroy_child(self, num_or_name, confirm=True):
         self._update()
         child = self._get_child_by_num_or_name(num_or_name)
-        if filesystem._destroy_struct(child, confirm):
+        if maker._destroy_child(child, confirm):
             self.__remove(child)
-            self._dispatch(ExpStructBoxEvent, ExpStructBoxEvent.DESTROY_CHIlD)
+            self._dispatch(ExpStructBoxEvent, ExpStructBoxEvent.CHILD_DESTROYED)
             return child
         return None
 

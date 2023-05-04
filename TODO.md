@@ -1,11 +1,17 @@
 ### CURRENT:
 
-- `def make_pipeline(self, run_func, params, save=False):` - check how `save` should work
+- Check in progress status on destroy pipeline
 
-- [PRIO] Other related issues: long saving and extremely long initialization on exp.start(). Separate project structure and status data loading from pipeline data loading - too long project loading. Loading exp pipeline data on demand.
+- Manual statuses (set_manual_status, success, fail) should check if there's no pipeline
 
-- Remove pipeline_run_data after exp is finished
+- Pulse
 
+- Timestamps
+
+- Checkpoints (intermediate results)
+   [PRIO] [!!!] Think about not saving the whole experiment (huge storage memory consumption and low speed of save-load operations), but provide a mechanic for saving checkpoints for long exp-s.
+
+- Pipeline._destroy()
 
 
 ### BUGS:
@@ -65,8 +71,6 @@
 
 - [PRIO] [!!!] Each exp takes ~ 2GB of disk size. Need to investigate how to reduce memory consumption. Maybe save separately proj-env, group-env, exp-env.
 
-- [PRIO] [!!!] Think about not saving the whole experiment (huge storage memory consumption and low speed of save-load operations), but provide a mechanic for saving checkpoints for long exp-s.
-
 - [LOW] Implement filter: `xman.filter(...what to filter...)` - see `filter.py`
 
 - [LOW] Save data classes in json format for human reading availability
@@ -110,6 +114,8 @@
 - [LOW] Save data structure version to the separated file `version.pkl`, it will help to recognize unmatched versions of saved file and xman data structure, and maybe it will be possible to make some converters from old to the newest versions.
        
 - [LOW] Add runner info (link on notebook and colab account or mail) - from which notebook and who started an exp
+
+- [???] Do I need to pull factual event dispatching out from the current execution thread (by making small timeout)? Async dispatching.
 
 
 

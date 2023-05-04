@@ -1,7 +1,8 @@
+import os
 from typing import Any, Callable
 import time
 
-from . import error as err
+from .error import get_error_str, get_error_stack_str
 from .event import Event, EventDispatcher
 
 
@@ -24,7 +25,7 @@ class Pulse(EventDispatcher):
     _TIMESTAMPS_AMOUNT = 3
 
     def __init__(self, location_dir):
-        self.location_dir = location_dir
+        self.location_dir = os.path.normpath(location_dir)
         self.intermediate_checkpoints = []
         self._timestamps = []
 
@@ -46,7 +47,7 @@ class Pulse(EventDispatcher):
         # self.exp._save_and_update()  # TODO Should be an event dispatch
 
 
-class PipelineData:  # TODO Save into ExpData (`.data`)
+class PipelineData:  # Saved in exp._data.pipeline
 
     def __init__(self, started, finished, error, error_stack, result, pulse_timestamps):
         self.started = started
@@ -55,35 +56,30 @@ class PipelineData:  # TODO Save into ExpData (`.data`)
         self.error_stack = error_stack
         self.result = result
         self.pulse_timestamps = pulse_timestamps
+        # self.intermediate_checkpoints: [] = intermediate_checkpoints  # TODO Implement it
 
 
-class PipelineRunData:  # TODO Save as `.run`, so it could be loaded on demand
+class PipelineRunData:  # Saved in `.run` file, might be really heavy (several GB)
 
-    def __init__(self, run_func: Callable[[Pulse, ...], Any], params: dict,
-                 intermediate_checkpoints: []):
+    def __init__(self, run_func: Callable[[Pulse, ...], Any], params: dict):
         self.run_func = run_func
         self.params = params
-        self.intermediate_checkpoints = intermediate_checkpoints
 
 
 class Pipeline(EventDispatcher):
 
     def __init__(self, location_dir: str, data: PipelineData, run_data: PipelineRunData):
         super().__init__()
-        self.__location_dir = location_dir  # TODO pass to Pulse
+        # self.__location_dir = location_dir  # TODO pass to Pulse for saving checkpoints in the same folder with the exp
         self.__data = data
         self.__run_data = run_data
         # self.__pulse = Pulse(exp.location_dir)
         # TODO Add event listener for saving intermediate results
-        # self.__pulse._
-
-    def __load_run_data(self):
-        pass  # TODO
 
     def __process_error(self, error):
         data = self.__data
-        data.error = err.get_error_str(error)
-        data.error_stack = err. get_error_stack_str(error)
+        data.error = get_error_str(error)
+        data.error_stack = get_error_stack_str(error)
 
     def _start(self):
         data = self.__data
@@ -96,7 +92,7 @@ class Pipeline(EventDispatcher):
         error = None
         try:
             # data.result = run_data.run_func(self.pulse, **run_data.params) # TODO Temporary None for pulse
-            data.result = run_data.run_func(None, **run_data.params)
+            data.result = run_data.run_func(None, **run_data.params)  # TODO Pass self.__pulse
             data.finished = True
             self._dispatch(PipelineEvent, PipelineEvent.FINISHED)
         except Exception as e:
@@ -107,5 +103,5 @@ class Pipeline(EventDispatcher):
             raise error
 
     def _destroy(self):
-        pass  # TODO
+        pass  # TODO Remove pulse, destroy components
         super()._destroy()

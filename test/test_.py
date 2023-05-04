@@ -3,14 +3,18 @@ import os
 import sys
 import shutil
 
-from xman.error import ArgumentsXManError
 
-xman_path = os.path.abspath(os.path.join('src'))
-if xman_path not in sys.path:
-    sys.path.insert(0, xman_path)
+# Just for adding xman's `src` to paths
+def test__xman_init():
+    xman_path = os.path.abspath(os.path.join('src'))
+    if xman_path not in sys.path:
+        sys.path.insert(0, xman_path)
+    assert True
+
 
 import xman
 from xman import util
+from xman.error import ArgumentsXManError
 
 
 def make_proj_from_nothing(proj_dir=None, name=None, descr=None):

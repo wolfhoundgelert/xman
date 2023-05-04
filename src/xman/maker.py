@@ -1,12 +1,14 @@
-import shutil
-
-from . import util, filesystem, platform
-from .error import AlreadyExistsXManError, ArgumentsXManError
-from .exp import Exp, ExpData
-from .struct import ExpStruct, ExpStructData
+from .error import AlreadyExistsXManError, ArgumentsXManError, IllegalOperationXManError
+from .pipeline import PipelineData, PipelineRunData, Pipeline
+from . import util
+from . import filesystem
+from . import platform
 
 
 def __get_data_class(obj_cls):
+    from .exp import Exp, ExpData
+    from .struct import ExpStructData, ExpStruct
+
     if obj_cls == Exp:
         return ExpData
     elif issubclass(obj_cls, ExpStruct):
@@ -16,8 +18,9 @@ def __get_data_class(obj_cls):
 
 
 def _get_child_class(parent_obj_or_cls):
-    from .group import ExpGroup
     from .proj import ExpProj
+    from .group import ExpGroup
+    from .exp import Exp
 
     cls = util.get_cls(parent_obj_or_cls)
     if cls == ExpProj:
@@ -59,3 +62,35 @@ def _make_new_child(parent, name, descr, child_num=None):
 def _recreate_child(parent, child_num):
     location_dir = filesystem._get_child_dir(parent, child_num)
     return _get_child_class(parent)(location_dir)
+
+
+def _destroy_child(child, confirm):
+    return filesystem._delete_struct(child, confirm)
+
+
+def _make_pipeline(exp, run_func, params, save=False):
+    if exp._data.pipeline is not None:
+        raise AlreadyExistsXManError(f"Exp `{exp}` already has a pipeline!")
+    exp._data.pipeline = PipelineData(False, False, None, None, None, None)
+    run_data = PipelineRunData(run_func, params)
+    if save:
+        filesystem._save_pipeline_run_data(run_data, exp.location_dir)
+    return Pipeline(exp.location_dir, exp._data.pipeline, run_data)
+
+
+def _recreate_pipeline(exp):
+    run_data = filesystem._load_pipeline_run_data(exp.location_dir)
+    if run_data is None:
+        raise IllegalOperationXManError(f"Can't recreate pipeline for exp `{exp}` - there's no `.run` file! "
+            f"Use `save=True` for `make_pipeline` method if you need to preserve `run_func` and `params` "
+            f"for other session.")
+    return Pipeline(exp.location_dir, exp._data.pipeline, run_data)
+
+
+def _destroy_pipeline(exp, pipeline, keep_data: bool):
+    filesystem._delete_pipeline_run_data(exp.location_dir)
+    if pipeline is not None:
+        pipeline._destroy()
+    if not keep_data:
+        exp._data.pipeline = None
+

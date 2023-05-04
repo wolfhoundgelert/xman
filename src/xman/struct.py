@@ -1,9 +1,10 @@
-from .event import EventDispatcher, Event
-from .tree import print_dir_tree
-from .error import NotExistsXManError, ArgumentsXManError, AlreadyExistsXManError
-from . import util, filesystem
+import os
 
-import time
+from .event import EventDispatcher, Event
+from .error import NotExistsXManError, ArgumentsXManError, AlreadyExistsXManError
+from . import util
+from . import filesystem
+from . import tree
 
 
 class ExpStructData:
@@ -87,7 +88,7 @@ class ExpStruct(EventDispatcher):
 
     def __init__(self, location_dir):
         super().__init__()
-        self.location_dir = location_dir
+        self.location_dir = os.path.normpath(location_dir)
         self.num = filesystem._get_dir_num(location_dir)
         self._data = None
         self.__time = None
@@ -156,7 +157,7 @@ class ExpStruct(EventDispatcher):
 
     def tree(self):
         self._update()
-        print_dir_tree(self.location_dir)
+        tree.print_dir_tree(self.location_dir)
 
     def info(self):
         self._update()

@@ -4,9 +4,9 @@ import time
 import re
 import cloudpickle as pickle  # dill as pickle, pickle
 
-from . import util, maker
 from .error import ArgumentsXManError, IllegalOperationXManError, NotImplementedXManError
-from .exp import Exp
+from . import util
+from . import maker
 
 __DATA_FILE = '.data'
 __TIME_FILE = '.time'
@@ -46,6 +46,7 @@ def __get_dir_nums_by_pattern(location_dir, dir_pattern):
 
 
 def _dir_prefix(struct_obj_or_cls):
+    from .exp import Exp
     from .group import ExpGroup
     from .proj import ExpProj
 
@@ -104,16 +105,33 @@ def _save_data_and_time(data, location_dir) -> float:
     return t
 
 
-def _load_fresh_data_and_time(location_dir, last_data, last_time) -> bool:
+def _load_fresh_data_and_time(location_dir, last_data, last_time):
     t = __load(__get_time_path(location_dir))
     if last_time != t:
         return __load(__get_data_path(location_dir)), t
     return last_data, last_time
 
 
-def _destroy_struct(struct, confirm=True):
+def _delete_struct(struct, confirm=True):
     struct_dir = struct.location_dir
     if not confirm or util.response(f"ATTENTION! Remove `{struct}` and its `{struct_dir}` dir with all its content?"):
         shutil.rmtree(struct_dir)
         return True
     return False
+
+
+def _save_pipeline_run_data(run_data, location_dir):
+    __save(run_data, __get_run_path(location_dir))
+
+
+def _load_pipeline_run_data(location_dir):
+    p = __get_run_path(location_dir)
+    if os.path.exists(p):
+        return __load(p)
+    return None
+
+
+def _delete_pipeline_run_data(location_dir):
+    p = __get_run_path(location_dir)
+    if os.path.exists(p):
+        os.remove(p)

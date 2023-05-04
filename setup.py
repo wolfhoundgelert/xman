@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='xman',
-    version='0.0.7',
+    version='0.0.8',
     packages=['xman'],
     package_dir={'': 'src'},
     url='https://github.com/wolfhoundgelert/xman',

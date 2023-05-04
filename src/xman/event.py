@@ -1,8 +1,8 @@
 from inspect import signature
 from typing import Type
 
-from . import util
 from .error import WasDestroyedXManError
+from . import util
 
 
 class Event:  # Generic event, can't be used as is - other `xman` events should inherit from this one.
