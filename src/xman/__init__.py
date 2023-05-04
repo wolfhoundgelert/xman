@@ -1,9 +1,9 @@
 from .proj import ExpProj
 from .tree import print_dir_tree
-from . import platform
+from . import platform, maker
 
 
-__version__ = '0.0.0'  #TODO support auto setting from setup.py
+__version__ = '0.0.7'  #TODO support auto setting from setup.py
 
 
 proj: ExpProj = None
@@ -14,20 +14,22 @@ def dir_tree(target_dir, files_limit=10, files_first=True, sort_numbers=True):
 
 
 def make_proj(location_dir: str, name: str, descr: str) -> ExpProj:
+    maker._make_and_save_data(ExpProj, location_dir, name, descr)
     global proj
-    proj = ExpProj(location_dir, name, descr)
+    proj = ExpProj(location_dir)
     return proj
 
 
 def load_proj(location_dir: str) -> ExpProj:
     global proj
-    proj = ExpProj(location_dir, None, None)
-    if not platform.check_forked_folders(proj):
-        return None
-    for group in proj.groups():
-        if not platform.check_forked_folders(group):
+    proj = ExpProj(location_dir)
+    if platform.is_colab:
+        if not platform.check_colab_forked_folders(proj):
             return None
-    return True
+        for group in proj.groups():
+            if not platform.check_colab_forked_folders(group):
+                return None
+    return proj
 
 
 # TODO xman.exp(1.1) direct call without project

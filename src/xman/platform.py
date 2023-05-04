@@ -1,13 +1,14 @@
-from . import util
 import sys
 import os
 import re
 
+from . import util, maker
+from .error import PlatformXManError
 
 is_colab = 'google.colab' in sys.modules
 
 
-def check_forked_folders(exp_struct_box) -> bool:
+def check_colab_forked_folders(exp_struct_box) -> bool:
     """
     Issue with making folders under different Colab accounts in one Google Drive shared folder produces folders with
     duplicated numbers (e.g. '`group1`' and '`group1 (1)`', '`exp2`' and '`exp2 (1)`'. It happens because there's a
@@ -23,8 +24,8 @@ def check_forked_folders(exp_struct_box) -> bool:
         (bool): `False` if forked folders were found and the response on the input was `No`, `True` otherwise.
     """
     if not is_colab:
-        return True
-    dir_prefix = exp_struct_box._get_child_class()._dir_prefix()
+        raise PlatformXManError(f"Actual only for Google Colab platform!")
+    dir_prefix = maker._dir_prefix(exp_struct_box)
     regex = fr'^{dir_prefix}\d+ \(\d+\)$'
     folders = []
     for entry in os.scandir(exp_struct_box.location_dir):

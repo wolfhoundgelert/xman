@@ -1,23 +1,17 @@
-from .error import NothingToDoXManError, NotImplementedDoXManError
-from .struct import ExpStructData, ExpStruct
+from .error import NothingToDoXManError
 from .structbox import ExpStructBox
 from .group import ExpGroup
 from .exp import Exp
-from . import util, platform
+from . import util
 
 
 class ExpProj(ExpStructBox):
 
-    @staticmethod
-    def _dir_prefix(): raise NotImplementedDoXManError(f"Isn't supported by logic!")
-
-    def __init__(self, location_dir, name, descr):
+    def __init__(self, location_dir):
         self.__updating = False
-        super().__init__(location_dir, name, descr)
+        super().__init__(location_dir)
 
     def __str__(self): return f"Proj [{self._status}] {self._data.name} - {self._data.descr}"
-
-    def _get_child_class(self): return ExpGroup
 
     def _update(self):
         if self.__updating:
@@ -31,9 +25,7 @@ class ExpProj(ExpStructBox):
 
     def has_group(self, num_or_name): return self._has_child_num_or_name(num_or_name)
 
-    def make_group(self, name, descr, num=None) -> ExpGroup:
-        group = self._make_child(name, descr, num)
-        return group if platform.check_forked_folders(self) else None
+    def make_group(self, name, descr, num=None) -> ExpGroup: return self._make_child(name, descr, num)
 
     def destroy_group(self, num_or_name): return self._destroy_child(num_or_name)
 
@@ -48,7 +40,7 @@ class ExpProj(ExpStructBox):
     def make_exp(self, group_num_or_name, name, descr, num=None) -> Exp:
         group = self.group(group_num_or_name)
         exp = group.make_exp(name, descr, num)
-        return exp if platform.check_forked_folders(group) else None
+        return exp
 
     def destroy_exp(self, dot_num: str):
         group_num, exp_num = util.parse_group_and_exp_num(dot_num)

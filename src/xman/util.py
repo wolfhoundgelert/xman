@@ -1,45 +1,22 @@
 import os
 import re
-import cloudpickle as pickle  # dill as pickle, pickle
 
-from xman.error import OverrideXManError, ArgumentsXManError, IllegalOperationXManError
+from xman.error import OverrideXManError, ArgumentsXManError
 
 SECOND = 1
 MINUTE = 60 * SECOND
 HOUR = 60 * MINUTE
 DAY = 24 * HOUR
 
-DOT_NUM_REGEX = r'^([1-9]\d*)\.([1-9]\d*)$'
+__DOT_NUM_REGEX = r'^([1-9]\d*)\.([1-9]\d*)$'
 
 TAB = '    '
 
 
 def tab(text, num=1):
-    tab = TAB * num
-    text = text.replace('\n', f'\n{tab}')
-    return f"{tab}{text}"
-
-
-def make_dir(dir_path):
-    if os.path.exists(dir_path):
-        if not os.path.isdir(dir_path):
-            raise ArgumentsXManError(f"`{dir_path}` is not a directory!")
-        elif len(os.listdir(dir_path)) > 0:
-            raise IllegalOperationXManError(f"Directory `{dir_path}` should be empty!")
-    else:
-        os.mkdir(dir_path)
-
-
-def save(obj, location_dir, fname):
-    fp = os.path.join(location_dir, fname)
-    with open(fp, 'wb') as f:
-        pickle.dump(obj, f)
-
-
-def load(location_dir, fname):
-    fp = os.path.join(location_dir, fname)
-    with open(fp, 'rb') as f:
-        return pickle.load(f)
+    t = TAB * num
+    text = text.replace('\n', f'\n{t}')
+    return f"{t}{text}"
 
 
 def check_has_value_in_class_public_constants(value, instance_or_cls):
@@ -68,27 +45,8 @@ def check_num(num, allow_none: bool):
     raise ArgumentsXManError(f"num={num} should be an integer that greater or equal 1!")
 
 
-def get_dir_num(target_dir):
-    regex = fr'[1-9][0-9]*$'
-    match = re.search(regex, target_dir)
-    return int(match.group()) if match else None
-
-
-def get_dir_nums_by_pattern(location_dir, dir_pattern):
-    regex = fr'^{dir_pattern}([1-9][0-9]*)$'
-    names = os.listdir(location_dir)
-    dirs = [x for x in names if os.path.isdir(os.path.join(location_dir, x))]
-    nums = []
-    for it in dirs:
-        match = re.search(regex, it)
-        if match:
-            nums.append(int(match.group(1)))
-    nums.sort()
-    return nums
-
-
 def parse_group_and_exp_num(dot_num: str):
-    match = re.match(DOT_NUM_REGEX, dot_num)
+    match = re.match(__DOT_NUM_REGEX, dot_num)
     if match is None:
         raise ArgumentsXManError(f"`dot_num` should be a string like `1.1`, `2.3`, etc, but `{dot_num}` was given")
     group_num, exp_num = int(match[1]), int(match[2])
@@ -98,6 +56,11 @@ def parse_group_and_exp_num(dot_num: str):
 def response(question):
     r = input(f"{question} (y/n) ")
     return r.lower() == "y"
+
+
+def get_cls(target_obj_or_cls):
+    t = type(target_obj_or_cls)
+    return target_obj_or_cls if t == type else t
 
 
 def override_it(): raise OverrideXManError("Should be overriden!")

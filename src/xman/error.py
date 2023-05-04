@@ -44,5 +44,9 @@ class NothingToDoXManError(XManError):
     pass
 
 
-class NotImplementedDoXManError(XManError):
+class NotImplementedXManError(XManError):
+    pass
+
+
+class PlatformXManError(XManError):
     pass

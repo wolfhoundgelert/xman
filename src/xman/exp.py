@@ -29,23 +29,15 @@ class ExpConfig:
 
 class Exp(ExpStruct):
 
-    __RUN_FILE = '.run'
-
-    @staticmethod
-    def _dir_prefix(): return 'exp'
-
-    def __init__(self, location_dir, name, descr):
+    def __init__(self, location_dir):
         self.__state = None
         self.__pipeline = None
         self.__updating = False
-        super().__init__(location_dir, name, descr)
+        super().__init__(location_dir)
 
     def __str__(self):
         state = f": {self._state}" if self._status == ExpStructStatus.IN_PROGRESS else ''
         return f"Exp {self.num} [{self._status}{state}] {self._data.name} - {self._data.descr}"
-
-    @property
-    def _data_class(self): return ExpData
 
     @property
     def _state(self): return self.__state
@@ -129,12 +121,13 @@ class Exp(ExpStruct):
         self._update()
         if self._data.manual_result is None:
             raise NotExistsXManError(f"There's no manual result in exp `{self}`!")
-        if not confirm or util.response(f"ACHTUNG! Remove the manual result of exp `{self}`?"):
+        if not confirm or util.response(f"ATTENTION! Remove the manual result of exp `{self}`?"):
             self._data.manual_result = None
             self._save_and_update()
             return self
         return None
 
+    # TODO Implement in maker.py
     def make_pipeline(self, run_func, params, save=False):
         self._update()
         if self._data.pipeline is not None:
@@ -149,11 +142,12 @@ class Exp(ExpStruct):
         self._save_and_update()
         return self
 
+    # TODO Implement in maker.py
     def destroy_pipeline(self, confirm=True):
         self._update()
         if self._data.pipeline is None:
             raise NotExistsXManError(f"There's no pipeline in exp `{self}`!")
-        if not confirm or util.response(f"ACHTUNG! Remove the pipeline of exp `{self}`?"):
+        if not confirm or util.response(f"ATTENTION! Remove the pipeline of exp `{self}`?"):
             if self.__pipeline is not None:
                 self.__pipeline._remove_listener(PipelineEvent, self._PipelineEvent_listener)
                 self.__pipeline._destroy()

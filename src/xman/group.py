@@ -2,21 +2,15 @@ from .error import NothingToDoXManError
 from .struct import ExpStructStatus
 from .structbox import ExpStructBox
 from .exp import Exp
-from . import platform
 
 
 class ExpGroup(ExpStructBox):
 
-    @staticmethod
-    def _dir_prefix(): return 'group'
-
-    def __init__(self, location_dir, name, descr):
+    def __init__(self, location_dir):
         self.__updating = False
-        super().__init__(location_dir, name, descr)
+        super().__init__(location_dir)
 
     def __str__(self): return f"Group {self.num} [{self._status}] {self._data.name} - {self._data.descr}"
-
-    def _get_child_class(self): return Exp
 
     def _update(self):
         if self.__updating:
@@ -30,13 +24,9 @@ class ExpGroup(ExpStructBox):
 
     def has_exp(self, num_or_name): return self._has_child_num_or_name(num_or_name)
 
-    def make_exp(self, name, descr, num=None) -> Exp:
-        exp = self._make_child(name, descr, num)
-        return exp if platform.check_forked_folders(self) else None
+    def make_exp(self, name, descr, num=None) -> Exp: return self._make_child(name, descr, num)
 
-    def destroy_exp(self, num_or_name):
-        exp = self._destroy_child(num_or_name)
-        return exp
+    def destroy_exp(self, num_or_name): return self._destroy_child(num_or_name)
 
     def exp(self, num_or_name) -> Exp: return self._get_child_by_num_or_name(num_or_name)
 

@@ -1,8 +1,5 @@
-import os
-import shutil
-
-from . import util
-from .error import ArgumentsXManError, NotExistsXManError, AlreadyExistsXManError
+from . import util, maker, filesystem
+from .error import ArgumentsXManError, NotExistsXManError
 from .struct import ExpStructEvent, ExpStruct, ExpStructStatus
 
 
@@ -14,11 +11,11 @@ class ExpStructBoxEvent(ExpStructEvent):
 
 class ExpStructBox(ExpStruct):
 
-    def __init__(self, location_dir, name, descr):
+    def __init__(self, location_dir):
         self.__num_to_child = {}
         self.__name_to_child = {}
         self.__updating = False
-        super().__init__(location_dir, name, descr)
+        super().__init__(location_dir)
 
     def __children_has_status(self, status_or_list, all_children: bool):
         sl = status_or_list if type(status_or_list) is list else [status_or_list]
@@ -46,11 +43,6 @@ class ExpStructBox(ExpStruct):
         if isinstance(child, ExpStructBox):
             child._remove_listener(ExpStructBoxEvent, self._ExpStructBoxEvent_listener)
         child._destroy()
-
-    def _get_child_class(self): util.override_it()
-
-    def _get_child_dir(self, num):
-        return os.path.join(self.location_dir, self._get_child_class()._dir_prefix() + str(num))
 
     def _process_auto_status(self):
         resolution = ExpStruct._AUTO_STATUS_RESOLUTION
@@ -81,13 +73,10 @@ class ExpStructBox(ExpStruct):
             return
         self.__updating = True
         super()._update()
-        child_class = self._get_child_class()
-        child_dir_prefix = child_class._dir_prefix()
-        nums = util.get_dir_nums_by_pattern(self.location_dir, child_dir_prefix)
+        nums = filesystem._get_children_nums(self)
         for num in nums:
             if num not in self.__num_to_child:
-                location_dir = self._get_child_dir(num)
-                child = child_class(location_dir, None, None)
+                child = maker._recreate_child(self, num)
                 self.__add(child)
         for child in self._children():
             if child.num not in nums:
@@ -119,35 +108,19 @@ class ExpStructBox(ExpStruct):
             return self.__name_to_child[num_or_name]
         raise NotExistsXManError(f"There's no item with num or name `{num_or_name}`!")
 
-    def _get_child_highest_num(self):
-        self._update()
-        nums = self.__num_to_child.keys()
-        return max(nums) if len(nums) else 0
-
     def _make_child(self, name, descr, num=None) -> ExpStruct:
         self._update()
-        util.check_num(num, True)
-        if self._has_child_num_or_name(name):
-            raise AlreadyExistsXManError(f"A child with the name `{name}` already exists!")
-        if num is not None:
-            if self._has_child_num_or_name(num):
-                raise AlreadyExistsXManError(f"A child with the num `{num}` already exists!")
-        else:
-            num = self._get_child_highest_num() + 1
-        child_dir = self._get_child_dir(num)
-        child_class = self._get_child_class()
-        child = child_class(child_dir, name, descr)
-        self.__add(child)
-        self._dispatch(ExpStructBoxEvent, ExpStructBoxEvent.MAKE_CHILD)
+        child = maker._make_new_child(self, name, descr, num)
+        if child is not None:
+            self.__add(child)
+            self._dispatch(ExpStructBoxEvent, ExpStructBoxEvent.MAKE_CHILD)
         return child
 
     def _destroy_child(self, num_or_name, confirm=True):
         self._update()
         child = self._get_child_by_num_or_name(num_or_name)
-        child_dir = self._get_child_dir(child.num)
-        if not confirm or util.response(f"ACHTUNG! Remove `{child}` and its `{child_dir}` dir with all its content?"):
+        if filesystem._destroy_struct(child, confirm):
             self.__remove(child)
-            shutil.rmtree(child_dir)
             self._dispatch(ExpStructBoxEvent, ExpStructBoxEvent.DESTROY_CHIlD)
             return child
         return None

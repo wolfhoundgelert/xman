@@ -1,7 +1,7 @@
 from .event import EventDispatcher, Event
 from .tree import print_dir_tree
 from .error import NotExistsXManError, ArgumentsXManError, AlreadyExistsXManError
-from . import util
+from . import util, filesystem
 
 import time
 
@@ -83,34 +83,19 @@ class ExpStructEvent(Event):
 
 class ExpStruct(EventDispatcher):
 
-    _DATA_FILE = '.data'
-    __TIME_FILE = '.time'
-
     _AUTO_STATUS_RESOLUTION = '-= auto status =-'
 
-    @staticmethod
-    def _dir_prefix(): util.override_it()
-
-    def __init__(self, location_dir, name, descr):
+    def __init__(self, location_dir):
         super().__init__()
         self.location_dir = location_dir
-        self.num = util.get_dir_num(location_dir)
-        self.__status = None
+        self.num = filesystem._get_dir_num(location_dir)
+        self._data = None
         self.__time = None
+        self.__status = None
         self.__updating = False
-        if name is not None and descr is not None:  # make a new data
-            util.make_dir(location_dir)
-            self._data = self._data_class(name, descr)
-            self._save_and_update()
-        elif name is None and descr is None:
-            self._update()
-        else:
-            raise ArgumentsXManError(f"`name` and `descr` should be both None or not None at the same time!")
+        self._update()
 
     def __str__(self): util.override_it()
-
-    @property
-    def _data_class(self): return ExpStructData
 
     @property
     def _status(self): return self.__status
@@ -134,19 +119,14 @@ class ExpStruct(EventDispatcher):
         if self.__updating:
             return
         self.__updating = True
-        t = util.load(self.location_dir, ExpStruct.__TIME_FILE)
-        if self.__time != t:
-            self.__time = t
-            self._data = util.load(self.location_dir, ExpStruct._DATA_FILE)
+        self._data, self.__time = filesystem._load_fresh_data_and_time(self.location_dir, self._data, self.__time)
         # Status should be updated at the end of the inherited updating hierarchy
         if type(self) == ExpStruct:
             self._update_status()
         self.__updating = False
 
     def _save_and_update(self):
-        util.save(self._data, self.location_dir, ExpStruct._DATA_FILE)
-        self.__time = time.time()
-        util.save(self.__time, self.location_dir, ExpStruct.__TIME_FILE)
+        self.__time = filesystem._save_data_and_time(self._data, self.location_dir)
         self._update()
 
     def _info(self):
@@ -197,7 +177,7 @@ class ExpStruct(EventDispatcher):
         self._update()
         if not self._status.manual:
             raise NotExistsXManError(f"There's no manual status in exp `{self}`")
-        if not confirm or util.response(f"ACHTUNG! Remove the manual status `{self._data.manual_status}` of exp `{self}`?"):
+        if not confirm or util.response(f"ATTENTION! Remove the manual status `{self._data.manual_status}` of exp `{self}`?"):
             self._data.manual_status = None
             self._data.manual_status_resolution = None
             self._save_and_update()

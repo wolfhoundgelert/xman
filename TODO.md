@@ -61,8 +61,6 @@
 
 - [PRIO] Implement `_destroy` for the all inheritance chain of ExpStruct
 
-- [PRIO] Make data, then instances of ExpStruct. ExpStruct._make_data(name, descr): make and save
-
 - [PRIO] How to parallel a huge grid-search (gs) exp? gs has number of experiments, but they all have the same env, so don't need to save each env separately. Does a group assume having the same env for all its children (exps)? 
 
 - [PRIO] [!!!] Each exp takes ~ 2GB of disk size. Need to investigate how to reduce memory consumption. Maybe save separately proj-env, group-env, exp-env.
@@ -78,8 +76,6 @@
 - [LOW] change exp or group num
 
 - [LOW] Move exp into another group
-
-- [LOW] Separate ExpStruct and ExpStructBox (struct.py and structbox.py)
 
 - [???] Add possibility to make manual `force` update, save, load when we got stuck for somehow? Need to investigate:
   ```
