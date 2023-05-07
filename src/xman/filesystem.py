@@ -8,27 +8,21 @@ from .error import ArgumentsXManError, IllegalOperationXManError, NotImplemented
 from . import util
 from . import maker
 
-__DATA_FILE = '.data'
-__TIME_FILE = '.time'
-__RUN_FILE = '.run'
 
-__EXP_DIR_PREFIX = 'exp'
-__GROUP_DIR_PREFIX = 'group'
-
-__DIR_NUM_REGEX = fr'[1-9][0-9]*$'
+def __get_data_path(location_dir): return os.path.join(location_dir, '.data')
 
 
-def __get_data_path(location_dir): return os.path.join(location_dir, __DATA_FILE)
+def __get_time_path(location_dir): return os.path.join(location_dir, '.time')
 
 
-def __get_time_path(location_dir): return os.path.join(location_dir, __TIME_FILE)
+def __get_run_path(location_dir): return os.path.join(location_dir, '.run')
 
 
-def __get_run_path(location_dir): return os.path.join(location_dir, __RUN_FILE)
+def __get_checkpoint_path(location_dir): return os.path.join(location_dir, '.checkpoint')
 
 
 def _get_dir_num(target_dir):
-    match = re.search(__DIR_NUM_REGEX, target_dir)
+    match = re.search(fr'[1-9][0-9]*$', target_dir)
     return int(match.group()) if match else None
 
 
@@ -52,17 +46,19 @@ def _dir_prefix(struct_obj_or_cls):
 
     cls = util.get_cls(struct_obj_or_cls)
     if cls == Exp:
-        return __EXP_DIR_PREFIX
+        return 'exp'
     elif cls == ExpGroup:
-        return __GROUP_DIR_PREFIX
+        return 'group'
     elif cls == ExpProj:
         raise NotImplementedXManError(f"Isn't supported by logic!")
     else:
-        raise ArgumentsXManError(f"`struct_obj_or_cls` should be an instance of/or a final class inheriting ExpStruct!")
+        raise ArgumentsXManError(
+            f"`struct_obj_or_cls` should be an instance of/or a final class inheriting ExpStruct!")
 
 
 def _get_child_dir(parent, child_num):
-    return os.path.join(parent.location_dir, _dir_prefix(maker._get_child_class(parent)) + str(child_num))
+    return os.path.join(parent.location_dir,
+                        _dir_prefix(maker._get_child_class(parent)) + str(child_num))
 
 
 def _get_children_nums(parent):
@@ -112,12 +108,7 @@ def _load_fresh_data_and_time(location_dir, last_data, last_time):
     return last_data, last_time
 
 
-def _delete_struct(struct, confirm=True):
-    struct_dir = struct.location_dir
-    if not confirm or util.response(f"ATTENTION! Remove `{struct}` and its `{struct_dir}` dir with all its content?"):
-        shutil.rmtree(struct_dir)
-        return True
-    return False
+def _delete_dir(location_dir): shutil.rmtree(location_dir, ignore_errors=True)
 
 
 def _save_pipeline_run_data(run_data, location_dir):
@@ -133,5 +124,22 @@ def _load_pipeline_run_data(location_dir):
 
 def _delete_pipeline_run_data(location_dir):
     p = __get_run_path(location_dir)
+    if os.path.exists(p):
+        os.remove(p)
+
+
+def _save_checkpoint(checkpoint, location_dir):
+    __save(checkpoint, __get_checkpoint_path(location_dir))
+
+
+def _load_checkpoint(location_dir):
+    p = __get_checkpoint_path(location_dir)
+    if os.path.exists(p):
+        return __load(p)
+    return None
+
+
+def _delete_checkpoint(location_dir):
+    p = __get_checkpoint_path(location_dir)
     if os.path.exists(p):
         os.remove(p)

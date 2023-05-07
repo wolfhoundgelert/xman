@@ -1,6 +1,6 @@
 import re
 
-from xman.error import OverrideXManError, ArgumentsXManError
+from .error import OverrideXManError, ArgumentsXManError
 
 SECOND = 1
 MINUTE = 60 * SECOND
@@ -39,11 +39,6 @@ def parse_group_and_exp_num(dot_num: str):
     return group_num, exp_num
 
 
-def response(question):
-    r = input(f"{question} (y/n) ")
-    return r.lower() == "y"
-
-
 def get_cls(target_obj_or_cls):
     t = type(target_obj_or_cls)
     return target_obj_or_cls if t == type else t
@@ -55,7 +50,6 @@ def check_has_value_in_class_public_constants(value, instance_or_cls):
                  and not v.startswith(('_', '__'))]
     if value not in constants:
         raise ArgumentsXManError(f"Wrong value `{value}`, should be one of {constants}")
-
 
 
 def override_it(): raise OverrideXManError("Should be overriden!")

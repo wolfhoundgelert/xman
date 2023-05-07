@@ -1,9 +1,10 @@
 import time
+from typing import Any
 
 from .error import NotExistsXManError, IllegalOperationXManError
 from .pipeline import PipelineData, PipelineEvent
 from .struct import ExpStructData, ExpStruct, ExpStructStatus
-from . import util
+from . import util, confirm
 from . import maker
 
 
@@ -40,15 +41,35 @@ class Exp(ExpStruct):
         state = f": {self._state}" if self._status == ExpStructStatus.IN_PROGRESS else ''
         return f"Exp {self.num} [{self._status}{state}] {self._data.name} - {self._data.descr}"
 
-    def __destroy_pipeline(self, keep_data: bool):
-        maker._destroy_pipeline(self, self.__pipeline, keep_data)
+    def __check_not_manual(self):
+        if self._manual:
+            raise IllegalOperationXManError(f"Illegal operation for manual experiments! "
+                f"Delete manual status first: `delete_manual_status()`.")
+
+    def __check_not_active(self):
+        if self._state == ExpState.ACTIVE:
+            raise IllegalOperationXManError(f"Can't proceed while the exp is active "
+                                            f"(has a pipeline that is executing right now!")
+        if not self._manual and self._status == ExpStructStatus.IN_PROGRESS:
+            if not util.response(f"Exp is in `{self._state}` state. "
+                                 f"Are you sure you want to proceed?"):
+                return False
+        return True
+
+    def __destroy_pipeline(self, keep_data: bool, save_and_update):
         if self.__pipeline is not None:
-            self.__pipeline._remove_listener(PipelineEvent, self._PipelineEvent_listener)
-            self.__pipeline == None
-        self._save_and_update()
+            self.__pipeline._remove_listener(PipelineEvent, self.__pipeline_listener)
+        maker._destroy_pipeline(self, self.__pipeline, keep_data)
+        self.__pipeline = None
+        if save_and_update:
+            self._save_and_update()
 
     @property
     def _state(self): return self.__state
+
+    @property
+    def _idle(self): return self._manual or self._status.status != ExpStructStatus.IN_PROGRESS \
+        or self._state == ExpState.IDLE
 
     def _process_auto_status(self):
         resolution = ExpStruct._AUTO_STATUS_RESOLUTION
@@ -67,8 +88,7 @@ class Exp(ExpStruct):
         return status, resolution
 
     def _update_state(self):
-        manual = self._data.manual_status is not None
-        if manual:
+        if self._manual:
             state = ExpState.UNKNOWN
         elif self._status != ExpStructStatus.IN_PROGRESS:
             state = ExpState.IDLE
@@ -84,11 +104,14 @@ class Exp(ExpStruct):
                 if average < util.SECOND:
                     state = ExpState.ACTIVE if elapsed < 10 * util.SECOND else ExpState.IDLE
                 elif average < util.MINUTE:
-                    state = ExpState.ACTIVE if elapsed < max(1.5 * average, 10 * util.SECOND) else ExpState.IDLE
+                    state = ExpState.ACTIVE if elapsed < max(1.5 * average, 10 * util.SECOND) \
+                        else ExpState.IDLE
                 elif average < util.HOUR:
-                    state = ExpState.ACTIVE if elapsed < max(1.1 * average, 2 * util.MINUTE) else ExpState.IDLE
+                    state = ExpState.ACTIVE if elapsed < max(1.1 * average, 2 * util.MINUTE) \
+                        else ExpState.IDLE
                 else:
-                    state = ExpState.ACTIVE if elapsed < max(1.05 * average, 5 * util.MINUTE) else ExpState.IDLE
+                    state = ExpState.ACTIVE if elapsed < max(1.05 * average, 5 * util.MINUTE) \
+                        else ExpState.IDLE
             else:
                 if elapsed < ExpConfig.ACTIVE_FROM_START:
                     state = ExpState.ACTIVE
@@ -108,28 +131,39 @@ class Exp(ExpStruct):
             self._update_state()
         self.__updating = False
 
+    def _set_manual_status(self, status: str, resolution: str):
+        if not self.__check_not_active():
+            return None
+        super()._set_manual_status(status, resolution)
+
     def _info(self):
         text = super()._info()
         if self.result is not None:
             text += util.tab(f"\nResult:\n{util.tab(str(self.result))}")
         return text
 
-    def _PipelineEvent_listener(self, event: PipelineEvent): self._save_and_update()
+    def _destroy(self):
+        if not self._idle:
+            raise IllegalOperationXManError(f"Exp `{self}` might be in progress right now!")
+        self.__destroy_pipeline(False, False)
+        self._data.manual_result = None
+        super()._destroy()
 
-    def set_manual_result(self, result, confirm=True):
+    def set_manual_result(self, result, need_confirm=True):
         self._update()
         if self._data.manual_result is not None:
-            if confirm and not util.response(f"Do you want to rewrite the previous result of the exp `{self}`?"):
+            if not confirm._request(need_confirm,
+                    f"Do you want to rewrite the previous result of the exp `{self}`?"):
                 return None
         self._data.manual_result = result
         self._save_and_update()
         return self
 
-    def delete_manual_result(self, confirm=True):
+    def delete_manual_result(self, need_confirm=True):
         self._update()
         if self._data.manual_result is None:
             raise NotExistsXManError(f"There's no manual result in exp `{self}`!")
-        if not confirm or util.response(f"ATTENTION! Remove the manual result of exp `{self}`?"):
+        if confirm._request(need_confirm, f"ATTENTION! Remove the manual result of exp `{self}`?"):
             self._data.manual_result = None
             self._save_and_update()
             return self
@@ -137,30 +171,34 @@ class Exp(ExpStruct):
 
     def make_pipeline(self, run_func, params, save=False):
         self._update()
+        self.__check_not_manual()
         self.__pipeline = maker._make_pipeline(self, run_func, params, save)
-        self.__pipeline._add_listener(PipelineEvent, self._PipelineEvent_listener)
+        self.__pipeline._add_listener(PipelineEvent, self.__pipeline_listener)
         self._save_and_update()
         return self
 
-    def destroy_pipeline(self, confirm=True):
+    def destroy_pipeline(self, need_confirm=True):
         self._update()
-        # TODO Check if not in progress and ask to proceed if it is
+        if not self.__check_not_active():
+            return None
         if self._data.pipeline is None:
             raise NotExistsXManError(f"There's no pipeline in exp `{self}`!")
-        if not confirm or util.response(f"ATTENTION! Remove the pipeline of exp `{self}`?"):
-            self.__destroy_pipeline(False)
+        if confirm._request(need_confirm, f"ATTENTION! Remove the pipeline of exp `{self}`?"):
+            self.__destroy_pipeline(False, True)
             return self
         return None
 
     def start(self):
         self._update()
+        self.__check_not_manual()
         pipeline_data = self._data.pipeline
         if pipeline_data is None:
             raise NotExistsXManError(f"`{self}` doesn't have a pipeline!")
         if pipeline_data.error:
             raise IllegalOperationXManError(f"`{self}` has an error during the previous start!")
         if pipeline_data.started:
-            raise IllegalOperationXManError(f"`{self}` was already started and the current status is `{self._status}`!")
+            raise IllegalOperationXManError(
+                f"`{self}` was already started and the current status is `{self._status}`!")
         if pipeline_data.finished:
             raise IllegalOperationXManError(f"`{self}` was already finished!")
         if self.__pipeline is None:
@@ -168,21 +206,31 @@ class Exp(ExpStruct):
         try:
             self.__pipeline._start()
         finally:
-            self.__destroy_pipeline(True)
-
-    # TODO Need to check that exp isn't run from another acc, check other places
-    def success(self, resolution: str):
-        self._update()
-        self.set_manual_status(ExpStructStatus.SUCCESS, resolution)
+            self.__destroy_pipeline(True, True)
         return self
 
-    def fail(self, resolution: str):
+    def success(self, resolution: str) -> 'Exp':
         self._update()
-        self.set_manual_status(ExpStructStatus.FAIL, resolution)
+        self._set_manual_status(ExpStructStatus.SUCCESS, resolution)
+        return self
+
+    def fail(self, resolution: str) -> 'Exp':
+        self._update()
+        self._set_manual_status(ExpStructStatus.FAIL, resolution)
         return self
 
     @property
-    def result(self):
+    def state(self) -> str:
+        self._update()
+        return self._state
+
+    @property
+    def idle(self) -> bool:
+        self._update()
+        return self._idle
+
+    @property
+    def result(self) -> Any:
         self._update()
         if self._data.manual_result is not None:
             return self._data.manual_result
@@ -190,7 +238,13 @@ class Exp(ExpStruct):
             return self._data.pipeline.result
         return None
 
+    def error_stack(self):
+        print(self._data.pipeline.error_stack if self._data.pipeline else None)
+
     @property
-    def error(self):
+    def error(self) -> str:
         self._update()
         return self._data.pipeline.error if self._data.pipeline else None
+
+    def __pipeline_listener(self, event: PipelineEvent): self._save_and_update()
+

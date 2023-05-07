@@ -1,17 +1,14 @@
 ### CURRENT:
 
-- Check in progress status on destroy pipeline
+- [PRIO] Add destructors for structures and over classes (check all files)
 
-- Manual statuses (set_manual_status, success, fail) should check if there's no pipeline
+- [PRIO] Remove self._update() in the underscore-methods (ExpStruct, ExpStructBox). Combine with <dsfdswerewfder32423fdsadf>
 
-- Pulse
+- [PRIO] <dsfdswerewfder32423fdsadf> All public methods should be with self._update() at the beginning (and at the end if it's needed), then they should call the same methods with underscore (these methods don't have self._update()). E.g. exp.set_manual_status() calls self._update(), then self._set_manual_status(). Internal logic works only with underscored methods without self._update()-s (if it's possible).
 
-- Timestamps
+- [PRIO] Start exp with IN_PROGRESS status and IDLE type (was started but died somehow), use intermediate checkpoints.
 
-- Checkpoints (intermediate results)
-   [PRIO] [!!!] Think about not saving the whole experiment (huge storage memory consumption and low speed of save-load operations), but provide a mechanic for saving checkpoints for long exp-s.
-
-- Pipeline._destroy()
+- [PRIO] Add popular methods (`exp('1.1')` and others) to the xman root: `xman.exp('1.1')` - now it's only `xman.proj.exp('1.1')`
 
 
 ### BUGS:
@@ -22,6 +19,57 @@
 ### TODO:
 
 - [PRIO] [!!!] README.md
+
+
+
+
+### BACKLOG:
+
+- [LOW] Save and load config for `config.py` under `.config` file for different levels: proj, group, exp
+
+- [PRIO] How to parallel a huge grid-search (gs) exp? gs has number of experiments, but they all have the same env, so don't need to save each env separately. Does a group assume having the same env for all its children (exps)? 
+
+- [PRIO] [!!!] Each exp takes ~ 2GB of disk size. Need to investigate how to reduce memory consumption. Maybe save separately proj-env, group-env, exp-env.
+
+- [LOW] Implement filter: `xman.filter(...what to filter...)` - see `filter.py`
+
+- [LOW] Save data classes in json format for human reading availability
+
+- [???] XManError.__process_stack: Limit stack len via a config tb.format_stack()[:STACK_LIMIT]
+
+- [LOW] change exp or group num
+
+- [LOW] Move exp into another group
+
+- [???] Add possibility to make manual `force` update, save, load when we got stuck for somehow? Need to investigate:
+  ```
+  Proj [ERROR] hw_3-1 - https://stepik.org/lesson/940785/step/1?unit=946946
+  
+      Group 1 [ERROR] Tokenization - Try several tokenization technics
+          Exp 1 [TODO] Punctuation - Remove punctuation
+  ```
+
+- [???] Add printable info about timings on exp execution, savings, loadings
+- 
+- [???] Set `.lock` file during writing, then remove. If there's an attempt to read during an exp was locked, set a series of timeouts, then raise an error that exp wasn't unlocked for somehow (too long writing time or some error with removing `.lock` file after writing). Error: "pickle data was truncated", then group has an error status and can't update for actual status (active in the other notebook and account)
+
+- [LOW] Add printable info on start, save, load, etc...
+
+- [LOW] Possibility to add custom `result_str` transformer for different levels: exp, group, proj. Save the transformer as a data field. Then check if exp has a custom one, then group has, then proj, then default str(result). Register result custom viewer on exp, group, and proj levels
+
+- [LOW] __init__.py: __version__ = '0.0.0' - support auto setting from setup.py
+
+- [LOW] Multiprocessing? Multithreading?
+
+- [LOW] Config for xman and/or xman.mode(STRICT/PROMPT/CAREFREE) Settings in config for exp starting mode: STRICT - all prev should be closed (can't make new group before the previos one was closed?), PROMPT - show prompt for proceeding if something wasn't closed, CAREFREE - no control at all. Other settings for different behavioural features.
+
+- [LOW] xman.guide_me() - analyzes current state and suggest what to do next. E.g. "Try to make a new project...", "Now it's time to create a group...", """You have experiments without finalized statuses...", etc.
+
+- [LOW] Save data structure version to the separated file `version.pkl`, it will help to recognize unmatched versions of saved file and xman data structure, and maybe it will be possible to make some converters from old to the newest versions.
+       
+- [LOW] Add runner info (link on notebook and colab account or mail) - from which notebook and who started an exp
+
+- [???] Do I need to pull factual event dispatching out from the current execution thread (by making small timeout)? Async dispatching.
 
 
 
@@ -37,9 +85,9 @@
 
   It can't be solved by locking container dir (group or proj) on some timeout (found manually) as the second account won't see the `.lock` for the same reason.
 
-  1) I can check such situations and ask users for solving. 
-  2) I can recommend users to initially create (register) experiments in one place, then execute them under different accounts.
-  3) I can provide users with a solution that "flatten" experiments automatically (it will change the order of experiments which follow the problematic "fork").
+  + 1) I can check such situations and ask users for solving. 
+  + 2) I can recommend users to initially create (register) experiments in one place, then execute them under different accounts.
+  - 3) I can provide users with a solution that "flatten" experiments automatically (it will change the order of experiments which follow the problematic "fork").
 
   ```
   print(os.listdir('/content/drive/MyDrive/DL2/test_folder'))
@@ -60,62 +108,6 @@
   https://stackoverflow.com/questions/76106194/folders-created-with-python-code-from-2-colab-accounts-in-one-google-drive-share
 
   I've sent an email to a guy from the Colab team.
-
-
-
-### BACKLOG:
-
-- [PRIO] Implement `_destroy` for the all inheritance chain of ExpStruct
-
-- [PRIO] How to parallel a huge grid-search (gs) exp? gs has number of experiments, but they all have the same env, so don't need to save each env separately. Does a group assume having the same env for all its children (exps)? 
-
-- [PRIO] [!!!] Each exp takes ~ 2GB of disk size. Need to investigate how to reduce memory consumption. Maybe save separately proj-env, group-env, exp-env.
-
-- [LOW] Implement filter: `xman.filter(...what to filter...)` - see `filter.py`
-
-- [LOW] Save data classes in json format for human reading availability
-
-- [LOW] XManError.__process_stack: Limit stack len via a config tb.format_stack()[:STACK_LIMIT]
-
-- [LOW] change exp or group num
-
-- [LOW] Move exp into another group
-
-- [???] Add possibility to make manual `force` update, save, load when we got stuck for somehow? Need to investigate:
-  ```
-  Proj [ERROR] hw_3-1 - https://stepik.org/lesson/940785/step/1?unit=946946
-  
-      Group 1 [ERROR] Tokenization - Try several tokenization technics
-          Exp 1 [TODO] Punctuation - Remove punctuation
-  ```
-
-- [???] Add printable info about timings on exp execution, savings, loadings
-- 
-- [???] Set `.lock` file during writing, then remove. If there's an attempt to read during an exp was locked, set a series of timeouts, then raise an error that exp wasn't unlocked for somehow (too long writing time or some error with removing `.lock` file after writing). Error: "pickle data was truncated", then group has an error status and can't update for actual status (active in the other notebook and account)
-
-- [LOW] Add destructors for structures and over classes
-
-- [LOW] Add printable info on start, save, load, etc...
-
-- [LOW] Possibility to add custom `result_str` transformer for different levels: exp, group, proj. Save the transformer as a data field. Then check if exp has a custom one, then group has, then proj, then default str(result). Register result custom viewer on exp, group, and proj levels
-
-- [LOW] __init__.py: __version__ = '0.0.0' - support auto setting from setup.py
-
-- [LOW] Multiprocessing? Multithreading?
-
-- [LOW] Add popular methods (`exp('1.1')` and others) to the xman root: `xman.exp('1.1')` - now it's only `xman.proj.exp('1.1')`
-
-- [LOW] Config for xman and/or xman.mode(STRICT/PROMPT/CAREFREE) Settings in config for exp starting mode: STRICT - all prev should be closed (can't make new group before the previos one was closed?), PROMPT - show prompt for proceeding if something wasn't closed, CAREFREE - no control at all. Other settings for different behavioural features.
-
-- [LOW] xman.guide_me() - analyzes current state and suggest what to do next. E.g. "Try to make a new project...", "Now it's time to create a group...", """You have experiments without finalized statuses...", etc.
-
-- [LOW] Start exp with IN_PROGRESS status and IDLE type (was started but died somehow)
-
-- [LOW] Save data structure version to the separated file `version.pkl`, it will help to recognize unmatched versions of saved file and xman data structure, and maybe it will be possible to make some converters from old to the newest versions.
-       
-- [LOW] Add runner info (link on notebook and colab account or mail) - from which notebook and who started an exp
-
-- [???] Do I need to pull factual event dispatching out from the current execution thread (by making small timeout)? Async dispatching.
 
 
 

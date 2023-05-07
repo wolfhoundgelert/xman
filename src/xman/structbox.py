@@ -1,6 +1,6 @@
 from .error import ArgumentsXManError, NotExistsXManError
 from .struct import ExpStructEvent, ExpStruct, ExpStructStatus
-from . import util
+from . import util, confirm
 from . import maker
 from . import filesystem
 
@@ -34,17 +34,16 @@ class ExpStructBox(ExpStruct):
     def __add(self, child):
         self.__num_to_child[child.num] = child
         self.__name_to_child[child._data.name] = child
-        child._add_listener(ExpStructEvent, self._ExpStructEvent_listener)
+        child._add_listener(ExpStructEvent, self.__exp_struct_listener)
         if isinstance(child, ExpStructBox):
-            child._add_listener(ExpStructBoxEvent, self._ExpStructBoxEvent_listener)
+            child._add_listener(ExpStructBoxEvent, self.__exp_struct_box_listener)
 
     def __remove(self, child):
         del self.__num_to_child[child.num]
         del self.__name_to_child[child._data.name]
-        child._remove_listener(ExpStructEvent, self._ExpStructEvent_listener)
+        child._remove_listener(ExpStructEvent, self.__exp_struct_listener)
         if isinstance(child, ExpStructBox):
-            child._remove_listener(ExpStructBoxEvent, self._ExpStructBoxEvent_listener)
-        child._destroy()
+            child._remove_listener(ExpStructBoxEvent, self.__exp_struct_box_listener)
 
     def _process_auto_status(self):
         resolution = ExpStruct._AUTO_STATUS_RESOLUTION
@@ -103,7 +102,6 @@ class ExpStructBox(ExpStruct):
             raise ArgumentsXManError(f"`num_or_name` should be num >= 1 (int) or name (str), but `{num_or_name}` was given!")
 
     def _get_child_by_num_or_name(self, num_or_name):
-        self._update()
         if util.is_num(num_or_name) and num_or_name in self.__num_to_child:
             return self.__num_to_child[num_or_name]
         elif util.is_name(num_or_name) and num_or_name in self.__name_to_child:
@@ -118,14 +116,12 @@ class ExpStructBox(ExpStruct):
             self._dispatch(ExpStructBoxEvent, ExpStructBoxEvent.CHILD_MADE)
         return child
 
-    def _destroy_child(self, num_or_name, confirm=True):
-        self._update()
-        child = self._get_child_by_num_or_name(num_or_name)
-        if maker._destroy_child(child, confirm):
+    def _destroy_child(self, num_or_name):
+        if confirm._remove_struct_and_all_its_content(self):
+            child = self._get_child_by_num_or_name(num_or_name)
             self.__remove(child)
+            maker._destroy_child(child)
             self._dispatch(ExpStructBoxEvent, ExpStructBoxEvent.CHILD_DESTROYED)
-            return child
-        return None
 
     def _children(self):
         self._update()
@@ -153,10 +149,17 @@ class ExpStructBox(ExpStruct):
             text += util.tab(f"\n\n{child._info()}")
         return text
 
-    def _ExpStructEvent_listener(self, event: ExpStructEvent):
+    def _destroy(self):
+        for num in list(self.__num_to_child.keys()):
+            self._destroy_child(num)
+        self.__num_to_child = None
+        self.__name_to_child = None
+        super()._destroy()
+
+    def __exp_struct_listener(self, event: ExpStructEvent):
         self._update()
         if event.kind == ExpStructEvent.CHANGE_NAME_REQUESTED:
             event.respondent = self
             event.response = event.request not in self.__name_to_child
 
-    def _ExpStructBoxEvent_listener(self, event: ExpStructBoxEvent): self._update()
+    def __exp_struct_box_listener(self, event: ExpStructBoxEvent): self._update()

@@ -1,8 +1,6 @@
 from .error import AlreadyExistsXManError, ArgumentsXManError, IllegalOperationXManError
-from .pipeline import PipelineData, PipelineRunData, Pipeline
-from . import util
-from . import filesystem
-from . import platform
+from .pipeline import PipelineData, PipelineRunData, Pipeline, Pulse
+from . import util, filesystem, platform
 
 
 def __get_data_class(obj_cls):
@@ -15,6 +13,33 @@ def __get_data_class(obj_cls):
         return ExpStructData
     else:
         raise ArgumentsXManError(f"`obj_cls` should inherit `ExpStruct`!")
+
+
+def _make_proj(location_dir, name, descr) -> 'ExpProj':
+    from .proj import ExpProj
+
+    _make_and_save_struct_data(ExpProj, location_dir, name, descr)
+    return ExpProj(location_dir)
+
+
+def _recreate_proj(location_dir) -> 'ExpProj':
+    from .proj import ExpProj
+
+    proj = ExpProj(location_dir)
+    if platform.is_colab:
+        if not platform.check_colab_forked_folders(proj):
+            return None
+        for group in proj.groups():
+            if not platform.check_colab_forked_folders(group):
+                return None
+
+
+def _make_and_save_struct_data(struct_cls, location_dir, name, descr):
+    from .proj import ExpProj
+
+    filesystem._prepare_dir(location_dir) if struct_cls == ExpProj else filesystem._make_dir(location_dir)
+    data = __get_data_class(struct_cls)(name, descr)
+    filesystem._save_data_and_time(data, location_dir)
 
 
 def _get_child_class(parent_obj_or_cls):
@@ -31,14 +56,6 @@ def _get_child_class(parent_obj_or_cls):
         raise ArgumentsXManError(f"`parent_obj_or_cls` should be `ExpProj` or `ExpGroup`!")
 
 
-def _make_and_save_data(obj_cls, location_dir, name, descr):
-    from .proj import ExpProj
-
-    filesystem._prepare_dir(location_dir) if obj_cls == ExpProj else filesystem._make_dir(location_dir)
-    data = __get_data_class(obj_cls)(name, descr)
-    filesystem._save_data_and_time(data, location_dir)
-
-
 def _make_new_child(parent, name, descr, child_num=None):
     util.check_num(child_num, True)
     if parent._has_child_num_or_name(name):
@@ -52,7 +69,7 @@ def _make_new_child(parent, name, descr, child_num=None):
         child_num = max_num + 1
     child_class = _get_child_class(parent)
     child_dir = filesystem._get_child_dir(parent, child_num)
-    _make_and_save_data(child_class, child_dir, name, descr)
+    _make_and_save_struct_data(child_class, child_dir, name, descr)
     child = child_class(child_dir)
     if platform.is_colab:
         return child if platform.check_colab_forked_folders(parent) else None
@@ -64,8 +81,9 @@ def _recreate_child(parent, child_num):
     return _get_child_class(parent)(location_dir)
 
 
-def _destroy_child(child, confirm):
-    return filesystem._delete_struct(child, confirm)
+def _destroy_child(child: 'ExpStruct'):
+    child._destroy()
+    filesystem._delete_dir(child.location_dir)
 
 
 def _make_pipeline(exp, run_func, params, save=False):
@@ -94,3 +112,13 @@ def _destroy_pipeline(exp, pipeline, keep_data: bool):
     if not keep_data:
         exp._data.pipeline = None
 
+
+def _make_pulse(location_dir):
+    checkpoints = filesystem._load_checkpoint(location_dir) or []
+    return Pulse(location_dir, checkpoints)
+
+
+def _destroy_pulse(pulse, location_dir):
+    filesystem._delete_checkpoint(location_dir)
+    if pulse is not None:
+        pulse._destroy()

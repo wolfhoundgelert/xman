@@ -5,7 +5,7 @@ from .error import WasDestroyedXManError
 from . import util
 
 
-class Event:  # Generic event, can't be used as is - other `xman` events should inherit from this one.
+class Event:  # Generic event, can't be used - other `xman` events should inherit from this one.
 
     def __init__(self, target, kind):
         self.target = target
@@ -16,7 +16,8 @@ class Event:  # Generic event, can't be used as is - other `xman` events should 
         cls = self.__class__
         cls_str = cls.__module__ + '.' + cls.__name__
         params = signature(cls).parameters
-        params_list = [f"{param.name}=`{getattr(self, param.name)}`" for param in params.values() if param.name != 'self']
+        params_list = [f"{param.name}=`{getattr(self, param.name)}`" for param in params.values()
+                       if param.name != 'self']
         params_str = f"({', '.join(params_list)})"
         return f"{cls_str}{params_str}"
 
@@ -25,15 +26,16 @@ class EventDispatcher:
 
     def __init__(self):
         self.__event_type_to_listeners = {}
-        self._destroyed = False
+        self.__destroyed = False
 
     def __check_destroyed(self):
-        if self._destroyed:
+        if self.__destroyed:
             raise WasDestroyedXManError(f"'{self}' was destroyed before!")
 
     def _has_listener(self, event_type, listener):
         self.__check_destroyed()
-        return event_type in self.__event_type_to_listeners and listener in self.__event_type_to_listeners[event_type]
+        return event_type in self.__event_type_to_listeners and \
+            listener in self.__event_type_to_listeners[event_type]
 
     def _has_listeners(self, event_type):
         self.__check_destroyed()
@@ -67,10 +69,9 @@ class EventDispatcher:
 
     def _destroy(self):
         self.__check_destroyed()
-        self._destroyed = True
+        self.__destroyed = True
         for event_type in list(self.__event_type_to_listeners.keys()):
             listeners = self.__event_type_to_listeners[event_type]
-            for listener in listeners:
-                listeners.remove(listener)
+            listeners.clear()
             del self.__event_type_to_listeners[event_type]
-        del self.__event_type_to_listeners
+        self.__event_type_to_listeners = None

@@ -1,3 +1,4 @@
+from . import confirm
 from .error import NothingToDoXManError
 from .struct import ExpStructStatus
 from .structbox import ExpStructBox
@@ -26,7 +27,12 @@ class ExpGroup(ExpStructBox):
 
     def make_exp(self, name, descr, num=None) -> Exp: return self._make_child(name, descr, num)
 
-    def destroy_exp(self, num_or_name): return self._destroy_child(num_or_name)
+    def destroy_exp(self, num_or_name):
+        self._update()
+        self._destroy_exp(num_or_name)
+
+    def _destroy_exp(self, num_or_name):
+        self._destroy_child(num_or_name)
 
     def exp(self, num_or_name) -> Exp: return self._get_child_by_num_or_name(num_or_name)
 

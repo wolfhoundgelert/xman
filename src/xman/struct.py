@@ -2,9 +2,7 @@ import os
 
 from .event import EventDispatcher, Event
 from .error import NotExistsXManError, ArgumentsXManError, AlreadyExistsXManError
-from . import util
-from . import filesystem
-from . import tree
+from . import util, filesystem, tree, confirm
 
 
 class ExpStructData:
@@ -101,14 +99,30 @@ class ExpStruct(EventDispatcher):
     @property
     def _status(self): return self.__status
 
+    @property
+    def _manual(self): return self._data.manual_status is not None
+
+    def _set_manual_status(self, status: str, resolution: str):
+        ExpStructStatus._check(status, resolution)
+        self._data.manual_status = status
+        self._data.manual_status_resolution = resolution
+        self._save_and_update()
+
+    def _delete_manual_status(self):
+        if not self._status.manual:
+            raise NotExistsXManError(f"There's no manual status in the struct `{self}`")
+        self._data.manual_status = None
+        self._data.manual_status_resolution = None
+        self._save_and_update()
+        return self
+
     def _update_status(self):
-        manual = self._data.manual_status is not None
-        if manual:
+        if self._manual:
             status, resolution = self._data.manual_status, self._data.manual_status_resolution
         else:
             status, resolution = self._process_auto_status()
-        if not ExpStructStatus._fit_parameters(self.__status, status, resolution, manual):
-            self.__status = ExpStructStatus(status, resolution, manual)
+        if not ExpStructStatus._fit_parameters(self.__status, status, resolution, self._manual):
+            self.__status = ExpStructStatus(status, resolution, self._manual)
             self._dispatch(ExpStructEvent, ExpStructEvent.STATUS_CHANGED)
 
     def _process_auto_status(self): util.override_it()
@@ -136,24 +150,30 @@ class ExpStruct(EventDispatcher):
             text += util.tab(f"\nResolution: {self.status.resolution}")
         return text
 
-    def destroy(self):
-        # TODO Implement for all inheritance chain
+    def _destroy(self):
+        self._data = None
+        self.__status = None
         super()._destroy()
 
     @property
-    def name(self):
+    def name(self) -> str:
         self._update()
         return self._data.name
 
     @property
-    def descr(self):
+    def descr(self) -> str:
         self._update()
         return self._data.descr
 
     @property
-    def status(self):
+    def status(self) -> ExpStructStatus:
         self._update()
         return self._status
+
+    @property
+    def manual(self) -> bool:
+        self._update()
+        return self._manual
 
     def tree(self):
         self._update()
@@ -168,21 +188,14 @@ class ExpStruct(EventDispatcher):
 
     def set_manual_status(self, status: str, resolution: str):
         self._update()
-        ExpStructStatus._check(status, resolution)
-        self._data.manual_status = status
-        self._data.manual_status_resolution = resolution
-        self._save_and_update()
+        self._set_manual_status(status, resolution)
         return self
 
-    def delete_manual_status(self, confirm=True):
+    def delete_manual_status(self, need_confirm=True):
         self._update()
-        if not self._status.manual:
-            raise NotExistsXManError(f"There's no manual status in exp `{self}`")
-        if not confirm or util.response(f"ATTENTION! Remove the manual status `{self._data.manual_status}` of exp `{self}`?"):
-            self._data.manual_status = None
-            self._data.manual_status_resolution = None
-            self._save_and_update()
-            return self
+        if confirm._request(need_confirm,
+            f"ATTENTION! Remove the manual status `{self._data.manual_status}` of exp `{self}`?"):
+            return self._delete_manual_status()
         return None
 
     def edit(self, name=None, descr=None):

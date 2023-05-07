@@ -2,49 +2,49 @@ import os
 from typing import Any, Callable
 import time
 
+from . import filesystem, maker
 from .error import get_error_str, get_error_stack_str
 from .event import Event, EventDispatcher
 
 
-class PipelineEvent(Event):
-
-    STARTED = 'STARTED'
-    FINISHED = 'FINISHED'
-    ERROR = 'ERROR'
-
-
 class PulseEvent(Event):
 
-    PULSE = 'PULSE'  # TODO Implement
-    INTERMEDIATE_CHECKPOINT = 'INTERMEDIATE_CHECKPOINT'  # TODO Implement
+    PULSE = 'PULSE'
+    INTERMEDIATE_CHECKPOINT = 'INTERMEDIATE_CHECKPOINT'
 
 
-# TODO Implement
 class Pulse(EventDispatcher):
 
     _TIMESTAMPS_AMOUNT = 3
 
-    def __init__(self, location_dir):
+    def __init__(self, location_dir: str, intermediate_checkpoints: []):
+        super().__init__()
         self.location_dir = os.path.normpath(location_dir)
-        self.intermediate_checkpoints = []
+        self.intermediate_checkpoints = intermediate_checkpoints
         self._timestamps = []
 
-    # Somewhere in the run_func: call pulse() or pulse(*info for saving, replaced or stacked*)
+    # Somewhere in the run_func: call pulse() or pulse(info_for_saving, replaced_or_stacked)
     def __call__(self, intermediate_checkpoint=None, replace=True):
         if intermediate_checkpoint is not None:
             if replace:
-                self.intermediate_checkpoints[0] = intermediate_checkpoint
-            else:
-                self.intermediate_checkpoints.append(intermediate_checkpoint)
-            # TODO Save and dispatch or smth else
+                self.intermediate_checkpoints.clear()
+            self.intermediate_checkpoints.append(intermediate_checkpoint)
+            super()._dispatch(PulseEvent, PulseEvent.INTERMEDIATE_CHECKPOINT)
         self.__tick()
 
-    # Should be called in run_func via pulse() for letting xman know that's the exp is still alive
+    # Should be called in run_func via pulse() for letting `xman` know that's the exp is still alive
     def __tick(self):
-        self.timestamps.append(time.time())
-        if len(self.timestamps) > Pulse._TIMESTAMPS_AMOUNT:
-            self.timestamps = self.timestamps[-Pulse._TIMESTAMPS_AMOUNT:]
-        # self.exp._save_and_update()  # TODO Should be an event dispatch
+        self._timestamps.append(time.time())
+        if len(self._timestamps) > Pulse._TIMESTAMPS_AMOUNT:
+            self._timestamps = self._timestamps[-Pulse._TIMESTAMPS_AMOUNT:]
+        super()._dispatch(PulseEvent, PulseEvent.PULSE)
+
+    def _destroy(self):
+        self._timestamps.clear()
+        self._timestamps = None
+        self.intermediate_checkpoints.clear()
+        self.intermediate_checkpoints = None
+        super()._destroy()
 
 
 class PipelineData:  # Saved in exp._data.pipeline
@@ -56,7 +56,6 @@ class PipelineData:  # Saved in exp._data.pipeline
         self.error_stack = error_stack
         self.result = result
         self.pulse_timestamps = pulse_timestamps
-        # self.intermediate_checkpoints: [] = intermediate_checkpoints  # TODO Implement it
 
 
 class PipelineRunData:  # Saved in `.run` file, might be really heavy (several GB)
@@ -66,15 +65,22 @@ class PipelineRunData:  # Saved in `.run` file, might be really heavy (several G
         self.params = params
 
 
+class PipelineEvent(Event):
+
+    STARTED = 'STARTED'
+    FINISHED = 'FINISHED'
+    ERROR = 'ERROR'
+    PULSE = 'PULSE'
+
+
 class Pipeline(EventDispatcher):
 
     def __init__(self, location_dir: str, data: PipelineData, run_data: PipelineRunData):
         super().__init__()
-        # self.__location_dir = location_dir  # TODO pass to Pulse for saving checkpoints in the same folder with the exp
+        self.__location_dir = os.path.normpath(location_dir)
         self.__data = data
         self.__run_data = run_data
-        # self.__pulse = Pulse(exp.location_dir)
-        # TODO Add event listener for saving intermediate results
+        self.__pulse = None
 
     def __process_error(self, error):
         data = self.__data
@@ -85,14 +91,13 @@ class Pipeline(EventDispatcher):
         data = self.__data
         run_data = self.__run_data
         data.started = True
+        self.__pulse = maker._make_pulse(self.__location_dir)
+        self.__pulse._add_listener(PulseEvent, self.__pulse_listener)
+        self.__pulse()  # for saving the first timestamp on start
         self._dispatch(PipelineEvent, PipelineEvent.STARTED)
-        # TODO Pulse operating
-        # self.pulse = Pulse(self.exp)
-        # self.pulse()
         error = None
         try:
-            # data.result = run_data.run_func(self.pulse, **run_data.params) # TODO Temporary None for pulse
-            data.result = run_data.run_func(None, **run_data.params)  # TODO Pass self.__pulse
+            data.result = run_data.run_func(self.__pulse, **run_data.params)
             data.finished = True
             self._dispatch(PipelineEvent, PipelineEvent.FINISHED)
         except Exception as e:
@@ -103,5 +108,16 @@ class Pipeline(EventDispatcher):
             raise error
 
     def _destroy(self):
-        pass  # TODO Remove pulse, destroy components
+        if self.__pulse is not None:
+            self.__pulse._remove_listener(PulseEvent, self.__pulse_listener)
+        maker._destroy_pulse(self.__pulse, self.__location_dir)
+        self.__pulse = None
         super()._destroy()
+
+    def __pulse_listener(self, event: PulseEvent):
+        if event.kind == PulseEvent.PULSE:
+            self.__data.pulse_timestamps = self.__pulse._timestamps
+            self._dispatch(PipelineEvent, PipelineEvent.PULSE)
+        elif event.kind == PulseEvent.INTERMEDIATE_CHECKPOINT:
+            pulse: Pulse = event.target
+            filesystem._save_checkpoint(pulse.intermediate_checkpoints, self.__location_dir)
