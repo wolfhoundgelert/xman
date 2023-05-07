@@ -1,10 +1,11 @@
 ### CURRENT:
 
-- [PRIO] Add destructors for structures and over classes (check all files)
 
 - [PRIO] Remove self._update() in the underscore-methods (ExpStruct, ExpStructBox). Combine with <dsfdswerewfder32423fdsadf>
 
 - [PRIO] <dsfdswerewfder32423fdsadf> All public methods should be with self._update() at the beginning (and at the end if it's needed), then they should call the same methods with underscore (these methods don't have self._update()). E.g. exp.set_manual_status() calls self._update(), then self._set_manual_status(). Internal logic works only with underscored methods without self._update()-s (if it's possible).
+
+- [PRIO] Add destructors for structures and over classes (check all files)
 
 - [PRIO] Start exp with IN_PROGRESS status and IDLE type (was started but died somehow), use intermediate checkpoints.
 

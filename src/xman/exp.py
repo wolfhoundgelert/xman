@@ -31,6 +31,58 @@ class ExpConfig:
 
 class Exp(ExpStruct):
 
+    @property
+    def state(self) -> str:
+        self._update()
+        return self._state
+
+    @property
+    def idle(self) -> bool:
+        self._update()
+        return self._idle
+
+    @property
+    def result(self) -> Any:
+        self._update()
+        return self._result
+
+    @property
+    def error(self) -> str:
+        self._update()
+        return self._error
+
+    @property
+    def error_stack(self) -> str:
+        self._update()
+        return self._error_stack
+
+
+
+    @property
+    def _state(self):
+        return self.__state
+
+    @property
+    def _idle(self):
+        return self._manual or self._status.status != ExpStructStatus.IN_PROGRESS \
+            or self._state == ExpState.IDLE
+
+    @property
+    def _result(self) -> Any:
+        if self._data.manual_result is not None:
+            return self._data.manual_result
+        if self._data.pipeline is not None:
+            return self._data.pipeline.result
+        return None
+
+    @property
+    def _error(self) -> str:
+        return self._data.pipeline.error if self._data.pipeline else None
+
+    @property
+    def _error_stack(self) -> str:
+        return self._data.pipeline.error_stack if self._data.pipeline else None
+
     def __init__(self, location_dir):
         self.__state = None
         self.__pipeline = None
@@ -64,12 +116,8 @@ class Exp(ExpStruct):
         if save_and_update:
             self._save_and_update()
 
-    @property
-    def _state(self): return self.__state
 
-    @property
-    def _idle(self): return self._manual or self._status.status != ExpStructStatus.IN_PROGRESS \
-        or self._state == ExpState.IDLE
+
 
     def _process_auto_status(self):
         resolution = ExpStruct._AUTO_STATUS_RESOLUTION
@@ -219,32 +267,9 @@ class Exp(ExpStruct):
         self._set_manual_status(ExpStructStatus.FAIL, resolution)
         return self
 
-    @property
-    def state(self) -> str:
-        self._update()
-        return self._state
 
-    @property
-    def idle(self) -> bool:
-        self._update()
-        return self._idle
 
-    @property
-    def result(self) -> Any:
-        self._update()
-        if self._data.manual_result is not None:
-            return self._data.manual_result
-        if self._data.pipeline is not None:
-            return self._data.pipeline.result
-        return None
 
-    def error_stack(self):
-        print(self._data.pipeline.error_stack if self._data.pipeline else None)
-
-    @property
-    def error(self) -> str:
-        self._update()
-        return self._data.pipeline.error if self._data.pipeline else None
 
     def __pipeline_listener(self, event: PipelineEvent): self._save_and_update()
 

@@ -1,5 +1,6 @@
 from . import config
 
+
 def __response(question):
     r = input(f"{question} (y/n) ")
     return r.lower() == "y"
