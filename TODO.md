@@ -1,6 +1,5 @@
 ### CURRENT:
 
-
 - [PRIO] Remove self._update() in the underscore-methods (ExpStruct, ExpStructBox). Combine with <dsfdswerewfder32423fdsadf>
 
 - [PRIO] <dsfdswerewfder32423fdsadf> All public methods should be with self._update() at the beginning (and at the end if it's needed), then they should call the same methods with underscore (these methods don't have self._update()). E.g. exp.set_manual_status() calls self._update(), then self._set_manual_status(). Internal logic works only with underscored methods without self._update()-s (if it's possible).
@@ -25,6 +24,15 @@
 
 
 ### BACKLOG:
+
+- [PRIO] How to solve the issue of multiple `update`-s in a chain `a.foo().bar().biz()`. I need to register each call in some `UpdateManager`, if it's the first call - set `is_chain` status to `True`, this status activates some other thread (e.g. by minimal timer) for setting `is_chain` back to `False`. Each of methods (foo, bar, biz) check `is_chain` flag, and if it's `True`, they skip `update`. In this case, the flag will be cleared right after the chain and the next chain starts again with `update`. I can add this logic to the root `super().update()` and it will return `False` if the chain were marked:
+  ```
+  if not super().update():
+      return False
+  ```
+  If it's needed to update during protected calls, use `force` flag for `self._update(force=True)`.
+  Check if `self.__updating` is still needed.
+  If I implement the points above, then underscored protected methods (which duplicate public methods) will be obsolete? 
 
 - [LOW] Save and load config for `config.py` under `.config` file for different levels: proj, group, exp
 

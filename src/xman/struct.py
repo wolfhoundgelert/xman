@@ -37,7 +37,8 @@ class ExpStructStatus:
     def _check(status, resolution):
         util.check_has_value_in_class_public_constants(status, ExpStructStatus)
         if status in (ExpStructStatus.SUCCESS, ExpStructStatus.FAIL) and resolution is None:
-            raise ArgumentsXManError(f"SUCCESS and FAIL manual statuses require setting resolutions!")
+            raise ArgumentsXManError(f"SUCCESS and FAIL manual statuses "
+                                     f"require setting resolutions!")
 
     @staticmethod
     def _fit_parameters(status_obj, status, resolution, manual):
@@ -82,39 +83,118 @@ class ExpStructEvent(Event):
 
 class ExpStruct(EventDispatcher):
 
+    @property
+    def name(self) -> str:
+        self._update()
+        return self._name
+
+    @property
+    def descr(self) -> str:
+        self._update()
+        return self._descr
+
+    @property
+    def status(self) -> ExpStructStatus:
+        self._update()
+        return self._status
+
+    @property
+    def manual(self) -> bool:
+        self._update()
+        return self._manual
+
+    def tree(self):
+        self._update()
+        self._tree()
+
+    def info(self):
+        self._update()
+        text = self._info()
+        print(text)
+
+    def start(self):
+        self._update()
+        self._start()
+
+    def set_manual_status(self, status: str, resolution: str) -> 'ExpStruct':
+        self._update()
+        return self._set_manual_status(status, resolution)
+
+    def delete_manual_status(self, need_confirm=True):
+        self._update()
+        if confirm._request(need_confirm,
+                            f"ATTENTION! Remove the manual status `{self._data.manual_status}` "
+                            f"of exp `{self}`?"):
+            return self._delete_manual_status()
+        return None
+
+    def edit(self, name=None, descr=None):
+        self._update()
+        self._edit(name, descr)
+
     _AUTO_STATUS_RESOLUTION = '-= auto status =-'
 
-    def __init__(self, location_dir):
-        super().__init__()
-        self.location_dir = os.path.normpath(location_dir)
-        self.num = filesystem._get_dir_num(location_dir)
-        self._data = None
-        self.__time = None
-        self.__status = None
-        self.__updating = False
-        self._update()
-
-    def __str__(self): util.override_it()
+    @property
+    def _name(self) -> str:
+        return self._data.name
 
     @property
-    def _status(self): return self.__status
+    def _descr(self) -> str:
+        return self._data.descr
 
     @property
-    def _manual(self): return self._data.manual_status is not None
+    def _status(self):
+        return self.__status
 
-    def _set_manual_status(self, status: str, resolution: str):
+    @property
+    def _manual(self):
+        return self._data.manual_status is not None
+
+    def _tree(self):
+        tree.print_dir_tree(self.location_dir)
+
+    def _info(self):
+        text = str(self)
+        if self._status.resolution:
+            text += util.tab(f"\nResolution: {self._status.resolution}")
+        return text
+
+    def _start(self):
+        util.override_it()
+
+    def _set_manual_status(self, status: str, resolution: str) -> 'ExpStruct':
         ExpStructStatus._check(status, resolution)
         self._data.manual_status = status
         self._data.manual_status_resolution = resolution
         self._save_and_update()
+        return self
 
-    def _delete_manual_status(self):
+    def _delete_manual_status(self) -> 'ExpStruct':
         if not self._status.manual:
             raise NotExistsXManError(f"There's no manual status in the struct `{self}`")
         self._data.manual_status = None
         self._data.manual_status_resolution = None
         self._save_and_update()
         return self
+
+    def _edit(self, name=None, descr=None):
+        need_update = need_save = False
+        if self._data.name != name:
+            event = self._dispatch(ExpStructEvent, ExpStructEvent.CHANGE_NAME_REQUESTED,
+                                   request=name)
+            if event is not None and not event.response:
+                raise AlreadyExistsXManError(
+                    f"There's another child with the name=`{name}` "
+                    f"in the parent `{event.respondent}`")
+            self._data.name = name
+            need_update = need_save = True
+        if self._data.descr != descr:
+            self._data.descr = descr
+            need_save = True
+        if need_save:
+            self._save_and_update()
+        if need_update:
+            self._dispatch(ExpStructEvent, ExpStructEvent.STRUCT_EDITED)
 
     def _update_status(self):
         if self._manual:
@@ -134,7 +214,8 @@ class ExpStruct(EventDispatcher):
         if self.__updating:
             return
         self.__updating = True
-        self._data, self.__time = filesystem._load_fresh_data_and_time(self.location_dir, self._data, self.__time)
+        self._data, self.__time = filesystem._load_fresh_data_and_time(self.location_dir,
+                                                                       self._data, self.__time)
         # Status should be updated at the end of the inherited updating hierarchy
         if type(self) == ExpStruct:
             self._update_status()
@@ -144,72 +225,19 @@ class ExpStruct(EventDispatcher):
         self.__time = filesystem._save_data_and_time(self._data, self.location_dir)
         self._update()
 
-    def _info(self):
-        text = str(self)
-        if self.status.resolution:
-            text += util.tab(f"\nResolution: {self.status.resolution}")
-        return text
-
     def _destroy(self):
         self._data = None
         self.__status = None
         super()._destroy()
 
-    @property
-    def name(self) -> str:
+    def __init__(self, location_dir):
+        super().__init__()
+        self.location_dir = os.path.normpath(location_dir)
+        self.num = filesystem._get_dir_num(location_dir)
+        self._data = None
+        self.__time = None
+        self.__status = None
+        self.__updating = False
         self._update()
-        return self._data.name
 
-    @property
-    def descr(self) -> str:
-        self._update()
-        return self._data.descr
-
-    @property
-    def status(self) -> ExpStructStatus:
-        self._update()
-        return self._status
-
-    @property
-    def manual(self) -> bool:
-        self._update()
-        return self._manual
-
-    def tree(self):
-        self._update()
-        tree.print_dir_tree(self.location_dir)
-
-    def info(self):
-        self._update()
-        text = self._info()
-        print(text)
-
-    def start(self): util.override_it()
-
-    def set_manual_status(self, status: str, resolution: str):
-        self._update()
-        self._set_manual_status(status, resolution)
-        return self
-
-    def delete_manual_status(self, need_confirm=True):
-        self._update()
-        if confirm._request(need_confirm,
-            f"ATTENTION! Remove the manual status `{self._data.manual_status}` of exp `{self}`?"):
-            return self._delete_manual_status()
-        return None
-
-    def edit(self, name=None, descr=None):
-        need_update = need_save = False
-        if self._data.name != name:
-            event = self._dispatch(ExpStructEvent, ExpStructEvent.CHANGE_NAME_REQUESTED, request=name)
-            if event is not None and not event.response:
-                raise AlreadyExistsXManError(f"There's another child with the name=`{name}` in the parent `{event.respondent}`")
-            self._data.name = name
-            need_update = need_save = True
-        if self._data.descr != descr:
-            self._data.descr = descr
-            need_save = True
-        if need_save:
-            self._save_and_update()
-        if need_update:
-            self._dispatch(ExpStructEvent, ExpStructEvent.STRUCT_EDITED)
+    def __str__(self): util.override_it()
