@@ -83,9 +83,9 @@ class ExpStructBox(ExpStruct):
             self._dispatch(ExpStructBoxEvent, ExpStructBoxEvent.CHILD_MADE)
         return child
 
-    def _destroy_child(self, num_or_name):
-        if confirm._remove_struct_and_all_its_content(self):
-            child = self._get_child_by_num_or_name(num_or_name)
+    def _destroy_child(self, num_or_name, need_confirm=True):
+        child = self._get_child_by_num_or_name(num_or_name)
+        if not need_confirm or confirm._remove_struct_and_all_its_content(child):
             self.__remove(child)
             maker._destroy_child(child)
             self._dispatch(ExpStructBoxEvent, ExpStructBoxEvent.CHILD_DESTROYED)
@@ -115,7 +115,7 @@ class ExpStructBox(ExpStruct):
 
     def _destroy(self):
         for num in list(self.__num_to_child.keys()):
-            self._destroy_child(num)
+            self._destroy_child(num, False)
         self.__num_to_child = None
         self.__name_to_child = None
         super()._destroy()

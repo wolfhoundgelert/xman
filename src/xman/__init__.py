@@ -1,7 +1,5 @@
 from .proj import ExpProj
-from . import tree
-from . import platform
-from . import maker
+from . import tree, platform, maker
 
 
 __version__ = '0.0.9'  #TODO support auto setting from setup.py
@@ -23,7 +21,6 @@ def make_proj(location_dir: str, name: str, descr: str) -> ExpProj:
 def load_proj(location_dir: str) -> ExpProj:
     global proj
     proj = ExpProj(location_dir)
-
     return proj
 
 

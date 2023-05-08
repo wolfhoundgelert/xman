@@ -15,9 +15,9 @@ class ExpProj(ExpStructBox):
         self._update()
         return self._make_group(name, descr, num)
 
-    def destroy_group(self, num_or_name):
+    def destroy_group(self, num_or_name, need_confirm=True):
         self._update()
-        self._destroy_group(num_or_name)
+        self._destroy_group(num_or_name, need_confirm)
 
     def group(self, num_or_name) -> ExpGroup:
         self._update()
@@ -35,9 +35,9 @@ class ExpProj(ExpStructBox):
         self._update()
         return self._make_exp(group_num_or_name, name, descr, num)
 
-    def destroy_exp(self, dot_num: str):
+    def destroy_exp(self, dot_num: str, need_confirm=True):
         self._update()
-        self._destroy_exp(dot_num)
+        self._destroy_exp(dot_num, need_confirm)
 
     def exp(self, dot_num: str) -> Exp:  # dot_num: '1.1', '1.10', '2.3'...
         self._update()
@@ -60,7 +60,8 @@ class ExpProj(ExpStructBox):
     def _make_group(self, name, descr, num=None) -> ExpGroup:
         return self._make_child(name, descr, num)
 
-    def _destroy_group(self, num_or_name): self._destroy_child(num_or_name)
+    def _destroy_group(self, num_or_name, need_confirm=True):
+        self._destroy_child(num_or_name, need_confirm)
 
     def _group(self, num_or_name) -> ExpGroup: return self._get_child_by_num_or_name(num_or_name)
 
@@ -75,9 +76,9 @@ class ExpProj(ExpStructBox):
         exp = group._make_exp(name, descr, num)
         return exp
 
-    def _destroy_exp(self, dot_num: str):
+    def _destroy_exp(self, dot_num: str, need_confirm=True):
         group_num, exp_num = util.parse_group_and_exp_num(dot_num)
-        self._group(group_num)._destroy_exp(exp_num)
+        self._group(group_num)._destroy_exp(exp_num, need_confirm)
 
     def _exp(self, dot_num: str) -> Exp:  # dot_num: '1.1', '1.10', '2.3'...
         group_num, exp_num = util.parse_group_and_exp_num(dot_num)
