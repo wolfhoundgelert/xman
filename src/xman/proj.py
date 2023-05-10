@@ -7,54 +7,6 @@ from . import util
 
 class ExpProj(ExpStructBox):
 
-    def has_group(self, num_or_name):
-        self._update()
-        return self._has_group(num_or_name)
-
-    def make_group(self, name, descr, num=None) -> ExpGroup:
-        self._update()
-        return self._make_group(name, descr, num)
-
-    def destroy_group(self, num_or_name, need_confirm=True):
-        self._update()
-        self._destroy_group(num_or_name, need_confirm)
-
-    def group(self, num_or_name) -> ExpGroup:
-        self._update()
-        return self._group(num_or_name)
-
-    def groups(self):
-        self._update()
-        return self._groups()
-
-    def has_exp(self, dot_num: str) -> bool:
-        self._update()
-        return self._has_exp(dot_num)
-
-    def make_exp(self, group_num_or_name, name, descr, num=None) -> Exp:
-        self._update()
-        return self._make_exp(group_num_or_name, name, descr, num)
-
-    def destroy_exp(self, dot_num: str, need_confirm=True):
-        self._update()
-        self._destroy_exp(dot_num, need_confirm)
-
-    def exp(self, dot_num: str) -> Exp:  # dot_num: '1.1', '1.10', '2.3'...
-        self._update()
-        return self._exp(dot_num)
-
-    def exps(self, group_num_or_name=None):
-        self._update()
-        return self._exps(group_num_or_name)
-
-    def start(self, exp_dot_num: str = None, autostart_next=False):
-        self._update()
-        self._start(exp_dot_num, autostart_next)
-
-    def move_exp(self, dot_num, new_dot_num):
-        self._update()
-        self._move_exp(dot_num, new_dot_num)
-
     def _has_group(self, num_or_name): return self._has_child_num_or_name(num_or_name)
 
     def _make_group(self, name, descr, num=None) -> ExpGroup:

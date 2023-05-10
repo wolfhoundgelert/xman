@@ -1,4 +1,5 @@
 import os
+from typing import Optional
 
 from .event import EventDispatcher, Event
 from .error import NotExistsXManError, ArgumentsXManError, AlreadyExistsXManError
@@ -45,6 +46,22 @@ class ExpStructStatus:
         return status_obj is not None and status_obj.status == status \
                 and status_obj.resolution == resolution and status_obj.manual == manual
 
+    @property
+    def workflow(self):
+        return ExpStructStatus.__WORKFLOW.copy()
+
+    @property
+    def next(self) -> Optional[str]:
+        if ExpStructStatus.__WORKFLOW[-1] == self.status:
+            return None
+        for i, it in enumerate(ExpStructStatus.__WORKFLOW[:-1]):
+            if it == self.status or (type(it) is tuple and self.status in it):
+                return ExpStructStatus.__WORKFLOW[i + 1]
+
+    # Printing in jupyter notebook - https://stackoverflow.com/a/41454816/9751954
+    def _repr_pretty_(self, p, cycle):
+        p.text(str(self) if not cycle else '...')
+
     def __init__(self, status: str, resolution: str = None, manual: bool = False):
         ExpStructStatus._check(status, resolution)
         self.status = status
@@ -52,20 +69,6 @@ class ExpStructStatus:
         self.manual = manual
 
     def __str__(self): return self.status + ' *' if self.manual else self.status
-
-    # Printing in jupyter notebook - https://stackoverflow.com/a/41454816/9751954
-    def _repr_pretty_(self, p, cycle): p.text(str(self) if not cycle else '...')
-
-    @property
-    def workflow(self): return ExpStructStatus.__WORKFLOW.copy()
-
-    @property
-    def next(self):
-        if ExpStructStatus.__WORKFLOW[-1] == self.status:
-            return None
-        for i, it in enumerate(ExpStructStatus.__WORKFLOW[:-1]):
-            if it == self.status or (type(it) is tuple and self.status in it):
-                return ExpStructStatus.__WORKFLOW[i + 1]
 
 
 class ExpStructEvent(Event):
@@ -82,55 +85,6 @@ class ExpStructEvent(Event):
 
 
 class ExpStruct(EventDispatcher):
-
-    @property
-    def name(self) -> str:
-        self._update()
-        return self._name
-
-    @property
-    def descr(self) -> str:
-        self._update()
-        return self._descr
-
-    @property
-    def status(self) -> ExpStructStatus:
-        self._update()
-        return self._status
-
-    @property
-    def manual(self) -> bool:
-        self._update()
-        return self._manual
-
-    def tree(self):
-        self._update()
-        self._tree()
-
-    def info(self):
-        self._update()
-        text = self._info()
-        print(text)
-
-    def start(self):
-        self._update()
-        self._start()
-
-    def set_manual_status(self, status: str, resolution: str) -> 'ExpStruct':
-        self._update()
-        return self._set_manual_status(status, resolution)
-
-    def delete_manual_status(self, need_confirm=True):
-        self._update()
-        if confirm._request(need_confirm,
-                            f"ATTENTION! Remove the manual status `{self._data.manual_status}` "
-                            f"of exp `{self}`?"):
-            return self._delete_manual_status()
-        return None
-
-    def edit(self, name=None, descr=None):
-        self._update()
-        self._edit(name, descr)
 
     _AUTO_STATUS_RESOLUTION = '-= auto status =-'
 
@@ -169,13 +123,18 @@ class ExpStruct(EventDispatcher):
         self._save_and_update()
         return self
 
-    def _delete_manual_status(self) -> 'ExpStruct':
+    def _delete_manual_status(self, need_confirm) -> Optional['ExpStruct']:
         if not self._status.manual:
             raise NotExistsXManError(f"There's no manual status in the struct `{self}`")
-        self._data.manual_status = None
-        self._data.manual_status_resolution = None
-        self._save_and_update()
-        return self
+        if confirm._request(need_confirm,
+                            f"ATTENTION! Do you want to delete the manual status "
+                            f"`{self._data.manual_status}` and its resolution "
+                            f"`{self._data.manual_status_resolution}` of exp `{self}`?"):
+            self._data.manual_status = None
+            self._data.manual_status_resolution = None
+            self._save_and_update()
+            return self
+        return None
 
     def _edit(self, name=None, descr=None):
         need_update = need_save = False
@@ -226,6 +185,7 @@ class ExpStruct(EventDispatcher):
         self._update()
 
     def _destroy(self):
+        self._api = None
         self._data = None
         self.__status = None
         super()._destroy()
@@ -239,5 +199,6 @@ class ExpStruct(EventDispatcher):
         self.__status = None
         self.__updating = False
         self._update()
+        self._api = None  # set outside, need to keep it for cleaning the link due to destroying
 
     def __str__(self): util.override_it()

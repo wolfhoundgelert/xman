@@ -1,5 +1,5 @@
 import time
-from typing import Any
+from typing import Any, Optional
 
 from .error import NotExistsXManError, IllegalOperationXManError
 from .pipeline import PipelineData, PipelineEvent
@@ -32,59 +32,6 @@ class ExpConfig:
 class Exp(ExpStruct):
 
     @property
-    def state(self) -> str:
-        self._update()
-        return self._state
-
-    @property
-    def idle(self) -> bool:
-        self._update()
-        return self._idle
-
-    @property
-    def result(self) -> Any:
-        self._update()
-        return self._result
-
-    @property
-    def error(self) -> str:
-        self._update()
-        return self._error
-
-    @property
-    def error_stack(self) -> str:
-        self._update()
-        return self._error_stack
-
-    def make_pipeline(self, run_func, params, save=False):
-        self._update()
-        return self._make_pipeline(run_func, params, save)
-
-    def destroy_pipeline(self, need_confirm=True):
-        self._update()
-        return self._destroy_pipeline(need_confirm)
-
-    def start(self):
-        self._update()
-        return self._start()
-
-    def set_manual_result(self, result, need_confirm=True):
-        self._update()
-        return self._set_manual_result(result, need_confirm)
-
-    def delete_manual_result(self, need_confirm=True):
-        self._update()
-        return self._delete_manual_result(need_confirm)
-
-    def success(self, resolution: str) -> 'Exp':
-        self._update()
-        return self._success(resolution)
-
-    def fail(self, resolution: str) -> 'Exp':
-        self._update()
-        return self._fail(resolution)
-
-    @property
     def _state(self):
         return self.__state
 
@@ -94,7 +41,7 @@ class Exp(ExpStruct):
             or self._state == ExpState.IDLE
 
     @property
-    def _result(self) -> Any:
+    def _result(self) -> Optional[Any]:
         if self._data.manual_result is not None:
             return self._data.manual_result
         if self._data.pipeline is not None:
@@ -102,21 +49,21 @@ class Exp(ExpStruct):
         return None
 
     @property
-    def _error(self) -> str:
-        return self._data.pipeline.error if self._data.pipeline else None
+    def _error(self) -> Optional[str]:
+        return None if self._data.pipeline is None else self._data.pipeline.error
 
     @property
-    def _error_stack(self) -> str:
-        return self._data.pipeline.error_stack if self._data.pipeline else None
+    def _error_stack(self) -> Optional[str]:
+        return None if self._data.pipeline is None else self._data.pipeline.error_stack
 
-    def _make_pipeline(self, run_func, params, save=False):
+    def _make_pipeline(self, run_func, params, save=False) -> 'Exp':
         self.__check_not_manual()
         self.__pipeline = maker._make_pipeline(self, run_func, params, save)
         self.__pipeline._add_listener(PipelineEvent, self.__pipeline_listener)
         self._save_and_update()
         return self
 
-    def _destroy_pipeline(self, need_confirm=True):
+    def _destroy_pipeline(self, need_confirm=True) -> Optional['Exp']:
         if not self.__check_not_active():
             return None
         if self._data.pipeline is None:
@@ -126,7 +73,7 @@ class Exp(ExpStruct):
             return self
         return None
 
-    def _start(self):
+    def _start(self) -> 'Exp':
         self.__check_not_manual()
         pipeline_data = self._data.pipeline
         if pipeline_data is None:
@@ -146,7 +93,7 @@ class Exp(ExpStruct):
             self.__destroy_pipeline(True, True)
         return self
 
-    def _set_manual_result(self, result, need_confirm=True):
+    def _set_manual_result(self, result, need_confirm=True) -> Optional['Exp']:
         if self._data.manual_result is not None:
             if not confirm._request(need_confirm,
                                     f"Do you want to rewrite the previous result of the exp `{self}`?"):
@@ -155,7 +102,7 @@ class Exp(ExpStruct):
         self._save_and_update()
         return self
 
-    def _delete_manual_result(self, need_confirm=True):
+    def _delete_manual_result(self, need_confirm=True) -> Optional['Exp']:
         if self._data.manual_result is None:
             raise NotExistsXManError(f"There's no manual result in exp `{self}`!")
         if confirm._request(need_confirm, f"ATTENTION! Remove the manual result of exp `{self}`?"):
@@ -164,11 +111,11 @@ class Exp(ExpStruct):
             return self
         return None
 
-    def _success(self, resolution: str) -> 'Exp':
+    def _success(self, resolution: str) -> Optional['Exp']:
         self._set_manual_status(ExpStructStatus.SUCCESS, resolution)
         return self
 
-    def _fail(self, resolution: str) -> 'Exp':
+    def _fail(self, resolution: str) -> Optional['Exp']:
         self._set_manual_status(ExpStructStatus.FAIL, resolution)
         return self
 
@@ -232,10 +179,10 @@ class Exp(ExpStruct):
             self._update_state()
         self.__updating = False
 
-    def _set_manual_status(self, status: str, resolution: str):
+    def _set_manual_status(self, status: str, resolution: str) -> Optional['Exp']:
         if not self.__check_not_active():
             return None
-        super()._set_manual_status(status, resolution)
+        return super()._set_manual_status(status, resolution)
 
     def _info(self):
         text = super()._info()

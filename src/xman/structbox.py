@@ -1,4 +1,6 @@
-from .error import ArgumentsXManError, NotExistsXManError
+from typing import Optional
+
+from .error import ArgumentsXManError, NotExistsXManError, AlreadyExistsXManError
 from .struct import ExpStructEvent, ExpStruct, ExpStructStatus
 from . import util, confirm
 from . import maker
@@ -12,6 +14,11 @@ class ExpStructBoxEvent(ExpStructEvent):
 
 
 class ExpStructBox(ExpStruct):
+
+    @property
+    def _num_children(self):
+        self._update()
+        return len(self._children())
 
     def _process_auto_status(self):
         resolution = ExpStruct._AUTO_STATUS_RESOLUTION
@@ -67,16 +74,29 @@ class ExpStructBox(ExpStruct):
         elif util.is_name(num_or_name):
             return num_or_name in self.__name_to_child
         else:
-            raise ArgumentsXManError(f"`num_or_name` should be num >= 1 (int) or name (str), but `{num_or_name}` was given!")
+            raise ArgumentsXManError(f"`num_or_name` should be num >= 1 (int) or name (str), "
+                                     f"but `{num_or_name}` was given!")
 
     def _get_child_by_num_or_name(self, num_or_name):
         if util.is_num(num_or_name) and num_or_name in self.__num_to_child:
             return self.__num_to_child[num_or_name]
         elif util.is_name(num_or_name) and num_or_name in self.__name_to_child:
             return self.__name_to_child[num_or_name]
-        raise NotExistsXManError(f"There's no item with num or name `{num_or_name}`!")
+        raise NotExistsXManError(f"There's no child with num or name `{num_or_name}` in the `{self}`!")
 
     def _make_child(self, name, descr, num=None) -> ExpStruct:
+        util.check_num(num, True)
+        if self._has_child_num_or_name(name):
+            raise AlreadyExistsXManError(
+                f"A child with the name `{name}` already exists in the `{self}`!")
+        if num is not None:
+            if self._has_child_num_or_name(num):
+                raise AlreadyExistsXManError(
+                    f"A child with the num `{num}` already exists in the `{self}`!")
+        else:
+            nums = filesystem._get_children_nums(self)
+            max_num = max(nums) if len(nums) else 0
+            num = max_num + 1
         child = maker._make_new_child(self, name, descr, num)
         if child is not None:
             self.__add(child)
@@ -99,7 +119,7 @@ class ExpStructBox(ExpStruct):
     def _names(self):
         return list(self.__name_to_child.keys())
 
-    def _get_child_by_status(self, status_or_list):
+    def _get_child_by_status(self, status_or_list) -> Optional[ExpStruct]:
         sl = status_or_list if type(status_or_list) is list else [status_or_list]
         for status in sl:
             for child in self._children():

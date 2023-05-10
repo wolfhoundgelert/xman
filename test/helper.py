@@ -2,9 +2,10 @@ import os
 import shutil
 
 import xman
+from xman.api import ExpProjAPI, ExpGroupAPI, ExpAPI
 
 
-def make_proj_from_nothing(proj_dir=None, name=None, descr=None):
+def make_proj_from_nothing(proj_dir=None, name=None, descr=None) -> ExpProjAPI:
     if proj_dir is None:
         # proj_dir = './gitignore/testproj'  # if running by `pytest` in terminal
         proj_dir = '../gitignore/testproj'
@@ -17,7 +18,7 @@ def make_proj_from_nothing(proj_dir=None, name=None, descr=None):
     return xman.make_proj(proj_dir, name, descr)
 
 
-def make_group_from_nothing(name=None, descr=None, num=None):
+def make_group_from_nothing(name=None, descr=None, num=None) -> ExpGroupAPI:
     if name is None:
         name = 'Test Group'
     if descr is None:
@@ -25,7 +26,7 @@ def make_group_from_nothing(name=None, descr=None, num=None):
     return make_proj_from_nothing().make_group(name, descr, num)
 
 
-def make_exp_from_nothing(name=None, descr=None, num=None):
+def make_exp_from_nothing(name=None, descr=None, num=None) -> ExpAPI:
     if name is None:
         name = 'Test Exp'
     if descr is None:

@@ -1,3 +1,5 @@
+from typing import Optional
+
 from .error import AlreadyExistsXManError, ArgumentsXManError, IllegalOperationXManError
 from .pipeline import PipelineData, PipelineRunData, Pipeline, Pulse
 from . import util, filesystem, platform
@@ -22,7 +24,7 @@ def _make_proj(location_dir, name, descr) -> 'ExpProj':
     return ExpProj(location_dir)
 
 
-def _recreate_proj(location_dir) -> 'ExpProj':
+def _recreate_proj(location_dir) -> Optional['ExpProj']:
     from .proj import ExpProj
 
     proj = ExpProj(location_dir)
@@ -56,17 +58,7 @@ def _get_child_class(parent_obj_or_cls):
         raise ArgumentsXManError(f"`parent_obj_or_cls` should be `ExpProj` or `ExpGroup`!")
 
 
-def _make_new_child(parent, name, descr, child_num=None):
-    util.check_num(child_num, True)
-    if parent._has_child_num_or_name(name):
-        raise AlreadyExistsXManError(f"A child with the name `{name}` already exists in the `{parent}`!")
-    if child_num is not None:
-        if parent._has_child_num_or_name(child_num):
-            raise AlreadyExistsXManError(f"A child with the num `{child_num}` already exists in the `{parent}`!")
-    else:
-        nums = filesystem._get_children_nums(parent)
-        max_num = max(nums) if len(nums) else 0
-        child_num = max_num + 1
+def _make_new_child(parent, name, descr, child_num):
     child_class = _get_child_class(parent)
     child_dir = filesystem._get_child_dir(parent, child_num)
     _make_and_save_struct_data(child_class, child_dir, name, descr)

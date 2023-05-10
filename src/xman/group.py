@@ -1,3 +1,5 @@
+from typing import Optional
+
 from .error import NothingToDoXManError
 from .struct import ExpStructStatus
 from .structbox import ExpStructBox
@@ -5,38 +7,6 @@ from .exp import Exp
 
 
 class ExpGroup(ExpStructBox):
-
-    def has_exp(self, num_or_name):
-        self._update()
-        return self._has_exp(num_or_name)
-
-    def make_exp(self, name, descr, num=None) -> Exp:
-        self._update()
-        return self._make_exp(name, descr, num)
-
-    def destroy_exp(self, num_or_name, need_confirm=True):
-        self._update()
-        self._destroy_exp(num_or_name, need_confirm)
-
-    def exp(self, num_or_name) -> Exp:
-        self._update()
-        return self._exp(num_or_name)
-
-    def exps(self):
-        self._update()
-        return self._exps()
-
-    def get_exp_for_start(self):
-        self._update()
-        return self._get_exp_for_start()
-
-    def start(self, exp_num=None, autostart_next=False):
-        self._update()
-        self._start(exp_num, autostart_next)
-
-    def change_exp_num(self, num_or_name):
-        self._update()
-        self._change_exp_num(num_or_name)
 
     def _has_exp(self, num_or_name): return self._has_child_num_or_name(num_or_name)
 
@@ -49,7 +19,7 @@ class ExpGroup(ExpStructBox):
 
     def _exps(self): return self._children()
 
-    def _get_exp_for_start(self):
+    def _get_exp_for_start(self) -> Optional[Exp]:
         # TODO Support IN_PROGRESS with state IDLE
         return self._get_child_by_status(ExpStructStatus.TODO)
 

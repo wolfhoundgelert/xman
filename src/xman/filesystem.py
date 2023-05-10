@@ -2,6 +2,8 @@ import os
 import shutil
 import time
 import re
+from typing import Optional, List, Any
+
 import cloudpickle as pickle  # dill as pickle, pickle
 
 from .error import ArgumentsXManError, IllegalOperationXManError, NotImplementedXManError
@@ -132,7 +134,7 @@ def _save_checkpoint(checkpoint, location_dir):
     __save(checkpoint, __get_checkpoint_path(location_dir))
 
 
-def _load_checkpoint(location_dir):
+def _load_checkpoint(location_dir) -> Optional[List[Any]]:
     p = __get_checkpoint_path(location_dir)
     if os.path.exists(p):
         return __load(p)

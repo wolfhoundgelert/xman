@@ -33,13 +33,13 @@ def test__pipeline():
 def test__destroy_group():
     helper.make_exp_from_nothing()
     xman.proj.destroy_group(1)
-    assert len(xman.proj._children()) == 0
+    assert xman.proj.num_children == 0
 
 
 def test__destroy_exp():
     helper.make_exp_from_nothing()
     xman.proj.group(1).destroy_exp(1)
-    assert len(xman.proj.group(1)._children()) == 0
+    assert xman.proj.group(1).num_children == 0
 
 def test__destroy_exp_after_pipeline_done():
     helper.make_exp_from_nothing().make_pipeline(helper.train, helper.train_params, True).start()
