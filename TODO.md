@@ -9,11 +9,10 @@
   Check if `self.__updating` is still needed.
   If I implement the points above, then underscored protected methods (which duplicate public methods) will be obsolete? 
 
-- [PRIO] Add destructors for structures and over classes (check all files)
-
 - [PRIO] Start exp with IN_PROGRESS status and IDLE type (was started but died somehow), use intermediate checkpoints.
 
-- [PRIO] Add popular methods (`exp('1.1')` and others) to the xman root: `xman.exp('1.1')` - now it's only `xman.proj.exp('1.1')`
+- [PRIO] Add destructors for structures and over classes (check all files)
+
 
 
 ### BUGS:

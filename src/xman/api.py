@@ -309,24 +309,3 @@ class ExpProjAPI(ExpStructBoxAPI):
     def __init__(self, obj: ExpProj):
         super().__init__(obj)
         self.__obj = obj
-
-
-# class XManAPI:
-#
-#     proj: ExpProjAPI = None
-#
-#     @staticmethod
-#     def dir_tree(target_dir, files_limit=10, files_first=True, sort_numbers=True):
-#         tree.print_dir_tree(target_dir, files_limit, files_first, sort_numbers)
-#
-#     @staticmethod
-#     def make_proj(location_dir: str, name: str, descr: str):
-#         p = maker._make_proj(location_dir, name, descr)
-#         XManAPI.proj = ExpProjAPI(p)
-#         return XManAPI.proj
-#
-#     @staticmethod
-#     def load_proj(location_dir: str):
-#         p = ExpProj(location_dir)
-#         XManAPI.proj = ExpProjAPI(p)
-#         return XManAPI.proj
