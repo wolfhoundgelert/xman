@@ -1,7 +1,7 @@
 import os
 import shutil
 
-import xman
+from xman import xman
 from xman.api import ExpProjAPI, ExpGroupAPI, ExpAPI
 
 
@@ -42,7 +42,8 @@ def train(pulse, p1, p2, np1=None, np2=None):
     # print("train is still in progress...")
     # time.sleep(1)
     pulse('TWO', replace=False)
-    # print(f"Pulse checkpoints: `{pulse.intermediate_checkpoints}`, loc dir `{pulse.location_dir}`")
+    # print(f"Pulse checkpoints: `{pulse.intermediate_checkpoints}`,
+    # loc dir `{pulse.location_dir}`")
     result = f"p1={p1}, p2={p2}, np1={np1}, np2={np2}"
     # print(f"train finished with result `{result}`")
     return result
@@ -50,4 +51,5 @@ def train(pulse, p1, p2, np1=None, np2=None):
 
 train_params = {'p1': 1, 'p2': 2, 'np1': 3, 'np2': 4}
 
-train_result = f"p1={train_params['p1']}, p2={train_params['p2']}, np1={train_params['np1']}, np2={train_params['np2']}"
+train_result = f"p1={train_params['p1']}, p2={train_params['p2']}, np1={train_params['np1']}, " \
+               f"np2={train_params['np2']}"

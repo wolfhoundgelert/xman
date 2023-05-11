@@ -1,6 +1,6 @@
 import pytest
 
-import xman
+from xman import xman
 from xman.error import ArgumentsXManError
 import helper
 

@@ -309,6 +309,10 @@ class ExpProjAPI(ExpStructBoxAPI):
         self.__obj._update()
         self.__obj._move_exp(dot_num, new_dot_num)
 
+    def _destroy(self):
+        self.__obj._destroy()
+        del self.__obj
+
     def __init__(self, obj: ExpProj):
         super().__init__(obj)
         self.__obj = obj

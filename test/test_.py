@@ -11,7 +11,7 @@ def test__xman_init():  # Just for adding xman's `src` to paths and config `is_p
     config.set__is_pytest(True)
 
 
-import xman
+from xman import xman
 import helper
 
 

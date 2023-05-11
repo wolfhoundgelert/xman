@@ -1,5 +1,7 @@
 ### CURRENT:
 
+- [PRIO] [!!!] README.md
+
 
 
 ### BUGS:
@@ -9,7 +11,6 @@
 
 ### TODO:
 
-- [PRIO] [!!!] README.md
 
 
 

@@ -1,8 +1,10 @@
 import shutil
 import os
-import xman
+
+from xman import xman
 
 proj_dir = '../gitignore/experiments/'
+xman.dir_tree(proj_dir)
 
 create_new = True
 if create_new:
