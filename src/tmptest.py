@@ -1,6 +1,5 @@
 import shutil
 import os
-# from xman import
 import xman
 
 proj_dir = '../gitignore/experiments/'

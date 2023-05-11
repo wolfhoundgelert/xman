@@ -32,8 +32,7 @@ class ExpConfig:
 class Exp(ExpStruct):
 
     @property
-    def _state(self):
-        return self.__state
+    def _state(self): return self.__state
 
     @property
     def _idle(self):
@@ -76,15 +75,18 @@ class Exp(ExpStruct):
     def _start(self) -> 'Exp':
         self.__check_not_manual()
         pipeline_data = self._data.pipeline
-        if pipeline_data is None:
+        if pipeline_data is None:  # status == 'EMPTY'
             raise NotExistsXManError(f"`{self}` doesn't have a pipeline!")
-        if pipeline_data.error:
+        if pipeline_data.error:  # status == 'ERROR'
             raise IllegalOperationXManError(f"`{self}` has an error during the previous start!")
-        if pipeline_data.started:
-            raise IllegalOperationXManError(
-                f"`{self}` was already started and the current status is `{self._status}`!")
-        if pipeline_data.finished:
+        if pipeline_data.started:  # status == 'IN_PROGRESS'
+            if self._state != ExpState.IDLE:
+                raise IllegalOperationXManError(
+                    f"`{self}` was already started and the current status is `{self._status}` "
+                    f"and state {self._state} isn't 'IDLE'!")
+        if pipeline_data.finished:  # status == 'DONE'
             raise IllegalOperationXManError(f"`{self}` was already finished!")
+        # status == 'TODO_' here, or 'IN_PROGRESS' with state 'IDLE'
         if self.__pipeline is None:
             self.__pipeline = maker._recreate_pipeline(self)
         try:
@@ -96,7 +98,7 @@ class Exp(ExpStruct):
     def _set_manual_result(self, result, need_confirm=True) -> Optional['Exp']:
         if self._data.manual_result is not None:
             if not confirm._request(need_confirm,
-                                    f"Do you want to rewrite the previous result of the exp `{self}`?"):
+                        f"Do you want to rewrite the previous result of the exp `{self}`?"):
                 return None
         self._data.manual_result = result
         self._save_and_update()
@@ -210,7 +212,7 @@ class Exp(ExpStruct):
     def __check_not_manual(self):
         if self._manual:
             raise IllegalOperationXManError(f"Illegal operation for manual experiments! "
-                f"Delete manual status first: `delete_manual_status()`.")
+                                       f"Delete manual status first: `delete_manual_status()`.")
 
     def __check_not_active(self):
         if self._state == ExpState.ACTIVE:

@@ -1,5 +1,5 @@
 import os
-from typing import Any, Callable
+from typing import Any, Callable, Optional
 import time
 
 from . import filesystem, maker
@@ -49,7 +49,8 @@ class Pulse(EventDispatcher):
 
 class PipelineData:  # Saved in exp._data.pipeline
 
-    def __init__(self, started, finished, error, error_stack, result, pulse_timestamps):
+    def __init__(self, started: bool, finished: bool, error: Optional[str],
+                 error_stack: Optional[str], result: Optional[Any], pulse_timestamps: [float]):
         self.started = started
         self.finished = finished
         self.error = error

@@ -89,23 +89,18 @@ class ExpStruct(EventDispatcher):
     _AUTO_STATUS_RESOLUTION = '-= auto status =-'
 
     @property
-    def _name(self) -> str:
-        return self._data.name
+    def _name(self) -> str: return self._data.name
 
     @property
-    def _descr(self) -> str:
-        return self._data.descr
+    def _descr(self) -> str: return self._data.descr
 
     @property
-    def _status(self):
-        return self.__status
+    def _status(self) -> ExpStructStatus: return self.__status
 
     @property
-    def _manual(self):
-        return self._data.manual_status is not None
+    def _manual(self): return self._data.manual_status is not None
 
-    def _tree(self):
-        tree.print_dir_tree(self.location_dir)
+    def _tree(self): tree.print_dir_tree(self.location_dir)
 
     def _info(self):
         text = str(self)
@@ -113,8 +108,7 @@ class ExpStruct(EventDispatcher):
             text += util.tab(f"\nResolution: {self._status.resolution}")
         return text
 
-    def _start(self):
-        util.override_it()
+    def _start(self): util.override_it()
 
     def _set_manual_status(self, status: str, resolution: str) -> 'ExpStruct':
         ExpStructStatus._check(status, resolution)
@@ -182,7 +176,9 @@ class ExpStruct(EventDispatcher):
 
     def _save_and_update(self):
         self.__time = filesystem._save_data_and_time(self._data, self.location_dir)
-        self._update()
+        self.__updating = True  # Update, but skipping ExpStruct._update part as it's not needed
+        self._update()  # Will call Exp, ExpGroup or ExpProj _update()
+        self.__updating = False  # Restore ExpStruct._update ability
 
     def _destroy(self):
         self._api = None

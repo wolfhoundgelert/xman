@@ -3,7 +3,7 @@ from typing import Optional
 from .error import NothingToDoXManError
 from .struct import ExpStructStatus
 from .structbox import ExpStructBox
-from .exp import Exp
+from .exp import Exp, ExpState
 
 
 class ExpGroup(ExpStructBox):
@@ -20,7 +20,9 @@ class ExpGroup(ExpStructBox):
     def _exps(self): return self._children()
 
     def _get_exp_for_start(self) -> Optional[Exp]:
-        # TODO Support IN_PROGRESS with state IDLE
+        for child in self._children():
+            if child._status == ExpStructStatus.IN_PROGRESS and child._state == ExpState.IDLE:
+                return child
         return self._get_child_by_status(ExpStructStatus.TODO)
 
     def _start(self, exp_num=None, autostart_next=False):
