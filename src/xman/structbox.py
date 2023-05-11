@@ -17,7 +17,6 @@ class ExpStructBox(ExpStruct):
 
     @property
     def _num_children(self):
-        self._update()
         return len(self._children())
 
     def _process_auto_status(self):
@@ -100,6 +99,7 @@ class ExpStructBox(ExpStruct):
         child = maker._make_new_child(self, name, descr, num)
         if child is not None:
             self.__add(child)
+            self._update_status()
             self._dispatch(ExpStructBoxEvent, ExpStructBoxEvent.CHILD_MADE)
         return child
 
@@ -108,6 +108,7 @@ class ExpStructBox(ExpStruct):
         if not need_confirm or confirm._remove_struct_and_all_its_content(child):
             self.__remove(child)
             maker._destroy_child(child)
+            self._update_status()
             self._dispatch(ExpStructBoxEvent, ExpStructBoxEvent.CHILD_DESTROYED)
 
     def _children(self):

@@ -36,11 +36,20 @@ def test__setting_status_after_wrong_one():
     assert xman.proj.group(1).status.status == 'TODO'
 
 
-def test__wrong_proj_status():
+def test__wrong_proj_status_when_new_exp():
     exp = helper.make_exp_from_nothing()
     exp.set_manual_status('SUCCESS', 'Success')
     proj = xman.proj
     group = proj.group(1)
     group.make_exp('Lowercase', 'Lowercase input')
     assert group.status.status == 'IN_PROGRESS'
+    assert proj.status.status == 'IN_PROGRESS'
+
+
+def test__wrong_proj_status_when_new_group():
+    exp = helper.make_exp_from_nothing()
+    exp.set_manual_status('SUCCESS', 'Success')
+    proj = xman.proj
+    assert proj.status.status == 'SUCCESS'
+    proj.make_group('Lowercase', 'Lowercase input')
     assert proj.status.status == 'IN_PROGRESS'

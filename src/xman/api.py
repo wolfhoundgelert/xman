@@ -114,6 +114,9 @@ class ExpStructAPI:
         self.__obj._update()
         self.__obj._edit(name, descr)
 
+    def _update(self):
+        self.__obj._update()
+
     # Printing in jupyter notebook - https://stackoverflow.com/a/41454816/9751954
     def _repr_pretty_(self, p, cycle): p.text(str(self) if not cycle else '...')
 

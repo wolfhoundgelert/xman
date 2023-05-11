@@ -54,9 +54,7 @@ def start(exp_dot_num: str = None, autostart_next=False):
 
 class xman:
 
-    @staticmethod
-    @property
-    def proj(): return proj
+    proj = None
 
     @staticmethod
     def dir_tree(target_dir, files_limit=10, files_first=True, sort_numbers=True):
@@ -71,70 +69,71 @@ class xman:
 
     @staticmethod
     def load_proj(location_dir: str):
-        from .proj import ExpProj
-        obj = ExpProj(location_dir)
+        from . import maker
+        obj = maker._recreate_proj(location_dir)
         return xman.__make_proj_api(obj)
 
     @staticmethod
     def info():
         xman.__check_proj()
-        proj.info()
+        xman.proj.info()
 
     @staticmethod
     def make_group(name, descr, num=None):
         xman.__check_proj()
-        return proj.make_group(name, descr, num)
+        return xman.proj.make_group(name, descr, num)
 
     @staticmethod
     def destroy_group(num_or_name, need_confirm=True):
         xman.__check_proj()
-        return proj.destroy_group(num_or_name, need_confirm)
+        return xman.proj.destroy_group(num_or_name, need_confirm)
 
     @staticmethod
     def group(num_or_name):
         xman.__check_proj()
-        return proj.group(num_or_name)
+        return xman.proj.group(num_or_name)
 
     @staticmethod
     def groups():
         xman.__check_proj()
-        return proj.groups()
+        return xman.proj.groups()
 
     @staticmethod
     def make_exp(group_num_or_name, name, descr, num=None):
         xman.__check_proj()
-        return proj.make_exp(group_num_or_name, name, descr, num)
+        return xman.proj.make_exp(group_num_or_name, name, descr, num)
 
     @staticmethod
     def destroy_exp(dot_num: str, need_confirm=True):
         xman.__check_proj()
-        return proj.destroy_exp(dot_num, need_confirm)
+        return xman.proj.destroy_exp(dot_num, need_confirm)
 
     @staticmethod
     def exp(dot_num: str):
         xman.__check_proj()
-        return proj.exp(dot_num)
+        return xman.proj.exp(dot_num)
 
     @staticmethod
     def exps(group_num_or_name=None):
         xman.__check_proj()
-        return proj.exps(group_num_or_name)
+        return xman.proj.exps(group_num_or_name)
 
     @staticmethod
     def start(exp_dot_num: str = None, autostart_next=False):
         xman.__check_proj()
-        proj.start(exp_dot_num, autostart_next)
+        xman.proj.start(exp_dot_num, autostart_next)
 
     @staticmethod
     def __make_proj_api(obj):
         from .api import ExpProjAPI
+        xman.proj = ExpProjAPI(obj)
         global proj
-        proj = ExpProjAPI(obj)
-        return proj
+        proj = xman.proj
+        return xman.proj
 
     @staticmethod
     def __check_proj():
         from .error import IllegalOperationXManError
-        if proj is None:
+        if xman.proj is None:
             raise IllegalOperationXManError(f"There's no project - use `xman.make_proj(...)` or "
                                             f"`xman.load_proj(...)` first!")
