@@ -58,7 +58,7 @@ def _make_new_child(parent, name, descr, child_num) -> Optional['ExpStruct']:
     child_class = _get_child_class(parent)
     child_dir = filesystem._get_child_dir(parent, child_num)
     _make_and_save_struct_data(child_class, child_dir, name, descr)
-    child = child_class(child_dir)
+    child = child_class(child_dir, parent)
     if platform.is_colab:
         return child if platform.check_colab_forked_folders(parent) else None
     return child
@@ -66,7 +66,7 @@ def _make_new_child(parent, name, descr, child_num) -> Optional['ExpStruct']:
 
 def _recreate_child(parent, child_num):
     location_dir = filesystem._get_child_dir(parent, child_num)
-    return _get_child_class(parent)(location_dir)
+    return _get_child_class(parent)(location_dir, parent)
 
 
 def _destroy_child(child: 'ExpStruct'):

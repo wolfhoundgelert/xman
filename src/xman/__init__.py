@@ -3,6 +3,7 @@ __version__ = '0.0.11'  # TODO support auto setting from setup.py
 
 from . import tree, maker
 from .api import ExpProjAPI
+from .error import IllegalOperationXManError
 
 
 class XMan:
@@ -74,7 +75,6 @@ class XMan:
         return self.__proj
 
     def __check_proj(self):
-        from .error import IllegalOperationXManError
         if self.__proj is None:
             raise IllegalOperationXManError(f"There's no project - use `xman.make_proj(...)` or "
                                             f"`xman.load_proj(...)` first!")

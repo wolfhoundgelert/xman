@@ -2,7 +2,7 @@ import time
 from typing import Any, Optional
 
 from .error import NotExistsXManError, IllegalOperationXManError
-from .pipeline import PipelineData, PipelineEvent
+from .pipeline import PipelineData
 from .struct import ExpStructData, ExpStruct, ExpStructStatus
 from . import util, confirm
 from . import maker
@@ -58,8 +58,7 @@ class Exp(ExpStruct):
     def _make_pipeline(self, run_func, params, save=False) -> 'Exp':
         self.__check_not_manual()
         self.__pipeline = maker._make_pipeline(self, run_func, params, save)
-        self.__pipeline._add_listener(PipelineEvent, self.__pipeline_listener)
-        self._save_and_update()
+        self._save()
         return self
 
     def _destroy_pipeline(self, need_confirm=True) -> Optional['Exp']:
@@ -101,7 +100,7 @@ class Exp(ExpStruct):
                         f"Do you want to rewrite the previous result of the exp `{self}`?"):
                 return None
         self._data.manual_result = result
-        self._save_and_update()
+        self._save()
         return self
 
     def _delete_manual_result(self, need_confirm=True) -> Optional['Exp']:
@@ -109,7 +108,7 @@ class Exp(ExpStruct):
             raise NotExistsXManError(f"There's no manual result in exp `{self}`!")
         if confirm._request(need_confirm, f"ATTENTION! Remove the manual result of exp `{self}`?"):
             self._data.manual_result = None
-            self._save_and_update()
+            self._save()
             return self
         return None
 
@@ -199,11 +198,11 @@ class Exp(ExpStruct):
         self._data.manual_result = None
         super()._destroy()
 
-    def __init__(self, location_dir):
+    def __init__(self, location_dir, parent):
         self.__state = None
         self.__pipeline = None
         self.__updating = False
-        super().__init__(location_dir)
+        super().__init__(location_dir, parent)
 
     def __str__(self):
         state = f": {self._state}" if self._status == ExpStructStatus.IN_PROGRESS else ''
@@ -225,11 +224,7 @@ class Exp(ExpStruct):
         return True
 
     def __destroy_pipeline(self, keep_data: bool, save_and_update):
-        if self.__pipeline is not None:
-            self.__pipeline._remove_listener(PipelineEvent, self.__pipeline_listener)
         maker._destroy_pipeline(self, self.__pipeline, keep_data)
         self.__pipeline = None
         if save_and_update:
-            self._save_and_update()
-
-    def __pipeline_listener(self, event: PipelineEvent): self._save_and_update()
+            self._save()

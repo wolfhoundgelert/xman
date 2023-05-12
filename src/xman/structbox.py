@@ -1,16 +1,10 @@
 from typing import Optional
 
 from .error import ArgumentsXManError, NotExistsXManError, AlreadyExistsXManError
-from .struct import ExpStructEvent, ExpStruct, ExpStructStatus
+from .struct import ExpStruct, ExpStructStatus
 from . import util, confirm
 from . import maker
 from . import filesystem
-
-
-class ExpStructBoxEvent(ExpStructEvent):
-
-    CHILD_MADE = 'CHILD_MADE'
-    CHILD_DESTROYED = 'CHILD_DESTROYED'
 
 
 class ExpStructBox(ExpStruct):
@@ -60,8 +54,8 @@ class ExpStructBox(ExpStruct):
         for name in list(self.__name_to_child.keys()):
             del self.__name_to_child[name]
         for child in self._children():
-            self.__name_to_child[child._data.name] = child
             child._update()
+            self.__name_to_child[child._data.name] = child
         # Status should be updated at the end of the inherited updating hierarchy
         if type(self) == ExpStructBox:
             self._update_status()
@@ -99,8 +93,6 @@ class ExpStructBox(ExpStruct):
         child = maker._make_new_child(self, name, descr, num)
         if child is not None:
             self.__add(child)
-            self._update_status()
-            self._dispatch(ExpStructBoxEvent, ExpStructBoxEvent.CHILD_MADE)
         return child
 
     def _destroy_child(self, num_or_name, need_confirm=True):
@@ -108,8 +100,6 @@ class ExpStructBox(ExpStruct):
         if not need_confirm or confirm._remove_struct_and_all_its_content(child):
             self.__remove(child)
             maker._destroy_child(child)
-            self._update_status()
-            self._dispatch(ExpStructBoxEvent, ExpStructBoxEvent.CHILD_DESTROYED)
 
     def _children(self):
         return list(self.__num_to_child.values())
@@ -141,11 +131,11 @@ class ExpStructBox(ExpStruct):
         self.__name_to_child = None
         super()._destroy()
 
-    def __init__(self, location_dir):
+    def __init__(self, location_dir, parent):
         self.__num_to_child = {}
         self.__name_to_child = {}
         self.__updating = False
-        super().__init__(location_dir)
+        super().__init__(location_dir, parent)
 
     def __children_has_status(self, status_or_list, all_children: bool):
         sl = status_or_list if type(status_or_list) is list else [status_or_list]
@@ -162,21 +152,7 @@ class ExpStructBox(ExpStruct):
     def __add(self, child):
         self.__num_to_child[child.num] = child
         self.__name_to_child[child._data.name] = child
-        child._add_listener(ExpStructEvent, self.__exp_struct_listener)
-        if isinstance(child, ExpStructBox):
-            child._add_listener(ExpStructBoxEvent, self.__exp_struct_box_listener)
 
     def __remove(self, child):
         del self.__num_to_child[child.num]
         del self.__name_to_child[child._data.name]
-        child._remove_listener(ExpStructEvent, self.__exp_struct_listener)
-        if isinstance(child, ExpStructBox):
-            child._remove_listener(ExpStructBoxEvent, self.__exp_struct_box_listener)
-
-    def __exp_struct_listener(self, event: ExpStructEvent):
-        self._update()
-        if event.kind == ExpStructEvent.CHANGE_NAME_REQUESTED:
-            event.respondent = self
-            event.response = event.request not in self.__name_to_child
-
-    def __exp_struct_box_listener(self, event: ExpStructBoxEvent): self._update()

@@ -1,7 +1,6 @@
 import os
 from typing import Optional
 
-from .event import EventDispatcher, Event
 from .error import NotExistsXManError, ArgumentsXManError, AlreadyExistsXManError
 from . import util, filesystem, tree, confirm
 
@@ -71,20 +70,7 @@ class ExpStructStatus:
     def __str__(self): return self.status + ' *' if self.manual else self.status
 
 
-class ExpStructEvent(Event):
-
-    STRUCT_EDITED = 'STRUCT_EDITED'
-    CHANGE_NAME_REQUESTED = 'CHANGE_NAME_REQUESTED'
-    STATUS_CHANGED = 'STATUS_CHANGED'
-
-    def __init__(self, target, kind, request=None):
-        super().__init__(target, kind)
-        self.request = request 
-        self.respondent = None
-        self.response = None
-
-
-class ExpStruct(EventDispatcher):
+class ExpStruct:
 
     _AUTO_STATUS_RESOLUTION = '-= auto status =-'
 
@@ -114,7 +100,7 @@ class ExpStruct(EventDispatcher):
         ExpStructStatus._check(status, resolution)
         self._data.manual_status = status
         self._data.manual_status_resolution = resolution
-        self._save_and_update()
+        self._save()
         return self
 
     def _delete_manual_status(self, need_confirm) -> Optional['ExpStruct']:
@@ -126,28 +112,24 @@ class ExpStruct(EventDispatcher):
                             f"`{self._data.manual_status_resolution}` of exp `{self}`?"):
             self._data.manual_status = None
             self._data.manual_status_resolution = None
-            self._save_and_update()
+            self._save()
             return self
         return None
 
     def _edit(self, name=None, descr=None):
-        need_update = need_save = False
+        need_save = False
         if self._data.name != name:
-            event = self._dispatch(ExpStructEvent, ExpStructEvent.CHANGE_NAME_REQUESTED,
-                                   request=name)
-            if event is not None and not event.response:
+            if self.parent is not None and self.parent._has_child_num_or_name(name):
                 raise AlreadyExistsXManError(
                     f"There's another child with the name=`{name}` "
-                    f"in the parent `{event.respondent}`")
+                    f"in the parent `{self.parent}`")
             self._data.name = name
-            need_update = need_save = True
+            need_save = True
         if self._data.descr != descr:
             self._data.descr = descr
             need_save = True
         if need_save:
-            self._save_and_update()
-        if need_update:
-            self._dispatch(ExpStructEvent, ExpStructEvent.STRUCT_EDITED)
+            self._save()
 
     def _update_status(self):
         if self._manual:
@@ -156,7 +138,6 @@ class ExpStruct(EventDispatcher):
             status, resolution = self._process_auto_status()
         if not ExpStructStatus._fit_parameters(self.__status, status, resolution, self._manual):
             self.__status = ExpStructStatus(status, resolution, self._manual)
-            self._dispatch(ExpStructEvent, ExpStructEvent.STATUS_CHANGED)
 
     def _process_auto_status(self): util.override_it()
 
@@ -174,21 +155,18 @@ class ExpStruct(EventDispatcher):
             self._update_status()
         self.__updating = False
 
-    def _save_and_update(self):
-        self.__time = filesystem._save_data_and_time(self._data, self.location_dir)
-        self.__updating = True  # Update, but skipping ExpStruct._update part as it's not needed
-        self._update()  # Will call Exp, ExpGroup or ExpProj _update()
-        self.__updating = False  # Restore ExpStruct._update ability
+    def _save(self): self.__time = filesystem._save_data_and_time(self._data, self.location_dir)
 
     def _destroy(self):
+        self.parent = None
         self._api = None
         self._data = None
         self.__status = None
-        super()._destroy()
 
-    def __init__(self, location_dir):
-        super().__init__()
+    def __init__(self, location_dir, parent):
+        from xman.structbox import ExpStructBox
         self.location_dir = os.path.normpath(location_dir)
+        self.parent: ExpStructBox = parent
         self.num = filesystem._get_dir_num(location_dir)
         self._data = None
         self.__time = None

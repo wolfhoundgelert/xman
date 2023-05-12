@@ -49,9 +49,9 @@ class ExpGroup(ExpStructBox):
             self._update_status()
         self.__updating = False
 
-    def __init__(self, location_dir):
+    def __init__(self, location_dir, parent):
         self.__updating = False
-        super().__init__(location_dir)
+        super().__init__(location_dir, parent)
 
     def __str__(self):
         return f"Group {self.num} [{self._status}] {self._data.name} - {self._data.descr}"

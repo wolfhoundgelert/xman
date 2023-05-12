@@ -26,7 +26,7 @@ def _get_group_api(group):
 def _get_groups_apis(groups): return [_get_group_api(group) for group in groups]
 
 
-class StatusAPI:
+class ExpStructStatusAPI:
 
     EMPTY = 'EMPTY'
     TODO = 'TODO'
@@ -78,9 +78,9 @@ class ExpStructAPI:
         return self.__obj._descr
 
     @property
-    def status(self) -> StatusAPI:
+    def status(self) -> ExpStructStatusAPI:
         self.__obj._update()
-        return StatusAPI(self.__obj._status)
+        return ExpStructStatusAPI(self.__obj._status)
 
     @property
     def manual(self) -> bool:
@@ -111,7 +111,8 @@ class ExpStructAPI:
         return None if obj is None else self
 
     def edit(self, name=None, descr=None):
-        self.__obj._update()
+        # Need to update parent (and all its children) to check other children on the same name:
+        self.__obj._update() if self.__obj.parent is None else self.__obj.parent._update()
         self.__obj._edit(name, descr)
 
     def _update(self):
@@ -124,7 +125,9 @@ class ExpStructAPI:
         self.__obj = obj
         obj._api = self
 
-    def __str__(self): return str(self.__obj)
+    def __str__(self):
+        self.__obj._update()
+        return str(self.__obj)
 
 
 class ExpAPI(ExpStructAPI):
@@ -305,9 +308,10 @@ class ExpProjAPI(ExpStructBoxAPI):
         self.__obj._update()
         self.__obj._start(exp_dot_num, autostart_next)
 
-    def move_exp(self, dot_num, new_dot_num):  # TODO
-        self.__obj._update()
-        self.__obj._move_exp(dot_num, new_dot_num)
+    # TODO
+    # def move_exp(self, dot_num, new_dot_num):
+    #     self.__obj._update()
+    #     self.__obj._move_exp(dot_num, new_dot_num)
 
     def _destroy(self):
         self.__obj._destroy()

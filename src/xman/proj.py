@@ -59,8 +59,7 @@ class ExpProj(ExpStructBox):
         if autostart_next:
             self._start(autostart_next=True)
 
-    def _move_exp(self, dot_num, new_dot_num):
-        pass  # TODO
+    # TODO def _move_exp(self, dot_num, new_dot_num):
 
     def _update(self):
         if self.__updating:
@@ -74,6 +73,6 @@ class ExpProj(ExpStructBox):
 
     def __init__(self, location_dir):
         self.__updating = False
-        super().__init__(location_dir)
+        super().__init__(location_dir, None)
 
     def __str__(self): return f"Proj [{self._status}] {self._data.name} - {self._data.descr}"

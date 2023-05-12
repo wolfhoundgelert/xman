@@ -1,7 +1,25 @@
 ### CURRENT:
 
-- [PRIO] [!!!] README.md
+- [PRIO] [!!!] README.md  
+  https://www.markdownguide.org/basic-syntax/  
+  https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax  
 
+- LICENSE.md (check in `setup.py`)
+
+- [PRIO] Redo working with Pulse.
+    + Check if threading Timer executes during the long loops - YES
+      ```
+      from threading import Timer
+      import time
+      Timer(delay:=6, lambda: print(f'timer {delay}')).start()
+      t = time.time()
+      for i in range(int(1e+8)):
+          if not i % int(1e+7):
+              print(time.time() - t)
+      ```
+    - Save timestamps automatically by threading Timer
+    - Now it's better to rename `Pulse` to `Mediator` (provides `location_dir` and saves checkpoints)
+    - Implement logic of saving checkpoints as: user passes as a checkpoint anything he wants, `Mediator` saves it to the exp folder by default or to the custom path if it's given, and `Mediator` saves the links on these checkpoints separately, so checkpoints data itself won't affect the performance.
 
 
 ### BUGS:
@@ -16,6 +34,8 @@
 
 
 ### BACKLOG:
+
+- [LOW] Add `__str__` and `_repr_pretty_` to XMan, show there the credits, version, quick help and links to documentation.
 
 - [LOW] How to solve the issue of multiple `update`-s in a chain `a.foo().bar().biz()`. I need to register each call in some `UpdateManager`, if it's the first call - set `is_chain` status to `True`, this status activates some other thread (e.g. by minimal timer) for setting `is_chain` back to `False`. Each of methods (foo, bar, biz) check `is_chain` flag, and if it's `True`, they skip `update`. In this case, the flag will be cleared right after the chain and the next chain starts again with `update`. I can add this logic to the root `super().update()` and it will return `False` if the chain were marked:
   ```
@@ -70,8 +90,6 @@
 - [LOW] Save data structure version to the separated file `version.pkl`, it will help to recognize unmatched versions of saved file and xman data structure, and maybe it will be possible to make some converters from old to the newest versions.
        
 - [LOW] Add runner info (link on notebook and colab account or mail) - from which notebook and who started an exp
-
-- [???] Do I need to pull factual event dispatching out from the current execution thread (by making small timeout)? Async dispatching.
 
 
 
