@@ -1,3 +1,13 @@
+from xman import util
+
+
+class PipelineConfig:
+
+    timer_interval = 2 * util.SECOND
+    active_buffer = 5 * util.SECOND
+    active_buffer_colab = util.MINUTE
+
+
 confirm_off = False
 is_pytest = False
 

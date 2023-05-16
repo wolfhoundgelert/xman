@@ -12,7 +12,7 @@ def _request(need_confirm, request):
     return __response(request) if need_confirm else True
 
 
-def _remove_struct_and_all_its_content(struct: 'ExpStruct'):
-    p = struct.location_dir
-    return _request(True,
+def _remove_struct_and_all_its_content(struct: 'ExpStruct', need_confirm):
+    p = struct._location_dir
+    return _request(need_confirm,
                     f"ATTENTION! Remove `{struct}` and all its `{p}` dir with all its content?")

@@ -75,6 +75,15 @@ class ExpStruct:
     _AUTO_STATUS_RESOLUTION = '-= auto status =-'
 
     @property
+    def _location_dir(self) -> str: return self.__location_dir
+
+    @property
+    def _parent(self) -> 'ExpStructBox': return self.__parent
+
+    @property
+    def _num(self) -> int: return self.__num
+
+    @property
     def _name(self) -> str: return self._data.name
 
     @property
@@ -84,9 +93,9 @@ class ExpStruct:
     def _status(self) -> ExpStructStatus: return self.__status
 
     @property
-    def _manual(self): return self._data.manual_status is not None
+    def _is_manual(self): return self._data.manual_status is not None
 
-    def _tree(self): tree.print_dir_tree(self.location_dir)
+    def _tree(self): tree.print_dir_tree(self.__location_dir)
 
     def _info(self):
         text = str(self)
@@ -102,6 +111,12 @@ class ExpStruct:
         self._data.manual_status_resolution = resolution
         self._save()
         return self
+
+    def _success(self, resolution: str) -> Optional['ExpStruct']:
+        return self._set_manual_status(ExpStructStatus.SUCCESS, resolution)
+
+    def _fail(self, resolution: str) -> Optional['ExpStruct']:
+        return self._set_manual_status(ExpStructStatus.FAIL, resolution)
 
     def _delete_manual_status(self, need_confirm) -> Optional['ExpStruct']:
         if not self._status.manual:
@@ -119,10 +134,10 @@ class ExpStruct:
     def _edit(self, name=None, descr=None):
         need_save = False
         if self._data.name != name:
-            if self.parent is not None and self.parent._has_child_num_or_name(name):
+            if self.__parent is not None and self.__parent._has_child_num_or_name(name):
                 raise AlreadyExistsXManError(
                     f"There's another child with the name=`{name}` "
-                    f"in the parent `{self.parent}`")
+                    f"in the parent `{self.__parent}`")
             self._data.name = name
             need_save = True
         if self._data.descr != descr:
@@ -132,12 +147,12 @@ class ExpStruct:
             self._save()
 
     def _update_status(self):
-        if self._manual:
+        if self._is_manual:
             status, resolution = self._data.manual_status, self._data.manual_status_resolution
         else:
             status, resolution = self._process_auto_status()
-        if not ExpStructStatus._fit_parameters(self.__status, status, resolution, self._manual):
-            self.__status = ExpStructStatus(status, resolution, self._manual)
+        if not ExpStructStatus._fit_parameters(self.__status, status, resolution, self._is_manual):
+            self.__status = ExpStructStatus(status, resolution, self._is_manual)
 
     def _process_auto_status(self): util.override_it()
 
@@ -148,27 +163,27 @@ class ExpStruct:
         if self.__updating:
             return
         self.__updating = True
-        self._data, self.__time = filesystem._load_fresh_data_and_time(self.location_dir,
+        self._data, self.__time = filesystem._load_fresh_data_and_time(self.__location_dir,
                                                                        self._data, self.__time)
         # Status should be updated at the end of the inherited updating hierarchy
         if type(self) == ExpStruct:
             self._update_status()
         self.__updating = False
 
-    def _save(self): self.__time = filesystem._save_data_and_time(self._data, self.location_dir)
+    def _save(self): self.__time = filesystem._save_data_and_time(self._data, self.__location_dir)
 
     def _destroy(self):
-        self.parent = None
+        self.__parent = None
         self._api = None
         self._data = None
         self.__status = None
 
     def __init__(self, location_dir, parent):
         from xman.structbox import ExpStructBox
-        self.location_dir = os.path.normpath(location_dir)
-        self.parent: ExpStructBox = parent
-        self.num = filesystem._get_dir_num(location_dir)
-        self._data = None
+        self.__location_dir = os.path.normpath(location_dir)
+        self.__parent: ExpStructBox = parent
+        self.__num = filesystem._get_dir_num(location_dir)
+        self._data: ExpStructData = None
         self.__time = None
         self.__status = None
         self.__updating = False

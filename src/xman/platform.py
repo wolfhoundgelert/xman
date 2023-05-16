@@ -30,11 +30,11 @@ def check_colab_forked_folders(exp_struct_box) -> bool:
     dir_prefix = filesystem._dir_prefix(exp_struct_box)
     regex = fr'^{dir_prefix}\d+ \(\d+\)$'
     folders = []
-    for entry in os.scandir(exp_struct_box.location_dir):
+    for entry in os.scandir(exp_struct_box._location_dir):
         if entry.is_dir() and re.match(regex, entry.name):
             folders.append(entry.name)
     if len(folders):
-        message = f"\nFound forked folders {folders} in the location `{exp_struct_box.location_dir}`." \
+        message = f"\nFound forked folders {folders} in the location `{exp_struct_box._location_dir}`." \
                   f"\nIt could be due to a delay in updating one account to the fact that a Google Drive folder was " \
                   f"created under a different account: https://stackoverflow.com/questions/76106194/folders-created-with-python-code-from-2-colab-accounts-in-one-google-drive-shareFound" \
                   f"\nForked folders are not presented in the project and are essentially lost experiments. You need " \

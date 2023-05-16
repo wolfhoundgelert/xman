@@ -1,35 +1,17 @@
 ### CURRENT:
 
+- Do TODO-s in the code
+
 - [PRIO] [!!!] README.md  
   https://www.markdownguide.org/basic-syntax/  
   https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax  
-
-- LICENSE.md (check in `setup.py`)
-
-- [PRIO] Redo working with Pulse.
-    + Check if threading Timer executes during the long loops - YES
-      ```
-      from threading import Timer
-      import time
-      Timer(delay:=6, lambda: print(f'timer {delay}')).start()
-      t = time.time()
-      for i in range(int(1e+8)):
-          if not i % int(1e+7):
-              print(time.time() - t)
-      ```
-    - Save timestamps automatically by threading Timer
-    - Now it's better to rename `Pulse` to `Mediator` (provides `location_dir` and saves checkpoints)
-    - Implement logic of saving checkpoints as: user passes as a checkpoint anything he wants, `Mediator` saves it to the exp folder by default or to the custom path if it's given, and `Mediator` saves the links on these checkpoints separately, so checkpoints data itself won't affect the performance.
 
 
 ### BUGS:
 
 
 
-
 ### TODO:
-
-
 
 
 
@@ -63,19 +45,11 @@
 
 - [LOW] Move exp into another group
 
-- [???] Add possibility to make manual `force` update, save, load when we got stuck for somehow? Need to investigate:
-  ```
-  Proj [ERROR] hw_3-1 - https://stepik.org/lesson/940785/step/1?unit=946946
-  
-      Group 1 [ERROR] Tokenization - Try several tokenization technics
-          Exp 1 [TODO] Punctuation - Remove punctuation
-  ```
-
 - [???] Add printable info about timings on exp execution, savings, loadings
 - 
 - [???] Set `.lock` file during writing, then remove. If there's an attempt to read during an exp was locked, set a series of timeouts, then raise an error that exp wasn't unlocked for somehow (too long writing time or some error with removing `.lock` file after writing). Error: "pickle data was truncated", then group has an error status and can't update for actual status (active in the other notebook and account)
 
-- [LOW] Add printable info on start, save, load, etc...
+- [???] Add printable info on start, save, load, etc...
 
 - [LOW] Possibility to add custom `result_str` transformer for different levels: exp, group, proj. Save the transformer as a data field. Then check if exp has a custom one, then group has, then proj, then default str(result). Register result custom viewer on exp, group, and proj levels
 

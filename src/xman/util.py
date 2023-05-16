@@ -31,14 +31,6 @@ def check_num(num, allow_none: bool):
     raise ArgumentsXManError(f"num={num} should be an integer that greater or equal 1!")
 
 
-def parse_group_and_exp_num(dot_num: str):
-    match = re.match(r'^([1-9]\d*)\.([1-9]\d*)$', dot_num)
-    if match is None:
-        raise ArgumentsXManError(f"`dot_num` should be a string like `1.1`, `2.3`, etc, but `{dot_num}` was given")
-    group_num, exp_num = int(match[1]), int(match[2])
-    return group_num, exp_num
-
-
 def get_cls(target_obj_or_cls):
     t = type(target_obj_or_cls)
     return target_obj_or_cls if t == type else t

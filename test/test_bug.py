@@ -5,13 +5,6 @@ from xman.error import ArgumentsXManError
 import helper
 
 
-def test__getting_tenth_exp_with_dotted_num():
-    exp = helper.make_exp_from_nothing(num=10)
-    assert exp.num == 10
-    assert xman.proj.exp('1.10') is exp
-    assert xman.proj.group(1).exp(10) is exp
-
-
 def test__exp_broken_after_setting_wrong_status():
     exp = helper.make_exp_from_nothing()
     with pytest.raises(ArgumentsXManError, match="Wrong value"):

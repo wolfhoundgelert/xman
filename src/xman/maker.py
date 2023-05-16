@@ -1,7 +1,7 @@
 from typing import Optional
 
 from .error import AlreadyExistsXManError, ArgumentsXManError, IllegalOperationXManError
-from .pipeline import PipelineData, PipelineRunData, Pipeline, Pulse
+from .pipeline import PipelineData, PipelineRunData, Pipeline
 from . import util, filesystem, platform
 
 
@@ -71,43 +71,32 @@ def _recreate_child(parent, child_num):
 
 def _destroy_child(child: 'ExpStruct'):
     child._destroy()
-    filesystem._delete_dir(child.location_dir)
+    filesystem._delete_dir(child._location_dir)
 
 
-def _make_pipeline(exp, run_func, params, save=False):
+def _make_pipeline(exp, run_func, with_mediator, params, save=False):
     if exp._data.pipeline is not None:
-        raise AlreadyExistsXManError(f"Exp `{exp}` already has a pipeline!")
-    exp._data.pipeline = PipelineData(False, False, None, None, None, None)
-    run_data = PipelineRunData(run_func, params)
+        raise AlreadyExistsXManError(f"`{exp}` already has a pipeline!")
+    exp._data.pipeline = PipelineData()
+    run_data = PipelineRunData(run_func, with_mediator, params)
     if save:
-        filesystem._save_pipeline_run_data(run_data, exp.location_dir)
-    return Pipeline(exp.location_dir, exp._data.pipeline, run_data)
+        filesystem._save_pipeline_run_data(run_data, exp._location_dir)
+    return Pipeline(exp._location_dir, exp._data.pipeline, run_data)
 
 
 def _recreate_pipeline(exp):
-    run_data = filesystem._load_pipeline_run_data(exp.location_dir)
+    run_data = filesystem._load_pipeline_run_data(exp._location_dir)
     if run_data is None:
         raise IllegalOperationXManError(f"Can't recreate pipeline for exp `{exp}` - "
                                         f"there's no `.run` file! Use `save=True` for "
                                         f"`make_pipeline` method if you need to preserve "
                                         f"`run_func` and `params` for other session.")
-    return Pipeline(exp.location_dir, exp._data.pipeline, run_data)
+    return Pipeline(exp._location_dir, exp._data.pipeline, run_data)
 
 
 def _destroy_pipeline(exp, pipeline, keep_data: bool):
-    filesystem._delete_pipeline_run_data(exp.location_dir)
+    filesystem._delete_pipeline_run_data(exp._location_dir)
     if pipeline is not None:
         pipeline._destroy()
     if not keep_data:
         exp._data.pipeline = None
-
-
-def _make_pulse(location_dir):
-    checkpoints = filesystem._load_checkpoint(location_dir) or []
-    return Pulse(location_dir, checkpoints)
-
-
-def _destroy_pulse(pulse, location_dir):
-    filesystem._delete_checkpoint(location_dir)
-    if pulse is not None:
-        pulse._destroy()

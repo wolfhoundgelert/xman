@@ -1,8 +1,7 @@
-from .error import NothingToDoXManError
+from .error import NothingToDoXManError, IllegalOperationXManError
 from .structbox import ExpStructBox
 from .group import ExpGroup
 from .exp import Exp
-from . import util
 
 
 class ExpProj(ExpStructBox):
@@ -13,30 +12,29 @@ class ExpProj(ExpStructBox):
         return self._make_child(name, descr, num)
 
     def _destroy_group(self, num_or_name, need_confirm=True):
+        # TODO check hasn't active experiments
         self._destroy_child(num_or_name, need_confirm)
 
     def _group(self, num_or_name) -> ExpGroup: return self._get_child_by_num_or_name(num_or_name)
 
-    def _groups(self): return self._children()
+    def _groups(self) -> [ExpGroup]: return self._children()
 
-    def _has_exp(self, dot_num: str) -> bool:
-        group_num, exp_num = util.parse_group_and_exp_num(dot_num)
-        return self._group(group_num)._has_exp(exp_num)
+    def _has_exp(self, group_num_or_name, exp_num_or_name) -> bool:
+        return self._group(group_num_or_name)._has_exp(exp_num_or_name)
 
     def _make_exp(self, group_num_or_name, name, descr, num=None) -> Exp:
         group = self._group(group_num_or_name)
         exp = group._make_exp(name, descr, num)
         return exp
+        self._has_exp()
 
-    def _destroy_exp(self, dot_num: str, need_confirm=True):
-        group_num, exp_num = util.parse_group_and_exp_num(dot_num)
-        self._group(group_num)._destroy_exp(exp_num, need_confirm)
+    def _destroy_exp(self, group_num_or_name, exp_num_or_name, need_confirm=True):
+        self._group(group_num_or_name)._destroy_exp(exp_num_or_name, need_confirm)
 
-    def _exp(self, dot_num: str) -> Exp:  # dot_num: '1.1', '1.10', '2.3'...
-        group_num, exp_num = util.parse_group_and_exp_num(dot_num)
-        return self._group(group_num)._exp(exp_num)
+    def _exp(self, group_num_or_name, exp_num_or_name) -> Exp:
+        return self._group(group_num_or_name)._exp(exp_num_or_name)
 
-    def _exps(self, group_num_or_name=None):
+    def _exps(self, group_num_or_name=None) -> [Exp]:
         if group_num_or_name is not None:
             return self._group(group_num_or_name)._exps()
         result = []
@@ -44,18 +42,36 @@ class ExpProj(ExpStructBox):
             result.extend(it.exps())
         return result
 
-    def _start(self, exp_dot_num: str = None, autostart_next=False):
-        if exp_dot_num is None:
-            exp = None
+    def _start(self, group_num_or_name=None, exp_num_or_name=None, autostart_next=False):
+        exp = None
+        if group_num_or_name is None and exp_num_or_name is None:
             for group in self._groups():
                 exp = group._get_exp_for_start()
                 if exp is not None:
-                    exp._start()
                     break
             if exp is None:
-                raise NothingToDoXManError(f"There's nothing to start in the proj `{self}`!")
-        else:
-            self._exp(exp_dot_num)._start()
+                raise NothingToDoXManError(f"There's nothing to start in the `{self}`!")
+        elif group_num_or_name is not None and exp_num_or_name is not None:
+            exp = self._exp(group_num_or_name, exp_num_or_name)
+            if not exp._is_ready_for_start():
+                raise IllegalOperationXManError(f"Can't start the `{exp}` because of its status "
+                                                f"`{exp._status}` and state `{exp._state}`!")
+        elif group_num_or_name is not None and exp_num_or_name is None:
+            group = self._group(group_num_or_name)
+            exp = group._get_exp_for_start()
+            if exp is None:
+                raise NothingToDoXManError(f"There's nothing to start in the `{group}`!")
+        elif group_num_or_name is None and exp_num_or_name is not None:
+            for group in self._groups():
+                if group._has_exp(exp_num_or_name):
+                    e = group._exp(exp_num_or_name)
+                    if e._is_ready_for_start():
+                        exp = e
+                        break
+            if exp is None:
+                raise NothingToDoXManError(f"There's no experiment with `num_or_name`=="
+                                           f"`{exp_num_or_name}` to start in the `{self}`!")
+        exp._start()
         if autostart_next:
             self._start(autostart_next=True)
 

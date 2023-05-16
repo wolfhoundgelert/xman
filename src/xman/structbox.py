@@ -49,7 +49,7 @@ class ExpStructBox(ExpStruct):
                 child = maker._recreate_child(self, num)
                 self.__add(child)
         for child in self._children():
-            if child.num not in nums:
+            if child._num not in nums:
                 self.__remove(child)
         for name in list(self.__name_to_child.keys()):
             del self.__name_to_child[name]
@@ -97,7 +97,7 @@ class ExpStructBox(ExpStruct):
 
     def _destroy_child(self, num_or_name, need_confirm=True):
         child = self._get_child_by_num_or_name(num_or_name)
-        if not need_confirm or confirm._remove_struct_and_all_its_content(child):
+        if confirm._remove_struct_and_all_its_content(child, need_confirm):
             self.__remove(child)
             maker._destroy_child(child)
 
@@ -110,11 +110,11 @@ class ExpStructBox(ExpStruct):
     def _names(self):
         return list(self.__name_to_child.keys())
 
-    def _get_child_by_status(self, status_or_list) -> Optional[ExpStruct]:
+    def _get_child_by_auto_status(self, status_or_list) -> Optional[ExpStruct]:
         sl = status_or_list if type(status_or_list) is list else [status_or_list]
         for status in sl:
             for child in self._children():
-                if child._status.status == status:
+                if not child._is_manual and child._status.status == status:
                     return child
         return None
 
@@ -150,9 +150,9 @@ class ExpStructBox(ExpStruct):
         return True if all_children else False
 
     def __add(self, child):
-        self.__num_to_child[child.num] = child
+        self.__num_to_child[child._num] = child
         self.__name_to_child[child._data.name] = child
 
     def __remove(self, child):
-        del self.__num_to_child[child.num]
+        del self.__num_to_child[child._num]
         del self.__name_to_child[child._data.name]
