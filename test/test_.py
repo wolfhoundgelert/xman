@@ -129,7 +129,7 @@ def test__filter_exps_in_group():
     for i in range(3):
         group.make_exp(f"Exp {i+1}", "Descr")
     exp = xman.exp(1, 2)
-    exp._ExpAPI__obj.__class__ = MockExp
+    exp._obj.__class__ = MockExp
     actives = group.filter_exps(active=True)
     assert len(actives) == 1 and actives[0] is exp
     xman.exp(1, 1).set_manual_status('DONE', "It's done.")

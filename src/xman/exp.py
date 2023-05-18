@@ -196,11 +196,13 @@ class Exp(ExpStruct):
                                             f"(has a pipeline that is executing right now)!")
 
     def __init__(self, location_dir, parent):
+        from .api import ExpAPI
         self._data: ExpData = None
         self.__state = None
         self.__pipeline: Pipeline = None
         self.__updating = False
         super().__init__(location_dir, parent)
+        self._api = ExpAPI(self)
 
     def __str__(self):
         state = f": {self.__state}" if self._status == ExpStructStatus.IN_PROGRESS else ''

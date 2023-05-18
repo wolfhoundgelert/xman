@@ -1,5 +1,6 @@
 from typing import Optional, List
 
+from .api import ExpGroupAPI
 from .error import NothingToDoXManError, ArgumentsXManError
 from .struct import ExpStructStatus
 from .structbox import ExpStructBox
@@ -69,6 +70,7 @@ class ExpGroup(ExpStructBox):
     def __init__(self, location_dir, parent):
         self.__updating = False
         super().__init__(location_dir, parent)
+        self._api = ExpGroupAPI(self)
 
     def __str__(self):
         return f"Group {self._num} [{self._status}] {self._data.name} - {self._data.descr}"

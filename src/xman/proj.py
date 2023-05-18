@@ -1,4 +1,5 @@
 from . import filesystem
+from .api import ExpProjAPI
 from .error import NothingToDoXManError, IllegalOperationXManError, NotExistsXManError, \
     AlreadyExistsXManError
 from .structbox import ExpStructBox
@@ -125,5 +126,6 @@ class ExpProj(ExpStructBox):
     def __init__(self, location_dir):
         self.__updating = False
         super().__init__(location_dir, None)
+        self._api = ExpProjAPI(self)
 
     def __str__(self): return f"Proj [{self._status}] {self._data.name} - {self._data.descr}"
