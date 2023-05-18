@@ -1,8 +1,6 @@
-import os
-import shutil
 from typing import Any, Optional, Callable
 
-from . import tree, maker, confirm
+from . import tree, maker, filesystem
 from .error import NotImplementedXManError, IllegalOperationXManError
 from .pipeline import CheckpointsMediator
 from .proj import ExpProj
@@ -137,7 +135,7 @@ class ExpStructAPI:
 
     def __init__(self, obj: ExpStruct):
         self.__obj = obj
-        obj._api = self
+        obj._ExpStruct__attention__set_api(self)
 
     def __str__(self):
         self.__obj._update()
@@ -145,6 +143,23 @@ class ExpStructAPI:
 
 
 class ExpAPI(ExpStructAPI):
+
+    @property
+    def group(self) -> 'ExpGroupAPI':
+        group = self.__obj._parent
+        group._update()
+        return _get_group_api(group)
+
+    @property
+    def proj(self) -> 'ExpProjAPI':
+        proj = self.__obj._parent._parent
+        proj._update()
+        return proj._api
+
+    @property
+    def is_active(self) -> bool:
+        self.__obj._update()
+        return self.__obj._is_active
 
     @property
     def state(self) -> str:
@@ -240,6 +255,12 @@ class ExpStructBoxAPI(ExpStructAPI):
 
 class ExpGroupAPI(ExpStructBoxAPI):
 
+    @property
+    def proj(self) -> 'ExpProjAPI':
+        proj = self.__obj._parent
+        proj._update()
+        return proj._api
+
     def has_exp(self, num_or_name) -> bool:
         self.__obj._update()
         return self.__obj._has_exp(num_or_name)
@@ -263,6 +284,11 @@ class ExpGroupAPI(ExpStructBoxAPI):
         exps = self.__obj._exps()
         return _get_exps_apis(exps)
 
+    def filter_exps(self, active=None, manual=None) -> [ExpAPI]:
+        self.__obj._update()
+        exps = self.__obj._filter_exps(active, manual)
+        return _get_exps_apis(exps)
+
     def get_exp_for_start(self) -> Optional[ExpAPI]:
         self.__obj._update()
         exp = self.__obj._get_exp_for_start()
@@ -272,9 +298,9 @@ class ExpGroupAPI(ExpStructBoxAPI):
         self.__obj._update()
         self.__obj._start(exp_num_or_name, autostart_next)
 
-    def change_exp_num(self, num_or_name):  # TODO Implement in ExpGroup
+    def change_exp_num(self, num_or_name: int | str, new_num: int):
         self.__obj._update()
-        self.__obj._change_exp_num(num_or_name)
+        self.__obj._change_exp_num(num_or_name, new_num)
 
     def __init__(self, obj: ExpGroup):
         super().__init__(obj)
@@ -334,23 +360,31 @@ class ExpProjAPI(ExpStructBoxAPI):
         exps = self.__obj._exps(group_num_or_name)
         return _get_exps_apis(exps)
 
+    def filter_exps(self, active=None, manual=None) -> [ExpAPI]:
+        self.__obj._update()
+        exps = self.__obj._filter_exps(active, manual)
+        return _get_exps_apis(exps)
+
     def start(self, group_num_or_name: Optional[int | str] = None,
               exp_num_or_name: Optional[int | str] = None, autostart_next=False):
         self.__obj._update()
         self.__obj._start(group_num_or_name, exp_num_or_name, autostart_next)
 
-    # TODO Implement and use group_num_or_name, exp_num_or_name
-    # def move_exp(self, dot_num, new_dot_num):
-    #     self.__obj._update()
-    #     self.__obj._move_exp(dot_num, new_dot_num)
+    def change_group_num(self, num_or_name: int | str, new_num: int):
+        self.__obj._update()
+        self.__obj._change_group_num(num_or_name, new_num)
 
-    def _destroy(self):
-        self.__obj._destroy()
-        del self.__obj
+    def move_exp(self, group_num_or_name, exp_num_or_name, new_group_num_or_name, new_exp_num):
+        self.__obj._update()
+        self.__obj._move_exp(group_num_or_name, exp_num_or_name, new_group_num_or_name, new_exp_num)
 
     def __init__(self, obj: ExpProj):
         super().__init__(obj)
         self.__obj = obj
+
+    def __attention__destroy(self):
+        self.__obj._destroy()
+        del self.__obj
 
 
 class XManAPI:
@@ -360,14 +394,13 @@ class XManAPI:
         tree.print_dir_tree(target_dir, files_limit, files_first, sort_numbers)
 
     @staticmethod
-    def make_dir(dir_path): os.makedirs(dir_path, exist_ok=True)
+    def make_dir(dir_path): filesystem.make_dir(dir_path)
 
     @staticmethod
-    def remove_dir(dir_path):
-        if len(os.listdir(dir_path)) > 0 and not confirm._request(
-                True, f"ATTENTION! Dir `{dir_path}` isn't empty - proceed?"):
-            return
-        shutil.rmtree(dir_path, ignore_errors=True)
+    def remove_dir(dir_path): filesystem.remove_dir(dir_path)
+
+    @staticmethod
+    def rename_or_move_dir(dir_path, new_path): filesystem.rename_or_move_dir(dir_path, new_path)
 
     __proj: ExpProjAPI = None
 
@@ -422,6 +455,10 @@ class XManAPI:
         self.__check_proj()
         return self.__proj.exps(group_num_or_name)
 
+    def filter_exps(self, active=None, manual=None) -> [ExpAPI]:
+        self.__check_proj()
+        return self.__proj.filter_exps(active, manual)
+
     def start(self, group_num_or_name: Optional[int | str] = None,
               exp_num_or_name: Optional[int | str] = None, autostart_next=False):
         self.__check_proj()
@@ -429,7 +466,7 @@ class XManAPI:
 
     def __make_proj_api(self, obj):
         if self.__proj is not None:
-            self.__proj._destroy()
+            self.__proj._ExpProjAPI__attention__destroy()
         self.__proj = ExpProjAPI(obj)
         return self.__proj
 

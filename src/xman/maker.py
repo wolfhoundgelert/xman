@@ -95,6 +95,7 @@ def _recreate_pipeline(exp):
 
 
 def _destroy_pipeline(exp, pipeline, keep_data: bool):
+    # TODO Looks like passive notebook can brake experiment with the line below:
     filesystem._delete_pipeline_run_data(exp._location_dir)
     if pipeline is not None:
         pipeline._destroy()

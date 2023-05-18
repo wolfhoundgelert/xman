@@ -1,4 +1,6 @@
-from .error import NothingToDoXManError, IllegalOperationXManError
+from . import filesystem
+from .error import NothingToDoXManError, IllegalOperationXManError, NotExistsXManError, \
+    AlreadyExistsXManError
 from .structbox import ExpStructBox
 from .group import ExpGroup
 from .exp import Exp
@@ -12,8 +14,16 @@ class ExpProj(ExpStructBox):
         return self._make_child(name, descr, num)
 
     def _destroy_group(self, num_or_name, need_confirm=True):
-        # TODO check hasn't active experiments
+        # TODO Refactor as ExpGroup and ExpProj _check_no_active_exps()
+        group = self._group(num_or_name)
+        actives = [exp for exp in group._exps() if exp._is_active]
+        if len(actives):
+            raise IllegalOperationXManError(f"The `{group}` has active experiment(s): {actives}!")
         self._destroy_child(num_or_name, need_confirm)
+
+    def _change_group_num(self, num_or_name, new_num):
+        # TODO check active experiments
+        self._change_child_num(num_or_name, new_num)
 
     def _group(self, num_or_name) -> ExpGroup: return self._get_child_by_num_or_name(num_or_name)
 
@@ -41,6 +51,12 @@ class ExpProj(ExpStructBox):
         for it in self._groups():
             result.extend(it.exps())
         return result
+
+    # TODO Implement more global in `filter.py`
+    def _filter_exps(self, active=None, manual=None) -> [Exp]:
+        # TODO active
+        # TODO manual
+        pass  # TODO
 
     def _start(self, group_num_or_name=None, exp_num_or_name=None, autostart_next=False):
         exp = None
@@ -75,7 +91,26 @@ class ExpProj(ExpStructBox):
         if autostart_next:
             self._start(autostart_next=True)
 
-    # TODO def _move_exp(self, dot_num, new_dot_num):
+    def _move_exp(self, group_num_or_name, exp_num_or_name, new_group_num_or_name, new_exp_num):
+        # TODO Check exp is not active
+        exp = self._exp(group_num_or_name, exp_num_or_name)
+        group = self._group(group_num_or_name)
+        if not self._has_group(new_group_num_or_name):
+            raise NotExistsXManError(f"There's no group with number or name "
+                                     f"`{new_group_num_or_name}`!")
+        new_group = self._group(new_group_num_or_name)
+        if self._has_exp(new_group_num_or_name, new_exp_num):
+            raise AlreadyExistsXManError(f"Can't move the experiment because another experiment"
+                                    f"already exist in the group number `{new_group_num_or_name}`!")
+        dir_path = exp._location_dir
+        new_path = filesystem._change_group_num_in_path(dir_path, new_group._num)
+        new_path = filesystem._change_exp_num_in_path(new_path, new_exp_num)
+        filesystem.rename_or_move_dir(dir_path, new_path)
+        group._ExpStructBox__attention__remove(exp)
+        # Also changes `num` as it's processing from the path:
+        exp._ExpStruct__attention__change_location_dir(new_path)
+        exp._ExpStruct__attention__change_parent(new_group)
+        new_group._ExpStructBox__attention__add(exp)
 
     def _update(self):
         if self.__updating:

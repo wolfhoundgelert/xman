@@ -8,8 +8,20 @@ from datetime import datetime
 import cloudpickle as pickle  # dill as pickle, pickle
 
 from .error import ArgumentsXManError, IllegalOperationXManError, NotImplementedXManError
-from . import util
-from . import maker
+from . import util, maker, confirm
+
+
+def make_dir(dir_path): os.makedirs(dir_path, exist_ok=True)
+
+
+def remove_dir(dir_path):
+    if len(os.listdir(dir_path)) > 0 and not confirm._request(
+            True, f"ATTENTION! Dir `{dir_path}` isn't empty - proceed?"):
+        return
+    shutil.rmtree(dir_path, ignore_errors=True)
+
+
+def rename_or_move_dir(dir_path, new_path): shutil.move(dir_path, new_path)
 
 
 def __get_data_path(location_dir): return os.path.join(location_dir, '.data')
@@ -37,8 +49,20 @@ def __get_checkpoint_path(location_dir):
 
 
 def _get_dir_num(target_dir):
-    match = re.search(fr'[1-9][0-9]*$', target_dir)
+    match = re.search(r'[1-9][0-9]*$', target_dir)
     return int(match.group()) if match else None
+
+
+def _change_num_in_path_by_pattern(path, pattern, new_num) -> str:
+    return re.sub(fr'\b{pattern}[1-9][0-9]*\b', f'{pattern}{new_num}', path)
+
+
+def _change_exp_num_in_path(path: str, new_exp_num: int) -> str:
+    return _change_num_in_path_by_pattern(path, 'exp', new_exp_num)
+
+
+def _change_group_num_in_path(path: str, new_group_num: int) -> str:
+    return _change_num_in_path_by_pattern(path, 'group', new_group_num)
 
 
 def __get_dir_nums_by_pattern(location_dir, dir_pattern):

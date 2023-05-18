@@ -1,6 +1,15 @@
 ### CURRENT:
 
 - Do TODO-s in the code
+  - check exp is not active when changing its num or moving to another group
+  - check exp is not active in other places 
+  - `get_active_experiments` for ExpProj and ExpGroup and their API
+
+- [!!!] Review destroy of active exp from active notebook (where pipeline was started) perspective and from passive notebook (just loaded the proj with active exp). Check that destroy from passive doesn't delete anything and brake active.
+
+- Rename `destroy_smth` in API methods because it seems like `destroy` method for GC
+
+- Check all needed API methods exist in XManAPI
 
 - [PRIO] [!!!] README.md  
   https://www.markdownguide.org/basic-syntax/  
@@ -13,9 +22,20 @@
 
 ### TODO:
 
+- Write a letter about `xman` repo to `support@pypi.org`
+
+- Documentation for each API method - py docstrings
+
+- Test coverage:
+  - Create own test file for each `xman` module
+  - Each API method should be covered by tests
+  - Each protected method with some logic should be covered by tests
+  - Each private method with some logic should be covered by tests
 
 
 ### BACKLOG:
+
+- [???] `filter_exps` from `XManAPI`, `XManProjAPI`, `XManGroupAPI` and their target classes should be implemented as a global filter system in `filter.py`.
 
 - [LOW] Add `__str__` and `_repr_pretty_` to XMan, show there the credits, version, quick help and links to documentation.
 

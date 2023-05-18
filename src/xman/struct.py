@@ -75,6 +75,9 @@ class ExpStruct:
     _AUTO_STATUS_RESOLUTION = '-= auto status =-'
 
     @property
+    def _api(self) -> 'ExpStructAPI': return self.__api
+
+    @property
     def _location_dir(self) -> str: return self.__location_dir
 
     @property
@@ -173,21 +176,32 @@ class ExpStruct:
     def _save(self): self.__time = filesystem._save_data_and_time(self._data, self.__location_dir)
 
     def _destroy(self):
+        self.__api = None
         self.__parent = None
-        self._api = None
         self._data = None
         self.__status = None
 
     def __init__(self, location_dir, parent):
-        from xman.structbox import ExpStructBox
-        self.__location_dir = os.path.normpath(location_dir)
+        from .structbox import ExpStructBox
+        from .api import ExpStructAPI
+        self.__location_dir = None
+        self.__num = None
+        self.__attention__change_location_dir(location_dir)
         self.__parent: ExpStructBox = parent
-        self.__num = filesystem._get_dir_num(location_dir)
         self._data: ExpStructData = None
         self.__time = None
         self.__status = None
         self.__updating = False
         self._update()
-        self._api = None  # set outside, need to keep it for cleaning the link due to destroying
+        self.__api: ExpStructAPI = None
 
     def __str__(self): util.override_it()
+
+    def __attention__set_api(self, api: 'ExpStructAPI'): self.__api = api
+
+    def __attention__change_location_dir(self, new_location_dir):
+        self.__location_dir = os.path.normpath(new_location_dir)
+        self.__num = filesystem._get_dir_num(new_location_dir)
+
+    def __attention__change_parent(self, new_parent):
+        self.__parent = new_parent

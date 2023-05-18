@@ -29,7 +29,10 @@ class ExpState:
 class Exp(ExpStruct):
 
     @property
-    def _state(self): return self.__state
+    def _is_active(self) -> bool: return self.__state == ExpState.ACTIVE
+
+    @property
+    def _state(self) -> str: return self.__state
 
     @property
     def _result(self) -> Optional[Any]:
@@ -64,7 +67,7 @@ class Exp(ExpStruct):
         return self.__make_pipeline(run_func_with_mediator, True, params, save_on_storage)
 
     def _destroy_pipeline(self, need_confirm=True) -> Optional['Exp']:
-        self.__check_not_active()
+        self._check_not_active()
         if self._data.pipeline is None:
             raise NotExistsXManError(f"There's no pipeline in exp `{self}`!")
         if confirm._request(need_confirm, f"ATTENTION! Remove the pipeline of exp `{self}` "
@@ -77,7 +80,7 @@ class Exp(ExpStruct):
     def _get_checkpoints_mediator(self): return CheckpointsMediator(self._location_dir)
 
     def _delete_checkpoints(self, need_confirm=True, delete_custom_paths=False) -> Optional['Exp']:
-        self.__check_not_active()
+        self._check_not_active()
         if not confirm._request(need_confirm, f"ATTENTION! Do you want to delete `{self}` "
                                               f"checkpoints?"):
             return None
@@ -92,11 +95,11 @@ class Exp(ExpStruct):
     def _is_ready_for_start(self):
         if self._is_manual:
             return False
-        return (self._status == ExpStructStatus.IN_PROGRESS and self._state == ExpState.IDLE) \
+        return (self._status == ExpStructStatus.IN_PROGRESS and self.__state == ExpState.IDLE) \
             or self._status == ExpStructStatus.TODO
 
     def _start(self) -> 'Exp':
-        self.__check_not_active()
+        self._check_not_active()
         if filesystem._has_checkpoints_dir(self._location_dir):
             raise IllegalOperationXManError(f"`{self}` contains checkpoints folder - delete it "
                                             f"first with `delete_checkpoints()` method!")
@@ -141,7 +144,7 @@ class Exp(ExpStruct):
         return self
 
     def _clear(self, need_confirm=True) -> Optional['Exp']:
-        self.__check_not_active()
+        self._check_not_active()
         if not confirm._request(need_confirm,
                                 f"ATTENTION! The `{self}` will be cleared as it just was "
                                 f"created - proceed?"):
@@ -182,10 +185,15 @@ class Exp(ExpStruct):
         self.__updating = False
 
     def _destroy(self):
-        self.__check_not_active()
+        # self._check_not_active()  # TODO Remove? Do I need it in destroy for GC
         self.__destroy_pipeline(keep_data=False, need_save=False)
         self._data.manual_result = None
         super()._destroy()
+
+    def _check_not_active(self) -> bool:
+        if self._is_active:
+            raise IllegalOperationXManError(f"Illegal operation while the experiment is active "
+                                            f"(has a pipeline that is executing right now)!")
 
     def __init__(self, location_dir, parent):
         self._data: ExpData = None
@@ -195,7 +203,7 @@ class Exp(ExpStruct):
         super().__init__(location_dir, parent)
 
     def __str__(self):
-        state = f": {self._state}" if self._status == ExpStructStatus.IN_PROGRESS else ''
+        state = f": {self.__state}" if self._status == ExpStructStatus.IN_PROGRESS else ''
         return f"Exp {self._num} [{self._status}{state}] {self._data.name} - {self._data.descr}"
 
     def __is_active_by_time_delta(self):
@@ -213,11 +221,6 @@ class Exp(ExpStruct):
 
     def __update_state(self):
         self.__state = ExpState.ACTIVE if self.__is_active() else ExpState.IDLE
-
-    def __check_not_active(self) -> bool:
-        if self._state == ExpState.ACTIVE:
-            raise IllegalOperationXManError(f"Illegal operation while the experiment is active "
-                                            f"(has a pipeline that is executing right now)!")
 
     def __make_pipeline(self, run_func, with_mediator, params, save):
         if self._data.pipeline is not None:
