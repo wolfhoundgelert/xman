@@ -388,10 +388,11 @@ class XManAPI:
         tree.print_dir_tree(target_dir, files_limit, files_first, sort_numbers)
 
     @staticmethod
-    def make_dir(dir_path): filesystem.make_dir(dir_path)
+    def make_dir(dir_path, exist_ok=True): filesystem.make_dir(dir_path, exist_ok)
 
     @staticmethod
-    def remove_dir(dir_path): filesystem.remove_dir(dir_path)
+    def delete_dir(dir_path, need_confirm=True) -> bool:
+        return filesystem.delete_dir(dir_path, need_confirm)
 
     @staticmethod
     def rename_or_move_dir(dir_path, new_path): filesystem.rename_or_move_dir(dir_path, new_path)

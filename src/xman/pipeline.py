@@ -23,26 +23,26 @@ class CheckpointsMediator:
         cp_list = self.get_checkpoint_paths_list()
         if replace and cp_list is not None:
             for cp_path in cp_list:
-                filesystem._delete_checkpoint(cp_path)
-            filesystem._delete_checkpoints_list(self.__exp_location_dir)
+                filesystem.delete_checkpoint(cp_path)
+            filesystem.delete_checkpoints_list(self.__exp_location_dir)
             cp_list = None
-        if not filesystem._has_checkpoints_dir(self.__exp_location_dir):
-            filesystem._make_checkpoints_dir(self.__exp_location_dir)
-        cp_path = filesystem._save_checkpoint(checkpoint, self.__exp_location_dir, custom_path)
+        if not filesystem.has_checkpoints_dir(self.__exp_location_dir):
+            filesystem.make_checkpoints_dir(self.__exp_location_dir)
+        cp_path = filesystem.save_checkpoint(checkpoint, self.__exp_location_dir, custom_path)
         cp_list = [] if cp_list is None else cp_list
         cp_list.append(cp_path)
-        filesystem._save_checkpoints_list(cp_list, self.__exp_location_dir)
+        filesystem.save_checkpoints_list(cp_list, self.__exp_location_dir)
         return cp_path
 
     def get_checkpoint_paths_list(self) -> Optional[List[str]]:
-        return filesystem._load_checkpoints_list(self.__exp_location_dir)
+        return filesystem.load_checkpoints_list(self.__exp_location_dir)
 
     def load_checkpoint(self, checkpoint_path) -> Optional[Any]:
-        return filesystem._load_checkpoint(checkpoint_path)
+        return filesystem.load_checkpoint(checkpoint_path)
 
     def __init__(self, exp_location_dir: str):
         self.__exp_location_dir = exp_location_dir
-        self.__default_checkpoints_dir = filesystem._get_checkpoints_dir_path(exp_location_dir)
+        self.__default_checkpoints_dir = filesystem.get_checkpoints_dir_path(exp_location_dir)
 
 
 class PipelineData:  # Saved in exp._data.pipeline
@@ -87,7 +87,7 @@ class Pipeline:
 
     # TODO Rework on delete and destroy methods
     # def _destroy(self):
-    #     filesystem._delete_run_time(self.__location_dir)
+    #     filesystem.delete_run_time(self.__location_dir)
     #     if self.__timer is not None:
     #         self.__timer.cancel()
     #         self.__timer = None
@@ -107,5 +107,5 @@ class Pipeline:
         data.error_stack = get_error_stack_str(error)
 
     def __do_timestamp(self):
-        filesystem._save_run_time(self.__location_dir)
+        filesystem.save_run_time(self.__location_dir)
         self.__timer = threading.Timer(PipelineConfig.timer_interval, self.__do_timestamp)

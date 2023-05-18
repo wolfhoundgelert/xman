@@ -93,16 +93,16 @@ class Exp(ExpStruct):
                                               f"checkpoints?"):
             return None
         if delete_custom_paths:
-            cp_list = filesystem._load_checkpoints_list(self.location_dir)
+            cp_list = filesystem.load_checkpoints_list(self.location_dir)
             if cp_list is not None:
                 for cp_path in cp_list:
-                    filesystem._delete_checkpoint(cp_path)
-        filesystem._delete_checkpoints_dir(self.location_dir)
+                    filesystem.delete_checkpoint(cp_path)
+        filesystem.delete_checkpoints_dir(self.location_dir, False)
         return self
 
     def start(self) -> 'Exp':
         self._check_not_active()
-        if filesystem._has_checkpoints_dir(self.location_dir):
+        if filesystem.has_checkpoints_dir(self.location_dir):
             raise IllegalOperationXManError(f"`{self}` contains checkpoints folder - delete it "
                                             f"first with `delete_checkpoints()` method!")
         pipeline_data = self._data.pipeline
@@ -201,12 +201,12 @@ class Exp(ExpStruct):
                                             f"(has a pipeline that is executing right now)!")
 
     def __init__(self, location_dir, parent):
+        from .api import ExpAPI
         self._data: ExpData = None
         self.__state = None
         self.__pipeline: Pipeline = None
         self.__updating = False
         super().__init__(location_dir, parent)
-        from .api import ExpAPI
         self._api = ExpAPI(self)
 
     def __str__(self):
@@ -214,7 +214,7 @@ class Exp(ExpStruct):
         return f"Exp {self.num} [{self.status}{state}] {self._data.name} - {self._data.descr}"
 
     def __is_active_by_time_delta(self):
-        run_timestamp = filesystem._load_run_time(self.location_dir)
+        run_timestamp = filesystem.load_run_time(self.location_dir)
         if run_timestamp is None:
             return False
         active_buffer = PipelineConfig.active_buffer_colab if platform.is_colab \

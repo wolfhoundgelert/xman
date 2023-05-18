@@ -102,8 +102,8 @@ class ExpProj(ExpStructBox):
             raise AlreadyExistsXManError(f"Can't move the experiment because another experiment"
                                     f"already exist in the group number `{new_group_num_or_name}`!")
         dir_path = exp.location_dir
-        new_path = filesystem._change_group_num_in_path(dir_path, new_group.num)
-        new_path = filesystem._change_exp_num_in_path(new_path, new_exp_num)
+        new_path = filesystem.change_group_num_in_path(dir_path, new_group.num)
+        new_path = filesystem.change_exp_num_in_path(new_path, new_exp_num)
         filesystem.rename_or_move_dir(dir_path, new_path)
         group._remove_child(exp)
         # Also changes `num` as it's processing from the path:
@@ -121,9 +121,9 @@ class ExpProj(ExpStructBox):
         self.__updating = False
 
     def __init__(self, location_dir):
+        from .api import ExpProjAPI
         self.__updating = False
         super().__init__(location_dir, None)
-        from .api import ExpProjAPI
         self._api = ExpProjAPI(self)
 
     def __str__(self): return f"Proj [{self.status}] {self._data.name} - {self._data.descr}"

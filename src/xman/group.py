@@ -64,9 +64,9 @@ class ExpGroup(ExpStructBox):
         self.__updating = False
 
     def __init__(self, location_dir, parent):
+        from .api import ExpGroupAPI
         self.__updating = False
         super().__init__(location_dir, parent)
-        from .api import ExpGroupAPI
         self._api = ExpGroupAPI(self)
 
     def __str__(self):

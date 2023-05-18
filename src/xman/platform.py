@@ -28,7 +28,7 @@ def check_colab_forked_folders(exp_struct_box) -> bool:
     """
     if not is_colab:
         raise PlatformXManError(f"Actual only for Google Colab platform!")
-    dir_prefix = filesystem._dir_prefix(exp_struct_box)
+    dir_prefix = filesystem.dir_prefix(exp_struct_box)
     regex = fr'^{dir_prefix}\d+ \(\d+\)$'
     folders = []
     for entry in os.scandir(exp_struct_box.location_dir):

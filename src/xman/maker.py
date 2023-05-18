@@ -34,10 +34,10 @@ def recreate_proj(location_dir) -> Optional[ExpProj]:
 
 
 def make_and_save_struct_data(struct_cls, location_dir, name, descr):
-    filesystem._prepare_dir(location_dir) if struct_cls == ExpProj else \
-        filesystem._make_dir(location_dir)
+    filesystem.prepare_dir(location_dir) if struct_cls == ExpProj else \
+        filesystem.make_dir(location_dir, exist_ok=False)
     data = __get_data_class(struct_cls)(name, descr)
-    filesystem._save_data_and_time(data, location_dir)
+    filesystem.save_data_and_time(data, location_dir)
 
 
 def get_child_class(parent_obj_or_cls):
@@ -52,7 +52,7 @@ def get_child_class(parent_obj_or_cls):
 
 def make_new_child(parent, name, descr, child_num) -> Optional[Exp | ExpGroup]:
     child_class = get_child_class(parent)
-    child_dir = filesystem._get_child_dir(parent, child_num)
+    child_dir = filesystem.get_child_dir(parent, child_num)
     make_and_save_struct_data(child_class, child_dir, name, descr)
     child = child_class(child_dir, parent)
     if platform.is_colab:
@@ -61,13 +61,15 @@ def make_new_child(parent, name, descr, child_num) -> Optional[Exp | ExpGroup]:
 
 
 def recreate_child(parent, child_num):
-    location_dir = filesystem._get_child_dir(parent, child_num)
+    location_dir = filesystem.get_child_dir(parent, child_num)
     return get_child_class(parent)(location_dir, parent)
 
 
-def _attention__delete_child(child: Exp | ExpGroup):
+def delete_child(child: Exp | ExpGroup, need_confirm) -> bool:
+    if not filesystem.delete_dir(child.location_dir, need_confirm):
+        return False
     child._destroy()
-    filesystem._delete_dir(child.location_dir)
+    return True
 
 
 def make_pipeline(exp, run_func, with_mediator, params, save=False):
@@ -76,12 +78,12 @@ def make_pipeline(exp, run_func, with_mediator, params, save=False):
     exp._data.pipeline = PipelineData()
     run_data = PipelineRunData(run_func, with_mediator, params)
     if save:
-        filesystem._save_pipeline_run_data(run_data, exp.location_dir)
+        filesystem.save_pipeline_run_data(run_data, exp.location_dir)
     return Pipeline(exp.location_dir, exp._data.pipeline, run_data)
 
 
 def recreate_pipeline(exp):
-    run_data = filesystem._load_pipeline_run_data(exp.location_dir)
+    run_data = filesystem.load_pipeline_run_data(exp.location_dir)
     if run_data is None:
         raise IllegalOperationXManError(f"Can't recreate pipeline for exp `{exp}` - "
                                         f"there's no `.run` file! Use `save=True` for "
@@ -94,7 +96,7 @@ def recreate_pipeline(exp):
 def _destroy_pipeline(exp, pipeline, keep_data: bool):
     pass  # TODO
     # TODO Looks like passive notebook can brake experiment with the line below:
-    # filesystem._delete_pipeline_run_data(exp.location_dir)
+    # filesystem.delete_pipeline_run_data(exp.location_dir)
     # if pipeline is not None:
     #     pipeline._destroy()
     # if not keep_data:

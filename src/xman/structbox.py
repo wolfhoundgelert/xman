@@ -26,7 +26,7 @@ class ExpStructBox(ExpStruct):
             return
         self.__updating = True
         super().update()
-        nums = filesystem._get_children_nums(self)
+        nums = filesystem.get_children_nums(self)
         for num in nums:
             if num not in self.__num_to_child:
                 child = maker.recreate_child(self, num)
@@ -71,7 +71,7 @@ class ExpStructBox(ExpStruct):
                 raise AlreadyExistsXManError(
                     f"A child with the num `{num}` already exists in the `{self}`!")
         else:
-            nums = filesystem._get_children_nums(self)
+            nums = filesystem.get_children_nums(self)
             max_num = max(nums) if len(nums) else 0
             num = max_num + 1
         child = maker.make_new_child(self, name, descr, num)
@@ -83,7 +83,7 @@ class ExpStructBox(ExpStruct):
         child = self.get_child_by_num_or_name(num_or_name)
         if confirm.delete_struct_and_all_its_content(child, need_confirm):
             self._remove_child(child)
-            maker._attention__delete_child(child)
+            maker.delete_child(child, False)
 
     def get_child_by_auto_status(self, status_or_list) -> Optional[ExpStruct]:
         sl = status_or_list if type(status_or_list) is list else [status_or_list]
@@ -115,8 +115,8 @@ class ExpStructBox(ExpStruct):
             raise AlreadyExistsXManError(f"Can't change number to `{new_num}` for `{child}` - "
                                             f"new number is already taken by other child!")
         dir_path = child.location_dir
-        child_dir_pattern = filesystem._dir_prefix(maker.get_child_class(self))
-        new_path = filesystem._change_num_in_path_by_pattern(dir_path, child_dir_pattern, new_num)
+        child_dir_pattern = filesystem.dir_prefix(maker.get_child_class(self))
+        new_path = filesystem.change_num_in_path_by_pattern(dir_path, child_dir_pattern, new_num)
         filesystem.rename_or_move_dir(dir_path, new_path)
         self._remove_child(child)
         # Also changes `num` as it's processing from the path:

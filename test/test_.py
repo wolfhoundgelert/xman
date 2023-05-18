@@ -65,7 +65,7 @@ def test__pipeline_with_checkpoints():
         helper.train_with_mediator_replace, helper.train_params, True).start()
     assert exp.result == helper.train_result
     exp.delete_checkpoints(need_confirm=False)
-    assert not filesystem._has_checkpoints_dir(exp.location_dir)
+    assert not filesystem.has_checkpoints_dir(exp.location_dir)
     exp = helper.make_exp_from_nothing().make_pipeline_with_checkpoints(
         helper.train_with_mediator_custom_path, helper.train_params, True).start()
     assert os.path.exists(os.path.join(exp.location_dir, 'custom/first.cp'))

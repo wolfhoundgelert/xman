@@ -153,8 +153,8 @@ class ExpStruct:
         if self.__updating:
             return
         self.__updating = True
-        self._data, self.__time = filesystem._load_fresh_data_and_time(self.location_dir,
-                                                                       self._data, self.__time)
+        self._data, self.__time = filesystem.load_fresh_data_and_time(self.location_dir,
+                                                                      self._data, self.__time)
         # Status should be updated at the end of the inherited updating hierarchy
         if type(self) == ExpStruct:
             self._update_status()
@@ -162,7 +162,7 @@ class ExpStruct:
 
     def _change_location_dir(self, new_location_dir):
         self.__location_dir = os.path.normpath(new_location_dir)
-        self.__num = filesystem._get_dir_num(new_location_dir)
+        self.__num = filesystem.get_dir_num(new_location_dir)
 
     def _update_status(self):
         if self.is_manual:
@@ -177,7 +177,7 @@ class ExpStruct:
     # Printing in jupyter notebook - https://stackoverflow.com/a/41454816/9751954
     def _repr_pretty_(self, p, cycle): p.text(str(self) if not cycle else '...')
 
-    def _save(self): self.__time = filesystem._save_data_and_time(self._data, self.location_dir)
+    def _save(self): self.__time = filesystem.save_data_and_time(self._data, self.location_dir)
 
     def _destroy(self):
         self._api._obj = None
@@ -187,17 +187,17 @@ class ExpStruct:
         self.__status = None
 
     def __init__(self, location_dir, parent):
+        from .structbox import ExpStructBox
+        from .api import ExpStructAPI
         self.__location_dir = None
         self.__num = None
         self._change_location_dir(location_dir)
-        from .structbox import ExpStructBox
         self._parent: ExpStructBox = parent
         self._data: ExpStructData = None
         self.__time = None
         self.__status = None
         self.__updating = False
         self.update()
-        from .api import ExpStructAPI
         self._api: ExpStructAPI = None
 
     def __str__(self): util.override_it()
