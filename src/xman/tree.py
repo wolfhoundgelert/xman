@@ -47,10 +47,10 @@ def __process_dir(target_dir, depth, result, files_limit, files_first, sort_numb
         target_dir = target_dir[:-1]
     result.append(f"{__tab * depth}{os.path.basename(target_dir) + '/'}")
     dirs, files = __sort_content_by_folders_and_files(target_dir, sort_numbers)
-    l = len(files)
-    if 0 < files_limit < l:
+    files_len = len(files)
+    if 0 < files_limit < files_len:
         trimmed = files[:2]
-        trimmed.append(f"... {l - 3} other files are hidden ... ")
+        trimmed.append(f"... {files_len - 3} other files are hidden ... ")
         trimmed.append(files[-1])
         files = trimmed
     if files_first:

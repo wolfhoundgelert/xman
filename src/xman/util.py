@@ -1,5 +1,3 @@
-import re
-
 from .error import OverrideXManError, ArgumentsXManError
 
 SECOND = 1

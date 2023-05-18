@@ -1,16 +1,13 @@
-from typing import Any, Optional, Callable
+from typing import Any, Optional, Callable, List
 
 from . import tree, maker, filesystem
 from .error import NotImplementedXManError, IllegalOperationXManError
+from .group import ExpGroup
 from .pipeline import CheckpointsMediator
 from .exp import Exp
+from .proj import ExpProj
 from .struct import ExpStructStatus, ExpStruct
-
-
-def _get_exps_apis(exps): return [exp.api for exp in exps]
-
-
-def _get_groups_apis(groups): return [group.api for group in groups]
+from .structbox import ExpStructBox
 
 
 class ExpStructStatusAPI:
@@ -30,7 +27,7 @@ class ExpStructStatusAPI:
     def resolution(self) -> str: return self._obj.resolution
 
     @property
-    def manual(self) -> str: return self._obj.manual
+    def manual(self) -> bool: return self._obj.manual
 
     @property
     def workflow(self) -> str: return self._obj.workflow
@@ -49,80 +46,79 @@ class ExpStructStatusAPI:
 class ExpStructAPI:
 
     @property
-    def location_dir(self) -> str: return self._obj._location_dir
+    def location_dir(self) -> str: return self._obj.location_dir
 
     @property
-    def num(self) -> int: return self._obj._num
+    def num(self) -> int: return self._obj.num
 
     @property
     def name(self) -> str:
-        self._obj._update()
-        return self._obj._name
+        self._obj.update()
+        return self._obj.name
 
     @property
     def descr(self) -> str:
-        self._obj._update()
-        return self._obj._descr
+        self._obj.update()
+        return self._obj.descr
 
     @property
     def status(self) -> ExpStructStatusAPI:
-        self._obj._update()
-        return ExpStructStatusAPI(self._obj._status)
+        self._obj.update()
+        return ExpStructStatusAPI(self._obj.status)
 
     @property
     def is_manual(self) -> bool:
-        self._obj._update()
-        return self._obj._is_manual
+        self._obj.update()
+        return self._obj.is_manual
 
     def tree(self):
-        self._obj._update()
-        self._obj._tree()
+        self._obj.update()
+        self._obj.tree()
 
     def info(self):
-        self._obj._update()
-        text = self._obj._info()
+        self._obj.update()
+        text = self._obj.info()
         print(text)
 
     def start(self):
-        self._obj._update()
-        self._obj._start()
+        self._obj.update()
+        self._obj.start()
 
     def set_manual_status(self, status: str, resolution: str) -> 'ExpStructAPI':
-        self._obj._update()
-        self._obj._set_manual_status(status, resolution)
+        self._obj.update()
+        self._obj.set_manual_status(status, resolution)
         return self
 
     def delete_manual_status(self, need_confirm=True) -> Optional['ExpStructAPI']:
-        self._obj._update()
-        obj = self._obj._delete_manual_status(need_confirm)
+        self._obj.update()
+        obj = self._obj.delete_manual_status(need_confirm)
         return None if obj is None else self
 
-    def success(self, resolution: str) -> Optional['ExpAPI']:
-        self._obj._update()
-        self._obj._success(resolution)
+    def success(self, resolution: str) -> Optional['ExpStructAPI']:
+        self._obj.update()
+        self._obj.success(resolution)
         return self
 
-    def fail(self, resolution: str) -> Optional['ExpAPI']:
-        self._obj._update()
-        self._obj._fail(resolution)
+    def fail(self, resolution: str) -> Optional['ExpStructAPI']:
+        self._obj.update()
+        self._obj.fail(resolution)
         return self
 
     def edit(self, name=None, descr=None):
         # Need to update parent (and all its children) to check other children on the same name:
-        self._obj._update() if self._obj._parent is None else self._obj._parent._update()
-        self._obj._edit(name, descr)
+        self._obj.update() if self._obj.parent is None else self._obj.parent.update()
+        self._obj.edit(name, descr)
 
     def _update(self):
-        self._obj._update()
+        self._obj.update()
 
     # Printing in jupyter notebook - https://stackoverflow.com/a/41454816/9751954
     def _repr_pretty_(self, p, cycle): p.text(str(self) if not cycle else '...')
 
-    def __init__(self, obj: ExpStruct):
-        self._obj = obj
+    def __init__(self, obj: ExpStruct): self._obj = obj  # for autocomplete
 
     def __str__(self):
-        self._obj._update()
+        self._obj.update()
         return str(self._obj)
 
 
@@ -130,153 +126,185 @@ class ExpAPI(ExpStructAPI):
 
     @property
     def group(self) -> 'ExpGroupAPI':
-        group = self._obj._parent
-        group._update()
+        group = self._obj.parent
+        group.update()
         return group.api
 
     @property
     def proj(self) -> 'ExpProjAPI':
-        proj = self._obj._parent._parent
-        proj._update()
+        proj = self._obj.parent.parent
+        proj.update()
         return proj.api
 
     @property
     def is_active(self) -> bool:
-        self._obj._update()
-        return self._obj._is_active
+        self._obj.update()
+        return self._obj.is_active
 
     @property
     def state(self) -> str:
-        self._obj._update()
-        return self._obj._state
+        self._obj.update()
+        return self._obj.state
 
     @property
     def result(self) -> Optional[Any]:
-        self._obj._update()
-        return self._obj._result
+        self._obj.update()
+        return self._obj.result
 
     @property
     def error(self) -> Optional[str]:
-        self._obj._update()
-        return self._obj._error
+        self._obj.update()
+        return self._obj.error
 
     @property
     def error_stack(self) -> Optional[str]:
-        self._obj._update()
-        return self._obj._error_stack
+        self._obj.update()
+        return self._obj.error_stack
 
     def make_pipeline(self, run_func: Callable[..., Any],
                       params: dict, save_on_storage: bool = False) -> 'ExpAPI':
-        self._obj._update()
-        self._obj._make_pipeline(run_func, params, save_on_storage)
+        self._obj.update()
+        self._obj.make_pipeline(run_func, params, save_on_storage)
         return self
 
     def make_pipeline_with_checkpoints(self,
-                                       run_func_with_mediator: Callable[[CheckpointsMediator, ...], Any],
-                                       params: dict, save_on_storage: bool = False) -> 'ExpAPI':
-        self._obj._update()
-        self._obj._make_pipeline_with_checkpoints(run_func_with_mediator, params, save_on_storage)
+                               run_func_with_mediator: Callable[[CheckpointsMediator, ...], Any],
+                               params: dict, save_on_storage: bool = False) -> 'ExpAPI':
+        self._obj.update()
+        self._obj.make_pipeline_with_checkpoints(run_func_with_mediator, params, save_on_storage)
         return self
 
     def get_pipeline_result(self) -> Optional[Any]:
-        self._obj._update()
-        return self._obj._get_pipeline_result()
+        self._obj.update()
+        return self._obj.get_pipeline_result()
 
-    def destroy_pipeline(self, need_confirm=True) -> Optional['ExpAPI']:
-        self._obj._update()
-        obj = self._obj._destroy_pipeline(need_confirm)
+    def delete_pipeline(self, need_confirm=True) -> Optional['ExpAPI']:
+        self._obj.update()
+        obj = self._obj.delete_pipeline(need_confirm)
         return None if obj is None else self
 
     # `self._obj._update()` isn't needed
-    def get_checkpoints_mediator(self): return self._obj._get_checkpoints_mediator()
+    def get_checkpoints_mediator(self): return self._obj.get_checkpoints_mediator()
 
     def delete_checkpoints(self, need_confirm=True,
                            delete_custom_paths=False) -> Optional['ExpAPI']:
-        self._obj._update()
-        obj = self._obj._delete_checkpoints(need_confirm, delete_custom_paths)
+        self._obj.update()
+        obj = self._obj.delete_checkpoints(need_confirm, delete_custom_paths)
         return None if obj is None else self
 
     def start(self):
-        self._obj._update()
-        self._obj._start()
+        self._obj.update()
+        self._obj.start()
         return self
 
     def set_manual_result(self, result) -> 'ExpAPI':
-        self._obj._update()
-        obj = self._obj._set_manual_result(result)
+        self._obj.update()
+        obj = self._obj.set_manual_result(result)
         return None if obj is None else self
 
     def delete_manual_result(self, need_confirm=True) -> Optional['ExpAPI']:
-        self._obj._update()
-        obj = self._obj._delete_manual_result(need_confirm)
+        self._obj.update()
+        obj = self._obj.delete_manual_result(need_confirm)
         return None if obj is None else self
 
     def get_manual_result(self) -> Optional[Any]:
-        self._obj._update()
-        return self._obj._get_manual_result()
+        self._obj.update()
+        return self._obj.get_manual_result()
 
-    def clear(self, need_confirm=True) -> Optional['Exp']:
-        self._obj._update()
-        obj = self._obj._clear(need_confirm)
+    def clear(self, need_confirm=True) -> Optional['ExpAPI']:
+        self._obj.update()
+        obj = self._obj.clear(need_confirm)
         return None if obj is None else self
+
+    def __init__(self, obj: Exp): self._obj = obj  # for autocomplete
 
 
 class ExpStructBoxAPI(ExpStructAPI):
 
+    @staticmethod
+    def _get_apis_from_list(objs: List[Exp | ExpGroup]) -> List['ExpAPI | ExpGroupAPI']:
+        return [x.api for x in objs]
+
+    # TODO Make the methods below protected (or remove) and implement them as public in ExpGroupAPI
+    #  and ExpProjAPI: exps and groups, num_exps and num_groups, exps_nums and groups_nums,
+    #  exps_names and groups_names.
+
+    #  TODO Methods from ExpGroupAPI also duplicate in ExpProjAPI (and in XManAPI if it's needed)
+
+    @property
+    def children(self) -> List['ExpStructAPI']:
+        self._obj.update()
+        return self._get_apis_from_list(self._obj.children)
+    
     @property
     def num_children(self) -> int:
-        self._obj._update()
-        return self._obj._num_children
+        self._obj.update()
+        return self._obj.num_children
+
+    @property
+    def children_nums(self) -> List[int]:
+        self._obj.update()
+        return self._obj.children_nums
+
+    @property
+    def children_names(self) -> List[str]:
+        self._obj.update()
+        return self._obj.children_names
+
+    def __init__(self, obj: ExpStructBox): self._obj = obj  # for autocomplete
 
 
 class ExpGroupAPI(ExpStructBoxAPI):
 
     @property
     def proj(self) -> 'ExpProjAPI':
-        proj = self._obj._parent
-        proj._update()
+        proj = self._obj.parent
+        proj.update()
         return proj.api
 
     def has_exp(self, num_or_name) -> bool:
-        self._obj._update()
-        return self._obj._has_exp(num_or_name)
+        self._obj.update()
+        return self._obj.has_exp(num_or_name)
 
     def make_exp(self, name, descr, num=None) -> ExpAPI:
-        self._obj._update()
-        exp = self._obj._make_exp(name, descr, num)
+        self._obj.update()
+        exp = self._obj.make_exp(name, descr, num)
         return exp.api
 
     def destroy_exp(self, num_or_name, need_confirm=True):
-        self._obj._update()
-        self._obj._destroy_exp(num_or_name, need_confirm)
+        self._obj.update()
+        self._obj.delete_exp(num_or_name, need_confirm)
 
     def exp(self, num_or_name) -> ExpAPI:
-        self._obj._update()
-        exp = self._obj._exp(num_or_name)
+        self._obj.update()
+        exp = self._obj.exp(num_or_name)
         return exp.api
 
-    def exps(self) -> [ExpAPI]:
-        self._obj._update()
-        exps = self._obj._exps()
-        return _get_exps_apis(exps)
+    def exps(self) -> List[ExpAPI]:
+        self._obj.update()
+        exps = self._obj.exps()
+        return self._get_apis_from_list(exps)
 
-    def filter_exps(self, active=None, manual=None) -> [ExpAPI]:
-        self._obj._update()
-        exps = self._obj._filter_exps(active, manual)
-        return _get_exps_apis(exps)
+    def filter_exps(self, active: bool = None, manual: bool = None,
+                    ready_for_start: bool = None) -> List[ExpAPI]:
+        self._obj.update()
+        exps = self._obj.filter_exps(active, manual, ready_for_start)
+        return self._get_apis_from_list(exps)
 
     def get_exp_for_start(self) -> Optional[ExpAPI]:
-        self._obj._update()
-        exp = self._obj._get_exp_for_start()
+        self._obj.update()
+        exp = self._obj.get_exp_for_start()
         return None if exp is None else exp.api
 
     def start(self, exp_num_or_name=None, autostart_next=False):
-        self._obj._update()
-        self._obj._start(exp_num_or_name, autostart_next)
+        self._obj.update()
+        self._obj.start(exp_num_or_name, autostart_next)
 
     def change_exp_num(self, num_or_name: int | str, new_num: int):
-        self._obj._update()
-        self._obj._change_exp_num(num_or_name, new_num)
+        self._obj.update()
+        self._obj.change_exp_num(num_or_name, new_num)
+
+    def __init__(self, obj: ExpGroup): self._obj = obj  # for autocomplete
 
 
 class ExpProjAPI(ExpStructBoxAPI):
@@ -286,69 +314,71 @@ class ExpProjAPI(ExpStructBoxAPI):
         raise NotImplementedXManError(f"`num` property isn't supported for a project!")
 
     def has_group(self, num_or_name) -> bool:
-        self._obj._update()
-        return self._obj._has_group(num_or_name)
+        self._obj.update()
+        return self._obj.has_group(num_or_name)
 
     def make_group(self, name, descr, num=None) -> ExpGroupAPI:
-        self._obj._update()
-        group = self._obj._make_group(name, descr, num)
+        self._obj.update()
+        group = self._obj.make_group(name, descr, num)
         return group.api
 
     def destroy_group(self, num_or_name, need_confirm=True):
-        self._obj._update()
-        self._obj._destroy_group(num_or_name, need_confirm)
+        self._obj.update()
+        self._obj.delete_group(num_or_name, need_confirm)
 
     def group(self, num_or_name) -> ExpGroupAPI:
-        self._obj._update()
-        group = self._obj._group(num_or_name)
+        self._obj.update()
+        group = self._obj.group(num_or_name)
         return group.api
 
-    def groups(self) -> [ExpGroupAPI]:
-        self._obj._update()
-        groups = self._obj._groups()
-        return _get_groups_apis(groups)
+    def groups(self) -> List[ExpGroupAPI]:
+        self._obj.update()
+        groups = self._obj.groups()
+        return self._get_apis_from_list(groups)
 
     def has_exp(self, group_num_or_name: int | str, exp_num_or_name: int | str) -> bool:
-        self._obj._update()
-        return self._obj._has_exp(group_num_or_name, exp_num_or_name)
+        self._obj.update()
+        return self._obj.has_exp(group_num_or_name, exp_num_or_name)
 
     def make_exp(self, group_num_or_name, name, descr, num=None) -> ExpAPI:
-        self._obj._update()
-        exp = self._obj._make_exp(group_num_or_name, name, descr, num)
+        self._obj.update()
+        exp = self._obj.make_exp(group_num_or_name, name, descr, num)
         return exp.api
 
     def destroy_exp(self, group_num_or_name: int | str, exp_num_or_name: int | str,
                     need_confirm=True):
-        self._obj._update()
-        self._obj._destroy_exp(group_num_or_name, exp_num_or_name, need_confirm)
+        self._obj.update()
+        self._obj.delete_exp(group_num_or_name, exp_num_or_name, need_confirm)
 
     def exp(self, group_num_or_name: int | str, exp_num_or_name: int | str) -> ExpAPI:
-        self._obj._update()
-        exp = self._obj._exp(group_num_or_name, exp_num_or_name)
+        self._obj.update()
+        exp = self._obj.exp(group_num_or_name, exp_num_or_name)
         return exp.api
 
-    def exps(self, group_num_or_name=None) -> [ExpAPI]:
-        self._obj._update()
-        exps = self._obj._exps(group_num_or_name)
-        return _get_exps_apis(exps)
+    def exps(self, group_num_or_name=None) -> List[ExpAPI]:
+        self._obj.update()
+        exps = self._obj.exps(group_num_or_name)
+        return self._get_apis_from_list(exps)
 
-    def filter_exps(self, active=None, manual=None) -> [ExpAPI]:
-        self._obj._update()
-        exps = self._obj._filter_exps(active, manual)
-        return _get_exps_apis(exps)
+    def filter_exps(self, active=None, manual=None) -> List[ExpAPI]:
+        self._obj.update()
+        exps = self._obj.filter_exps(active, manual)
+        return self._get_apis_from_list(exps)
 
     def start(self, group_num_or_name: Optional[int | str] = None,
               exp_num_or_name: Optional[int | str] = None, autostart_next=False):
-        self._obj._update()
-        self._obj._start(group_num_or_name, exp_num_or_name, autostart_next)
+        self._obj.update()
+        self._obj.start(group_num_or_name, exp_num_or_name, autostart_next)
 
     def change_group_num(self, num_or_name: int | str, new_num: int):
-        self._obj._update()
-        self._obj._change_group_num(num_or_name, new_num)
+        self._obj.update()
+        self._obj.change_group_num(num_or_name, new_num)
 
     def move_exp(self, group_num_or_name, exp_num_or_name, new_group_num_or_name, new_exp_num):
-        self._obj._update()
-        self._obj._move_exp(group_num_or_name, exp_num_or_name, new_group_num_or_name, new_exp_num)
+        self._obj.update()
+        self._obj.move_exp(group_num_or_name, exp_num_or_name, new_group_num_or_name, new_exp_num)
+
+    def __init__(self, obj: ExpProj): self._obj = obj  # for autocomplete
 
 
 class XManAPI:
@@ -373,14 +403,14 @@ class XManAPI:
         return self.__proj
 
     def make_proj(self, location_dir: str, name: str, descr: str) -> ExpProjAPI:
-        proj = maker._make_proj(location_dir, name, descr)
         self.__destroy_old_proj()
+        proj = maker.make_proj(location_dir, name, descr)
         self.__proj = proj.api
         return self.__proj
 
     def load_proj(self, location_dir: str) -> ExpProjAPI:
-        proj = maker._recreate_proj(location_dir)
         self.__destroy_old_proj()
+        proj = maker.recreate_proj(location_dir)
         self.__proj = proj.api
         return self.__proj
 
@@ -421,7 +451,7 @@ class XManAPI:
         self.__check_proj()
         return self.__proj.exps(group_num_or_name)
 
-    def filter_exps(self, active=None, manual=None) -> [ExpAPI]:
+    def filter_exps(self, active=None, manual=None) -> List[ExpAPI]:
         self.__check_proj()
         return self.__proj.filter_exps(active, manual)
 
@@ -439,5 +469,5 @@ class XManAPI:
 
     def __destroy_old_proj(self):
         if self.__proj is not None:
-            self.__proj._obj._destroy()
+            self.__proj._obj._destroy()  # TODO Move to maker
             self.__proj = None

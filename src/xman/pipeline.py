@@ -66,7 +66,7 @@ class PipelineRunData:  # Saved in `.run` file, might be really heavy (several G
 
 class Pipeline:
 
-    def _start(self):
+    def start(self):
         data = self.__data
         run_data = self.__run_data
         data.started = True
@@ -85,13 +85,14 @@ class Pipeline:
         if error is not None:
             raise error
 
-    def _destroy(self):
-        filesystem._delete_run_time(self.__location_dir)
-        if self.__timer is not None:
-            self.__timer.cancel()
-            self.__timer = None
-        if self.__mediator is not None:
-            self.__mediator = None
+    # TODO Rework on delete and destroy methods
+    # def _destroy(self):
+    #     filesystem._delete_run_time(self.__location_dir)
+    #     if self.__timer is not None:
+    #         self.__timer.cancel()
+    #         self.__timer = None
+    #     if self.__mediator is not None:
+    #         self.__mediator = None
 
     def __init__(self, location_dir: str, data: PipelineData, run_data: PipelineRunData):
         self.__location_dir = os.path.normpath(location_dir)

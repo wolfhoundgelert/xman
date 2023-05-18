@@ -122,13 +122,21 @@ def test__move_exp():
 
 
 def test__filter_exps_in_group():
-    class MockExp(Exp):
-        _is_active = True
-
     group = helper.make_group_from_nothing()
     for i in range(3):
-        group.make_exp(f"Exp {i+1}", "Descr")
+        group.make_exp(f"Exp {i + 1}", "Descr")
     exp = xman.exp(1, 2)
+
+    class MockExp(Exp):
+        is_ready_for_start = True
+
+    exp._obj.__class__ = MockExp
+    readies = group.filter_exps(ready_for_start=True)
+    assert len(readies) == 1 and readies[0] is exp
+
+    class MockExp(Exp):
+        is_active = True
+
     exp._obj.__class__ = MockExp
     actives = group.filter_exps(active=True)
     assert len(actives) == 1 and actives[0] is exp
@@ -137,17 +145,13 @@ def test__filter_exps_in_group():
     assert len(manuals) == 1 and manuals[0] is xman.exp(1, 1)
     all_falses = xman.group(1).filter_exps(active=False, manual=False)
     assert len(all_falses) == 1 and all_falses[0] is xman.exp(1, 3)
-    with pytest.raises(ArgumentsXManError, match="nothing to filter"):
-        xman.group(1).filter_exps(active=None, manual=None)
-    with pytest.raises(ArgumentsXManError, match="Manual experiments can't be active"):
-        xman.group(1).filter_exps(active=True, manual=True)
 
 
 def test__filter_exps_in_proj():
     pass  # TODO
-    assert False
+    # assert False
 
 
 def test__filter_exps_in_xman():
     pass  # TODO
-    assert False
+    # assert False

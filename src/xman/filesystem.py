@@ -15,7 +15,7 @@ def make_dir(dir_path): os.makedirs(dir_path, exist_ok=True)
 
 
 def remove_dir(dir_path):
-    if len(os.listdir(dir_path)) > 0 and not confirm._request(
+    if len(os.listdir(dir_path)) > 0 and not confirm.request(
             True, f"ATTENTION! Dir `{dir_path}` isn't empty - proceed?"):
         return
     shutil.rmtree(dir_path, ignore_errors=True)
@@ -96,14 +96,14 @@ def _dir_prefix(struct_obj_or_cls):
 
 
 def _get_child_dir(parent, child_num):
-    return os.path.join(parent._location_dir, _dir_prefix(maker._get_child_class(parent)) +
+    return os.path.join(parent.location_dir, _dir_prefix(maker.get_child_class(parent)) +
                         str(child_num))
 
 
 def _get_children_nums(parent):
-    child_class = maker._get_child_class(parent)
+    child_class = maker.get_child_class(parent)
     child_dir_prefix = _dir_prefix(child_class)
-    return __get_dir_nums_by_pattern(parent._location_dir, child_dir_prefix)
+    return __get_dir_nums_by_pattern(parent.location_dir, child_dir_prefix)
 
 
 def _has(path) -> bool: return os.path.exists(path)
