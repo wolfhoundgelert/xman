@@ -165,13 +165,13 @@ def load_pipeline_run_data(location_dir): return __load_from_file(__get_run_path
 def delete_pipeline_run_data(location_dir): __delete_file(__get_run_path(location_dir))
 
 
-def save_run_time(location_dir): __save(time.time(), __get_run_time_path(location_dir))
+def save_run_timestamp(location_dir): __save(time.time(), __get_run_time_path(location_dir))
 
 
-def load_run_time(location_dir): return __load_from_file(__get_run_time_path(location_dir))
+def load_run_timestamp(location_dir): return __load_from_file(__get_run_time_path(location_dir))
 
 
-def delete_run_time(location_dir): __delete_file(__get_run_time_path(location_dir))
+def delete_run_timestamp(location_dir): __delete_file(__get_run_time_path(location_dir))
 
 
 def has_checkpoints_dir(location_dir): return __has(get_checkpoints_dir_path(location_dir))

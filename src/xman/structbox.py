@@ -1,25 +1,23 @@
-from typing import Optional, Type
+from typing import Optional, Type, List
 
 from .error import ArgumentsXManError, NotExistsXManError, AlreadyExistsXManError
 from .struct import ExpStruct, ExpStructStatus
-from . import util, confirm
-from . import maker
-from . import filesystem
+from . import util, confirm, maker, filesystem
 
 
 class ExpStructBox(ExpStruct):
 
     @property
-    def children(self): return list(self.__num_to_child.values())
+    def children(self) -> List['Exp | ExpGroup']: return list(self.__num_to_child.values())
 
     @property
-    def num_children(self): return len(self.__num_to_child)
+    def num_children(self) -> int: return len(self.__num_to_child)
 
     @property
-    def children_nums(self): return list(self.__num_to_child.keys())
+    def children_nums(self) -> List[int]: return list(self.__num_to_child.keys())
 
     @property
-    def children_names(self): return list(self.__name_to_child.keys())
+    def children_names(self) -> List[str]: return list(self.__name_to_child.keys())
 
     def update(self):
         if self.__updating:
@@ -149,9 +147,11 @@ class ExpStructBox(ExpStruct):
         return status, resolution
 
     def _destroy(self):
-        # for num in list(self.__num_to_child.keys()):
-        #     self.delete_child(num, False)  # TODO can't be here
+        for child in self.children:
+            child._destroy()
+        self.__num_to_child.clear()
         self.__num_to_child = None
+        self.__name_to_child.clear()
         self.__name_to_child = None
         super()._destroy()
 

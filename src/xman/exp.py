@@ -2,7 +2,8 @@ import time
 from typing import Any, Optional, Callable
 
 from .config import PipelineConfig
-from .error import NotExistsXManError, IllegalOperationXManError, AlreadyExistsXManError
+from .error import NotExistsXManError, IllegalOperationXManError, AlreadyExistsXManError, \
+    UnpredictableLogicXManError
 from .pipeline import PipelineData, CheckpointsMediator, Pipeline
 from .struct import ExpStructData, ExpStruct, ExpStructStatus
 from . import util, confirm, platform, filesystem
@@ -66,7 +67,8 @@ class Exp(ExpStruct):
             text += util.tab(f"\nResult:\n{util.tab(str(self.result))}")
         return text
 
-    def make_pipeline(self, run_func: Callable[..., Any], params, save_on_storage=False) -> 'Exp':
+    def make_pipeline(self, run_func: Callable[..., Any],
+                      params: dict, save_on_storage: bool = False) -> 'Exp':
         return self.__make_pipeline(run_func, False, params, save_on_storage)
 
     def make_pipeline_with_checkpoints(self,
@@ -81,7 +83,9 @@ class Exp(ExpStruct):
         if confirm.request(need_confirm, f"ATTENTION! Remove the pipeline of exp `{self}` "
                                           f"(it will also delete all checkpoints and all pipeline"
                                           f"data)?"):
-            self.__destroy_pipeline(keep_data=False, need_save=True)
+            maker.delete_pipeline(self, self.__pipeline)
+            self.__pipeline = None
+            self._save()
             return self
         return None
 
@@ -118,7 +122,11 @@ class Exp(ExpStruct):
         try:
             self.__pipeline.start()
         finally:
-            self.__destroy_pipeline(keep_data=True, need_save=True)
+            self._save()
+            self.__pipeline._destroy()
+            self.__pipeline = None
+            filesystem.delete_pipeline_run_data(self.location_dir)
+            filesystem.delete_run_timestamp(self.location_dir)
         return self
 
     def get_pipeline_result(self) -> Optional[Any]:
@@ -154,7 +162,7 @@ class Exp(ExpStruct):
                                 f"ATTENTION! The `{self}` will be cleared as it just was "
                                 f"created - proceed?"):
             return None
-        self.__destroy_pipeline(keep_data=False, need_save=False)
+        self.delete_pipeline(need_confirm=False)
         self.delete_checkpoints(need_confirm=False, delete_custom_paths=True)
         self._data.manual_result = None
         self._data.manual_status = None
@@ -190,15 +198,18 @@ class Exp(ExpStruct):
         return status, resolution
 
     def _destroy(self):
-        # self._check_not_active()  # TODO Remove? Do I need it in destroy for GC
-        self.__destroy_pipeline(keep_data=False, need_save=False)
+        if self.__pipeline is not None:
+            if self.is_active:
+                raise UnpredictableLogicXManError(f"It shouldn't be, but if you're reading this... "
+                        f"So, something extraordinary has happened - congrats and my condolences!)")
+            self.__pipeline._destroy()
         self._data.manual_result = None
         super()._destroy()
 
     def _check_not_active(self):
         if self.is_active:
-            raise IllegalOperationXManError(f"Illegal operation while the experiment is active "
-                                            f"(has a pipeline that is executing right now)!")
+            raise IllegalOperationXManError(f"Illegal operation while the experiment is active - "
+                                            f"has a pipeline that is executing right now!")
 
     def __init__(self, location_dir, parent):
         from .api import ExpAPI
@@ -214,7 +225,7 @@ class Exp(ExpStruct):
         return f"Exp {self.num} [{self.status}{state}] {self._data.name} - {self._data.descr}"
 
     def __is_active_by_time_delta(self):
-        run_timestamp = filesystem.load_run_time(self.location_dir)
+        run_timestamp = filesystem.load_run_timestamp(self.location_dir)
         if run_timestamp is None:
             return False
         active_buffer = PipelineConfig.active_buffer_colab if platform.is_colab \
@@ -222,22 +233,17 @@ class Exp(ExpStruct):
         return time.time() - run_timestamp < PipelineConfig.timer_interval + active_buffer
 
     def __is_active(self):
-        pl = self._data.pipeline
-        return pl is not None and pl.started and not pl.finished and pl.error is None \
-            and self.__is_active_by_time_delta()
+        p_data = self._data.pipeline
+        return p_data is not None and p_data.started and not p_data.finished and \
+            p_data.error is None and self.__is_active_by_time_delta()
 
     def __update_state(self):
         self.__state = ExpState.ACTIVE if self.__is_active() else ExpState.IDLE
 
-    def __make_pipeline(self, run_func, with_mediator, params, save):
+    def __make_pipeline(self, run_func, with_mediator, params, save_on_storage):
         if self._data.pipeline is not None:
             raise AlreadyExistsXManError(f"`{self}` already has a pipeline!")
-        self.__pipeline = maker.make_pipeline(self, run_func, with_mediator, params, save)
+        self.__pipeline = maker.make_pipeline(self, run_func, with_mediator, params,
+                                              save_on_storage)
         self._save()
         return self
-
-    def __destroy_pipeline(self, keep_data: bool, need_save: bool):
-        maker._destroy_pipeline(self, self.__pipeline, keep_data)
-        self.__pipeline = None
-        if need_save:
-            self._save()

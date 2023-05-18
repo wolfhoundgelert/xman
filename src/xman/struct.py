@@ -28,13 +28,6 @@ class ExpStructStatus:
     __WORKFLOW = (EMPTY, TODO, IN_PROGRESS, (DONE, ERROR), (SUCCESS, FAIL))
 
     @staticmethod
-    def __has_status_in_workflow(status):
-        for it in ExpStructStatus.__WORKFLOW:
-            if it == status or status in it:
-                return True
-        return False
-
-    @staticmethod
     def _check(status, resolution):
         util.check_has_value_in_class_public_constants(status, ExpStructStatus)
         if status in (ExpStructStatus.SUCCESS, ExpStructStatus.FAIL) and resolution is None:
@@ -45,6 +38,13 @@ class ExpStructStatus:
     def _fit_parameters(status_obj, status, resolution, manual):
         return status_obj is not None and status_obj.status == status \
                 and status_obj.resolution == resolution and status_obj.manual == manual
+
+    @staticmethod
+    def __has_status_in_workflow(status):
+        for it in ExpStructStatus.__WORKFLOW:
+            if it == status or status in it:
+                return True
+        return False
 
     @property
     def workflow(self): return deepcopy(ExpStructStatus.__WORKFLOW)

@@ -72,12 +72,12 @@ def delete_child(child: Exp | ExpGroup, need_confirm) -> bool:
     return True
 
 
-def make_pipeline(exp, run_func, with_mediator, params, save=False):
+def make_pipeline(exp, run_func, with_mediator, params, save_on_storage=False):
     if exp._data.pipeline is not None:
         raise AlreadyExistsXManError(f"`{exp}` already has a pipeline!")
     exp._data.pipeline = PipelineData()
     run_data = PipelineRunData(run_func, with_mediator, params)
-    if save:
+    if save_on_storage:
         filesystem.save_pipeline_run_data(run_data, exp.location_dir)
     return Pipeline(exp.location_dir, exp._data.pipeline, run_data)
 
@@ -92,12 +92,10 @@ def recreate_pipeline(exp):
     return Pipeline(exp.location_dir, exp._data.pipeline, run_data)
 
 
-# TODO _attention__delete_pipeline, rework
-def _destroy_pipeline(exp, pipeline, keep_data: bool):
-    pass  # TODO
-    # TODO Looks like passive notebook can brake experiment with the line below:
-    # filesystem.delete_pipeline_run_data(exp.location_dir)
-    # if pipeline is not None:
-    #     pipeline._destroy()
-    # if not keep_data:
-    #     exp._data.pipeline = None
+def delete_pipeline(exp: Exp, pipeline: Optional[Pipeline]):
+    exp.delete_checkpoints(need_confirm=False, delete_custom_paths=True)
+    filesystem.delete_pipeline_run_data(exp.location_dir)
+    filesystem.delete_run_timestamp(exp.location_dir)
+    if pipeline is not None:
+        pipeline._destroy()
+    exp._data.pipeline = None

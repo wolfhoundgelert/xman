@@ -71,10 +71,11 @@ class Pipeline:
         run_data = self.__run_data
         data.started = True
         error = None
+        if run_data.with_mediator:
+            self.__mediator = CheckpointsMediator(self.__location_dir)
         self.__do_timestamp()
         try:
             if run_data.with_mediator:
-                self.__mediator = CheckpointsMediator(self.__location_dir)
                 data.result = run_data.run_func(self.__mediator, **run_data.params)
             else:
                 data.result = run_data.run_func(**run_data.params)
@@ -85,14 +86,14 @@ class Pipeline:
         if error is not None:
             raise error
 
-    # TODO Rework on delete and destroy methods
-    # def _destroy(self):
-    #     filesystem.delete_run_time(self.__location_dir)
-    #     if self.__timer is not None:
-    #         self.__timer.cancel()
-    #         self.__timer = None
-    #     if self.__mediator is not None:
-    #         self.__mediator = None
+    def _destroy(self):
+        if self.__timer is not None:
+            self.__timer.cancel()
+            self.__timer = None
+        if self.__mediator is not None:
+            self.__mediator = None
+        self.__data = None
+        self.__run_data = None
 
     def __init__(self, location_dir: str, data: PipelineData, run_data: PipelineRunData):
         self.__location_dir = os.path.normpath(location_dir)
@@ -107,5 +108,5 @@ class Pipeline:
         data.error_stack = get_error_stack_str(error)
 
     def __do_timestamp(self):
-        filesystem.save_run_time(self.__location_dir)
+        filesystem.save_run_timestamp(self.__location_dir)
         self.__timer = threading.Timer(PipelineConfig.timer_interval, self.__do_timestamp)

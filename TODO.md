@@ -11,6 +11,8 @@
 
 - Check all needed API methods exist in XManAPI
 
+- XManAPI only wit methods for initialization, after a project is created `xman`-property is changed to ExpProjAPI, so we have new extended API. Don't forget duplicate initial methods in ExpProjAPI.
+
 - [PRIO] [!!!] README.md  
   https://www.markdownguide.org/basic-syntax/  
   https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax  

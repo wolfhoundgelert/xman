@@ -84,21 +84,21 @@ def test__destroy_group():
     config.set__is_pytest(True)
     helper.make_exp_from_nothing()
     xman.destroy_group(1)
-    assert xman.proj.num_children == 0
+    assert xman.proj._num_children == 0
 
 
 def test__destroy_exp():
     config.set__is_pytest(True)
     helper.make_exp_from_nothing()
     xman.group(1).destroy_exp(1)
-    assert xman.group(1).num_children == 0
+    assert xman.group(1)._num_children == 0
 
 
 def test__destroy_exp_after_pipeline_done():
     config.set__is_pytest(True)
     helper.make_exp_from_nothing().make_pipeline(helper.train, helper.train_params, True).start()
     xman.group(1).destroy_exp(1)
-    assert xman.group(1).num_children == 0
+    assert xman.group(1)._num_children == 0
 
 
 def test__getting_exp():

@@ -50,3 +50,7 @@ class NotImplementedXManError(XManError):
 
 class PlatformXManError(XManError):
     pass
+
+
+class UnpredictableLogicXManError(XManError):
+    pass

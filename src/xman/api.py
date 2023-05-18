@@ -232,22 +232,22 @@ class ExpStructBoxAPI(ExpStructAPI):
     #  TODO Methods from ExpGroupAPI also duplicate in ExpProjAPI (and in XManAPI if it's needed)
 
     @property
-    def children(self) -> List['ExpStructAPI']:
+    def _children(self) -> List['ExpStructAPI']:
         self._obj.update()
         return self._get_apis_from_list(self._obj.children)
     
     @property
-    def num_children(self) -> int:
+    def _num_children(self) -> int:
         self._obj.update()
         return self._obj.num_children
 
     @property
-    def children_nums(self) -> List[int]:
+    def _children_nums(self) -> List[int]:
         self._obj.update()
         return self._obj.children_nums
 
     @property
-    def children_names(self) -> List[str]:
+    def _children_names(self) -> List[str]:
         self._obj.update()
         return self._obj.children_names
 
@@ -470,5 +470,5 @@ class XManAPI:
 
     def __destroy_old_proj(self):
         if self.__proj is not None:
-            self.__proj._obj._destroy()  # TODO Move to maker
+            self.__proj._obj._destroy()
             self.__proj = None
