@@ -15,7 +15,7 @@ def make_dir(dir_path, exist_ok=True): os.makedirs(dir_path, exist_ok=exist_ok)
 
 
 def delete_dir(dir_path, need_confirm=True) -> bool:
-    if len(os.listdir(dir_path)) > 0 and not confirm.request(
+    if __has(dir_path) and len(os.listdir(dir_path)) > 0 and not confirm.request(
             need_confirm, f"ATTENTION! Dir `{dir_path}` isn't empty - delete anyway?"):
         return False
     shutil.rmtree(dir_path, ignore_errors=True)
@@ -92,7 +92,8 @@ def dir_prefix(struct_obj_or_cls):
         raise NotImplementedXManError(f"Isn't supported by logic!")
     else:
         raise ArgumentsXManError(
-            f"`struct_obj_or_cls` should be an instance of/or a final class inheriting ExpStruct!")
+            f"`struct_obj_or_cls` should be an instance of/or a final class inheriting ExpStruct - "
+            f"Exp, ExpGroup or ExpProj, but `{cls.__name__}` was given!")
 
 
 def get_child_dir(parent, child_num):

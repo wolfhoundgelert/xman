@@ -1,5 +1,7 @@
 ### CURRENT:
 
+- Proj methods make as Group methods (which is copying Box structure), and add them to API
+
 - Do TODO-s in the code
   - check exp is not active when changing its num or moving to another group
   - check exp is not active in other places 
@@ -12,6 +14,10 @@
 - Check all needed API methods exist in XManAPI
 
 - XManAPI only wit methods for initialization, after a project is created `xman`-property is changed to ExpProjAPI, so we have new extended API. Don't forget duplicate initial methods in ExpProjAPI.
+
+- set manual result viewer - exp, group, proj level
+
+- set pipeline result viewer - exp, group, proj level
 
 - [PRIO] [!!!] README.md  
   https://www.markdownguide.org/basic-syntax/  

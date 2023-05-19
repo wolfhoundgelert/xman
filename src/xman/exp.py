@@ -3,7 +3,7 @@ from typing import Any, Optional, Callable
 
 from .config import PipelineConfig
 from .error import NotExistsXManError, IllegalOperationXManError, AlreadyExistsXManError, \
-    UnpredictableLogicXManError
+    UnpredictableLogicXManError, NothingToDoXManError
 from .pipeline import PipelineData, CheckpointsMediator, Pipeline
 from .struct import ExpStructData, ExpStruct, ExpStructStatus
 from . import util, confirm, platform, filesystem
@@ -51,8 +51,7 @@ class Exp(ExpStruct):
         return None if self._data.pipeline is None else self._data.pipeline.error_stack
 
     @property
-    def is_active(self) -> bool:
-        return self.state == ExpState.ACTIVE
+    def is_active(self) -> bool: return self.state == ExpState.ACTIVE
 
     @property
     def is_ready_for_start(self):
@@ -77,7 +76,7 @@ class Exp(ExpStruct):
         return self.__make_pipeline(run_func_with_mediator, True, params, save_on_storage)
 
     def delete_pipeline(self, need_confirm=True) -> Optional['Exp']:
-        self._check_not_active()
+        self._check_is_not_active()
         if self._data.pipeline is None:
             raise NotExistsXManError(f"There's no pipeline in exp `{self}`!")
         if confirm.request(need_confirm, f"ATTENTION! Remove the pipeline of exp `{self}` "
@@ -92,7 +91,7 @@ class Exp(ExpStruct):
     def get_checkpoints_mediator(self): return CheckpointsMediator(self.location_dir)
 
     def delete_checkpoints(self, need_confirm=True, delete_custom_paths=False) -> Optional['Exp']:
-        self._check_not_active()
+        self._check_is_not_active()
         if not confirm.request(need_confirm, f"ATTENTION! Do you want to delete `{self}` "
                                               f"checkpoints?"):
             return None
@@ -105,28 +104,37 @@ class Exp(ExpStruct):
         return self
 
     def start(self) -> 'Exp':
-        self._check_not_active()
-        if filesystem.has_checkpoints_dir(self.location_dir):
-            raise IllegalOperationXManError(f"`{self}` contains checkpoints folder - delete it "
-                                            f"first with `delete_checkpoints()` method!")
-        pipeline_data = self._data.pipeline
-        if pipeline_data is None:  # status == 'EMPTY'
-            raise NotExistsXManError(f"`{self}` doesn't have a pipeline!")
-        if pipeline_data.error:  # status == 'ERROR'
-            raise IllegalOperationXManError(f"`{self}` has an error during the previous start!")
-        if pipeline_data.finished:  # status == 'DONE'
-            raise IllegalOperationXManError(f"`{self}` was already finished!")
-        # status == 'TODO_' here, or 'IN_PROGRESS' with state 'IDLE'
-        if self.__pipeline is None:
-            self.__pipeline = maker.recreate_pipeline(self)
-        try:
-            self.__pipeline.start()
-        finally:
-            self._save()
-            self.__pipeline._destroy()
-            self.__pipeline = None
-            filesystem.delete_pipeline_run_data(self.location_dir)
-            filesystem.delete_run_timestamp(self.location_dir)
+        if self._data.manual_result is not None:
+            raise IllegalOperationXManError(f"The `{self}` already has a manual result - delete it "
+                                            f"with `delete_manual_result()` method first!")
+        if self.is_ready_for_start:
+            if filesystem.has_checkpoints_dir(self.location_dir) and \
+                    self.status == ExpStructStatus.TODO:
+                raise IllegalOperationXManError(f"`{self}` contains checkpoints folder - delete it "
+                                                f"first with `delete_checkpoints()` method!")
+            if self.__pipeline is None:
+                self.__pipeline = maker.recreate_pipeline(self)
+            try:
+                self.__pipeline.start()
+            finally:
+                self._save()
+                self.__pipeline._destroy()
+                self.__pipeline = None
+                filesystem.delete_pipeline_run_data(self.location_dir)
+                filesystem.delete_run_timestamp(self.location_dir)
+        else:
+            self._check_is_not_active()
+            if self.is_manual:
+                raise IllegalOperationXManError(f"Can't start the `{self}` as it's manual - use "
+                                                f"`delete_manual_status()` method first!")
+            pipeline_data = self._data.pipeline
+            if pipeline_data is None:  # status == 'EMPTY'
+                raise NotExistsXManError(f"`The {self}` doesn't have a pipeline!")
+            if pipeline_data.error:  # status == 'ERROR'
+                raise IllegalOperationXManError(
+                    f"The `{self}` has an error during the previous start!")
+            if pipeline_data.finished:  # status == 'DONE'
+                raise IllegalOperationXManError(f"`The {self}` was already finished!")
         return self
 
     def get_pipeline_result(self) -> Optional[Any]:
@@ -156,13 +164,26 @@ class Exp(ExpStruct):
         self._save()
         return self
 
+    def delete_all_manual(self, need_confirm=True) -> Optional['Exp']:
+        if not self.is_manual and not self._data.manual_result:
+            raise NothingToDoXManError(f"There's nothing manual to delete!")
+        if not confirm.request(need_confirm, f"ATTENTION! Manual status and resolution, and manual"
+                                             f"result will be deleted - proceed?"):
+            return None
+        self._data.manual_status = None
+        self._data.manual_status_resolution = None
+        self._data.manual_result = None
+        self._save()
+        return self
+
     def clear(self, need_confirm=True) -> Optional['Exp']:
-        self._check_not_active()
+        self._check_is_not_active()
         if not confirm.request(need_confirm,
                                 f"ATTENTION! The `{self}` will be cleared as it just was "
                                 f"created - proceed?"):
             return None
-        self.delete_pipeline(need_confirm=False)
+        if self._data.pipeline is not None:
+            self.delete_pipeline(need_confirm=False)
         self.delete_checkpoints(need_confirm=False, delete_custom_paths=True)
         self._data.manual_result = None
         self._data.manual_status = None
@@ -206,7 +227,7 @@ class Exp(ExpStruct):
         self._data.manual_result = None
         super()._destroy()
 
-    def _check_not_active(self):
+    def _check_is_not_active(self):
         if self.is_active:
             raise IllegalOperationXManError(f"Illegal operation while the experiment is active - "
                                             f"has a pipeline that is executing right now!")

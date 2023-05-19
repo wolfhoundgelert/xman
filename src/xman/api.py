@@ -142,6 +142,11 @@ class ExpAPI(ExpStructAPI):
         return self._obj.is_active
 
     @property
+    def is_ready_for_start(self) -> bool:
+        self._obj.update()
+        return self._obj.is_ready_for_start
+
+    @property
     def state(self) -> str:
         self._obj.update()
         return self._obj.state
@@ -231,22 +236,18 @@ class ExpStructBoxAPI(ExpStructAPI):
 
     #  TODO Methods from ExpGroupAPI also duplicate in ExpProjAPI (and in XManAPI if it's needed)
 
-    @property
-    def _children(self) -> List['ExpStructAPI']:
+    def _children(self) -> List['ExpAPI | ExpGroupAPI']:
         self._obj.update()
         return self._get_apis_from_list(self._obj.children)
     
-    @property
     def _num_children(self) -> int:
         self._obj.update()
         return self._obj.num_children
 
-    @property
     def _children_nums(self) -> List[int]:
         self._obj.update()
         return self._obj.children_nums
 
-    @property
     def _children_names(self) -> List[str]:
         self._obj.update()
         return self._obj.children_names
@@ -262,6 +263,23 @@ class ExpGroupAPI(ExpStructBoxAPI):
         proj.update()
         return proj.api
 
+    def exps(self) -> List[ExpAPI]:
+        self._obj.update()
+        exps = self._obj.exps
+        return self._get_apis_from_list(exps)
+
+    def num_exps(self) -> int:
+        self._obj.update()
+        return self._obj.num_exps
+
+    def exps_nums(self) -> List[int]:
+        self._obj.update()
+        return self._obj.exps_nums
+
+    def exps_names(self) -> List[str]:
+        self._obj.update()
+        return self._obj.exps_names
+
     def has_exp(self, num_or_name) -> bool:
         self._obj.update()
         return self._obj.has_exp(num_or_name)
@@ -271,20 +289,16 @@ class ExpGroupAPI(ExpStructBoxAPI):
         exp = self._obj.make_exp(name, descr, num)
         return exp.api
 
-    def destroy_exp(self, num_or_name, need_confirm=True):
+    def delete_exp(self, num_or_name, need_confirm=True) -> bool:
         self._obj.update()
-        self._obj.delete_exp(num_or_name, need_confirm)
+        return self._obj.delete_exp(num_or_name, need_confirm)
 
     def exp(self, num_or_name) -> ExpAPI:
         self._obj.update()
         exp = self._obj.exp(num_or_name)
         return exp.api
 
-    def exps(self) -> List[ExpAPI]:
-        self._obj.update()
-        exps = self._obj.exps()
-        return self._get_apis_from_list(exps)
-
+    # TODO Update signature as in ExpGroup
     def filter_exps(self, active: bool = None, manual: bool = None,
                     ready_for_start: bool = None) -> List[ExpAPI]:
         self._obj.update()
@@ -322,9 +336,9 @@ class ExpProjAPI(ExpStructBoxAPI):
         group = self._obj.make_group(name, descr, num)
         return group.api
 
-    def destroy_group(self, num_or_name, need_confirm=True):
+    def delete_group(self, num_or_name, need_confirm=True) -> bool:
         self._obj.update()
-        self._obj.delete_group(num_or_name, need_confirm)
+        return self._obj.delete_group(num_or_name, need_confirm)
 
     def group(self, num_or_name) -> ExpGroupAPI:
         self._obj.update()
@@ -345,10 +359,10 @@ class ExpProjAPI(ExpStructBoxAPI):
         exp = self._obj.make_exp(group_num_or_name, name, descr, num)
         return exp.api
 
-    def destroy_exp(self, group_num_or_name: int | str, exp_num_or_name: int | str,
-                    need_confirm=True):
+    def delete_exp(self, group_num_or_name: int | str, exp_num_or_name: int | str,
+                   need_confirm=True) -> bool:
         self._obj.update()
-        self._obj.delete_exp(group_num_or_name, exp_num_or_name, need_confirm)
+        return self._obj.delete_exp(group_num_or_name, exp_num_or_name, need_confirm)
 
     def exp(self, group_num_or_name: int | str, exp_num_or_name: int | str) -> ExpAPI:
         self._obj.update()
@@ -360,6 +374,7 @@ class ExpProjAPI(ExpStructBoxAPI):
         exps = self._obj.exps(group_num_or_name)
         return self._get_apis_from_list(exps)
 
+    # TODO Actualize
     def filter_exps(self, active=None, manual=None) -> List[ExpAPI]:
         self._obj.update()
         exps = self._obj.filter_exps(active, manual)
@@ -423,9 +438,9 @@ class XManAPI:
         self.__check_proj()
         return self.__proj.make_group(name, descr, num)
 
-    def destroy_group(self, num_or_name, need_confirm=True):
+    def delete_group(self, num_or_name, need_confirm=True) -> bool:
         self.__check_proj()
-        return self.__proj.destroy_group(num_or_name, need_confirm)
+        return self.__proj.delete_group(num_or_name, need_confirm)
 
     def group(self, num_or_name):
         self.__check_proj()
@@ -439,10 +454,10 @@ class XManAPI:
         self.__check_proj()
         return self.__proj.make_exp(group_num_or_name, name, descr, num)
 
-    def destroy_exp(self, group_num_or_name: int | str, exp_num_or_name: int | str,
-                    need_confirm=True):
+    def delete_exp(self, group_num_or_name: int | str, exp_num_or_name: int | str,
+                   need_confirm=True) -> bool:
         self.__check_proj()
-        return self.__proj.destroy_exp(group_num_or_name, exp_num_or_name, need_confirm)
+        return self.__proj.delete_exp(group_num_or_name, exp_num_or_name, need_confirm)
 
     def exp(self, group_num_or_name: int | str, exp_num_or_name: int | str):
         self.__check_proj()
@@ -452,6 +467,7 @@ class XManAPI:
         self.__check_proj()
         return self.__proj.exps(group_num_or_name)
 
+    # TODO Actualize
     def filter_exps(self, active=None, manual=None) -> List[ExpAPI]:
         self.__check_proj()
         return self.__proj.filter_exps(active, manual)

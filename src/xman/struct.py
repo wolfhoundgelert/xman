@@ -28,8 +28,12 @@ class ExpStructStatus:
     __WORKFLOW = (EMPTY, TODO, IN_PROGRESS, (DONE, ERROR), (SUCCESS, FAIL))
 
     @staticmethod
+    def has_status(status: str):
+        return util.check_has_value_in_class_public_constants(status, ExpStructStatus)
+
+    @staticmethod
     def _check(status, resolution):
-        util.check_has_value_in_class_public_constants(status, ExpStructStatus)
+        ExpStructStatus.has_status(status)
         if status in (ExpStructStatus.SUCCESS, ExpStructStatus.FAIL) and resolution is None:
             raise ArgumentsXManError(f"SUCCESS and FAIL manual statuses "
                                      f"require setting resolutions!")
@@ -38,13 +42,6 @@ class ExpStructStatus:
     def _fit_parameters(status_obj, status, resolution, manual):
         return status_obj is not None and status_obj.status == status \
                 and status_obj.resolution == resolution and status_obj.manual == manual
-
-    @staticmethod
-    def __has_status_in_workflow(status):
-        for it in ExpStructStatus.__WORKFLOW:
-            if it == status or status in it:
-                return True
-        return False
 
     @property
     def workflow(self): return deepcopy(ExpStructStatus.__WORKFLOW)
@@ -137,7 +134,7 @@ class ExpStruct:
     def edit(self, name=None, descr=None):
         need_save = False
         if self._data.name != name:
-            if self._parent is not None and self._parent.has_child_with_num_or_name(name):
+            if self._parent is not None and self._parent.has_child(name):
                 raise AlreadyExistsXManError(
                     f"There's another child with the name=`{name}` "
                     f"in the parent `{self._parent}`")

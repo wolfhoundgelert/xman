@@ -7,17 +7,11 @@ from . import util, confirm, maker, filesystem
 
 class ExpStructBox(ExpStruct):
 
-    @property
-    def children(self) -> List['Exp | ExpGroup']: return list(self.__num_to_child.values())
-
-    @property
-    def num_children(self) -> int: return len(self.__num_to_child)
-
-    @property
-    def children_nums(self) -> List[int]: return list(self.__num_to_child.keys())
-
-    @property
-    def children_names(self) -> List[str]: return list(self.__name_to_child.keys())
+    def info(self):
+        text = super().info()
+        for child in self.children:
+            text += util.tab(f"\n\n{child.info()}")
+        return text
 
     def update(self):
         if self.__updating:
@@ -42,7 +36,7 @@ class ExpStructBox(ExpStruct):
             self._update_status()
         self.__updating = False
 
-    def has_child_with_num_or_name(self, num_or_name):
+    def has_child(self, num_or_name):
         if util.is_num(num_or_name):
             return num_or_name in self.__num_to_child
         elif util.is_name(num_or_name):
@@ -51,7 +45,7 @@ class ExpStructBox(ExpStruct):
             raise ArgumentsXManError(f"`num_or_name` should be num >= 1 (int) or name (str), "
                                      f"but `{num_or_name}` was given!")
 
-    def get_child_by_num_or_name(self, num_or_name):
+    def child(self, num_or_name):
         if util.is_num(num_or_name) and num_or_name in self.__num_to_child:
             return self.__num_to_child[num_or_name]
         elif util.is_name(num_or_name) and num_or_name in self.__name_to_child:
@@ -61,11 +55,11 @@ class ExpStructBox(ExpStruct):
 
     def make_child(self, name, descr, num=None) -> Type['Exp | ExpGroup']:
         util.check_num(num, True)
-        if self.has_child_with_num_or_name(name):
+        if self.has_child(name):
             raise AlreadyExistsXManError(
                 f"A child with the name `{name}` already exists in the `{self}`!")
         if num is not None:
-            if self.has_child_with_num_or_name(num):
+            if self.has_child(num):
                 raise AlreadyExistsXManError(
                     f"A child with the num `{num}` already exists in the `{self}`!")
         else:
@@ -77,39 +71,25 @@ class ExpStructBox(ExpStruct):
             self._add_child(child)
         return child
 
-    def delete_child(self, num_or_name, need_confirm=True):
-        child = self.get_child_by_num_or_name(num_or_name)
+    def delete_child(self, num_or_name, need_confirm=True) -> bool:
+        child = self.child(num_or_name)
         if confirm.delete_struct_and_all_its_content(child, need_confirm):
             self._remove_child(child)
             maker.delete_child(child, False)
+            return True
+        return False
 
-    def get_child_by_auto_status(self, status_or_list) -> Optional[ExpStruct]:
-        sl = status_or_list if type(status_or_list) is list else [status_or_list]
-        for status in sl:
-            for child in self.children:
-                if not child.is_manual and child.status.status == status:
-                    return child
-        return None
+    def children(self) -> List['Exp | ExpGroup']: return list(self.__num_to_child.values())
 
-    def info(self):
-        text = super().info()
-        for child in self.children:
-            text += util.tab(f"\n\n{child.info()}")
-        return text
+    def num_children(self) -> int: return len(self.__num_to_child)
 
-    def _add_child(self, child):
-        self.__num_to_child[child.num] = child
-        self.__name_to_child[child._data.name] = child
-        child._parent = self
+    def children_nums(self) -> List[int]: return list(self.__num_to_child.keys())
 
-    def _remove_child(self, child):
-        del self.__num_to_child[child.num]
-        del self.__name_to_child[child._data.name]
-        child._parent = None
+    def children_names(self) -> List[str]: return list(self.__name_to_child.keys())
 
-    def _change_child_num(self, num_or_name, new_num):
-        child = self.get_child_by_num_or_name(num_or_name)
-        if self.has_child_with_num_or_name(new_num):
+    def change_child_num(self, num_or_name, new_num):
+        child = self.child(num_or_name)
+        if self.has_child(new_num):
             raise AlreadyExistsXManError(f"Can't change number to `{new_num}` for `{child}` - "
                                             f"new number is already taken by other child!")
         dir_path = child.location_dir
@@ -120,6 +100,16 @@ class ExpStructBox(ExpStruct):
         # Also changes `num` as it's processing from the path:
         child._change_location_dir(new_path)
         self._add_child(child)
+
+    def _add_child(self, child):
+        self.__num_to_child[child.num] = child
+        self.__name_to_child[child._data.name] = child
+        child._parent = self
+
+    def _remove_child(self, child):
+        del self.__num_to_child[child.num]
+        del self.__name_to_child[child._data.name]
+        child._parent = None
 
     def _process_auto_status(self):
         resolution = ExpStruct._AUTO_STATUS_RESOLUTION

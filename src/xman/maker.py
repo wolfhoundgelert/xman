@@ -47,7 +47,8 @@ def get_child_class(parent_obj_or_cls):
     elif cls == ExpGroup:
         return Exp
     else:
-        raise ArgumentsXManError(f"`parent_obj_or_cls` should be `ExpProj` or `ExpGroup`!")
+        raise ArgumentsXManError(f"`parent_obj_or_cls` should be `ExpProj` or `ExpGroup`, but "
+                                 f"`{cls.__name__}` was given!")
 
 
 def make_new_child(parent, name, descr, child_num) -> Optional[Exp | ExpGroup]:
@@ -86,8 +87,8 @@ def recreate_pipeline(exp):
     run_data = filesystem.load_pipeline_run_data(exp.location_dir)
     if run_data is None:
         raise IllegalOperationXManError(f"Can't recreate pipeline for exp `{exp}` - "
-                                        f"there's no `.run` file! Use `save=True` for "
-                                        f"`make_pipeline` method if you need to preserve "
+                                        f"there's no `.run` data file! Use `save=True` for "
+                                        f"`make_pipeline()` method if you need to preserve "
                                         f"`run_func` and `params` for other session.")
     return Pipeline(exp.location_dir, exp._data.pipeline, run_data)
 

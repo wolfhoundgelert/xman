@@ -83,21 +83,21 @@ def test__pipeline_with_checkpoints():
 def test__destroy_group():
     config.set__is_pytest(True)
     helper.make_exp_from_nothing()
-    xman.destroy_group(1)
+    xman.delete_group(1)
     assert xman.proj._num_children == 0
 
 
 def test__destroy_exp():
     config.set__is_pytest(True)
     helper.make_exp_from_nothing()
-    xman.group(1).destroy_exp(1)
+    xman.group(1).delete_exp(1)
     assert xman.group(1)._num_children == 0
 
 
 def test__destroy_exp_after_pipeline_done():
     config.set__is_pytest(True)
     helper.make_exp_from_nothing().make_pipeline(helper.train, helper.train_params, True).start()
-    xman.group(1).destroy_exp(1)
+    xman.group(1).delete_exp(1)
     assert xman.group(1)._num_children == 0
 
 
@@ -121,6 +121,7 @@ def test__move_exp():
     assert not xman.group(1).has_exp(1) and xman.group(2).has_exp(3) and xman.group(2).exp(3) is exp
 
 
+# TODO add other params and separate on different tests (one for each param)
 def test__filter_exps_in_group():
     group = helper.make_group_from_nothing()
     for i in range(3):
@@ -141,9 +142,9 @@ def test__filter_exps_in_group():
     actives = group.filter_exps(active=True)
     assert len(actives) == 1 and actives[0] is exp
     xman.exp(1, 1).set_manual_status('DONE', "It's done.")
-    manuals = xman.group(1).filter_exps(manual=True)
+    manuals = xman.group(1).filter_exps(is_manual=True)
     assert len(manuals) == 1 and manuals[0] is xman.exp(1, 1)
-    all_falses = xman.group(1).filter_exps(active=False, manual=False)
+    all_falses = xman.group(1).filter_exps(is_active=False, is_manual=False)
     assert len(all_falses) == 1 and all_falses[0] is xman.exp(1, 3)
 
 
