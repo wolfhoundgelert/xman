@@ -220,8 +220,9 @@ def load_checkpoint(cp_path): return __load_from_file(cp_path)
 
 def delete_checkpoint(cp_path, location_dir):
     path = resolve_checkpoint_path(cp_path, location_dir)
-    if path is not None:
-        __delete_file(path)
+    if path is None:
+        raise NotExistsXManError(f"Can't resolve checkpoint path `{cp_path}`!")
+    __delete_file(path)
 
 
 def save_checkpoints_list(cp_list, location_dir):

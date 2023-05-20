@@ -18,14 +18,14 @@ class ExpStructData:
 class ExpStructStatus:
 
     EMPTY = 'EMPTY'
-    TODO = 'TODO'
+    TO_DO = 'TO_DO'
     IN_PROGRESS = 'IN_PROGRESS'
     DONE = 'DONE'
     ERROR = 'ERROR'
     SUCCESS = 'SUCCESS'
     FAIL = 'FAIL'
 
-    __WORKFLOW = (EMPTY, TODO, IN_PROGRESS, (DONE, ERROR), (SUCCESS, FAIL))
+    __WORKFLOW = (EMPTY, TO_DO, IN_PROGRESS, (DONE, ERROR), (SUCCESS, FAIL))
 
     @staticmethod
     def has_status(status_str: str):

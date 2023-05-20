@@ -161,6 +161,11 @@ class ExpAPI(ExpStructAPI):
         self._obj.update()
         return self._obj.error_stack
 
+    @property
+    def checkpoints_mediator(self) -> CheckpointsMediator:
+        # `self._obj._update()` isn't needed
+        return self._obj.checkpoints_mediator
+
     def make_pipeline(self, run_func: Callable[..., Any],
                       params: dict, save_on_storage: bool = False) -> 'ExpAPI':
         self._obj.update()
@@ -182,9 +187,6 @@ class ExpAPI(ExpStructAPI):
         self._obj.update()
         obj = self._obj.delete_pipeline(need_confirm)
         return None if obj is None else self
-
-    # `self._obj._update()` isn't needed
-    def get_checkpoints_mediator(self): return self._obj.get_checkpoints_mediator()
 
     def delete_checkpoints(self, need_confirm=True,
                            delete_custom_paths=False) -> Optional['ExpAPI']:

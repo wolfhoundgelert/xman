@@ -103,8 +103,3 @@ def test__get_related_path():
     path = '/path/outside/folder/file.txt'
     result = filesystem.__get_related_path(path, anchor_folder)
     assert result == str(Path('../../outside/folder/file.txt'))
-
-    # TODO remove debug
-    print(f"\nDEBUG: {result}\n")
-    # TODO remove debug
-    print(f"\nDEBUG: {str((Path(anchor_folder) / Path('../../outside/folder/file.txt')).resolve())}\n")

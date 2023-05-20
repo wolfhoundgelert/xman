@@ -106,11 +106,10 @@ class Pipeline:
         run_data = self.__run_data
         data.started = True
         error = None
-        if run_data.with_mediator:
-            self.__mediator = CheckpointsMediator(self.__location_dir)
         self.__do_timestamp()
         try:
             if run_data.with_mediator:
+                self.__mediator = CheckpointsMediator(self.__location_dir)
                 data.result = run_data.run_func(self.__mediator, **run_data.params)
             else:
                 data.result = run_data.run_func(**run_data.params)
@@ -125,8 +124,7 @@ class Pipeline:
         if self.__timer is not None:
             self.__timer.cancel()
             self.__timer = None
-        if self.__mediator is not None:
-            self.__mediator = None
+        self.__mediator = None
         self.__data = None
         self.__run_data = None
 

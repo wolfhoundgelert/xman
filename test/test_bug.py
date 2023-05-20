@@ -23,10 +23,10 @@ def test__setting_status_after_wrong_one():
         exp.set_manual_status('FAILED', "There's no `FAILED` status - should be `FAIL`")
     except:
         pass
-    xman.proj.set_manual_status('TODO', None)
-    assert xman.proj.status.status_str == 'TODO'
-    xman.proj.group(1).set_manual_status('TODO', None)
-    assert xman.proj.group(1).status.status_str == 'TODO'
+    xman.proj.set_manual_status('TO_DO', None)
+    assert xman.proj.status.status_str == 'TO_DO'
+    xman.proj.group(1).set_manual_status('TO_DO', None)
+    assert xman.proj.group(1).status.status_str == 'TO_DO'
 
 
 def test__wrong_proj_status_when_new_exp():

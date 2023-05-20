@@ -119,16 +119,16 @@ class ExpStructBox(ExpStruct):
             status = ExpStructStatus.IN_PROGRESS
         elif self.__children_has_status(ExpStructStatus.EMPTY, True):
             status = ExpStructStatus.EMPTY
-        elif self.__children_has_status(ExpStructStatus.TODO, True):
-            status = ExpStructStatus.TODO
+        elif self.__children_has_status(ExpStructStatus.TO_DO, True):
+            status = ExpStructStatus.TO_DO
         elif self.__children_has_status(ExpStructStatus.DONE, True):
             status = ExpStructStatus.DONE
         elif self.__children_has_status(ExpStructStatus.SUCCESS, True):
             status = ExpStructStatus.SUCCESS
         elif self.__children_has_status(ExpStructStatus.FAIL, True):
             status = ExpStructStatus.FAIL
-        elif self.__children_has_status([ExpStructStatus.EMPTY, ExpStructStatus.TODO], True):
-            status = ExpStructStatus.TODO
+        elif self.__children_has_status([ExpStructStatus.EMPTY, ExpStructStatus.TO_DO], True):
+            status = ExpStructStatus.TO_DO
         elif self.__children_has_status([ExpStructStatus.DONE, ExpStructStatus.SUCCESS,
                                          ExpStructStatus.FAIL], True):
             status = ExpStructStatus.DONE

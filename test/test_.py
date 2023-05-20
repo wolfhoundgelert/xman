@@ -76,10 +76,6 @@ def test__pipeline_with_checkpoints():
     exp = helper.make_exp_from_nothing().make_pipeline_with_checkpoints(
         helper.train_with_mediator_custom_path, helper.train_params, True).start()
     exp.delete_checkpoints(need_confirm=False, delete_custom_paths=True)
-
-    cp_list = exp.get_checkpoints_mediator().get_checkpoint_paths_list()
-    cp_list
-    # TODO fix:
     assert not os.path.exists(os.path.join(exp.location_dir, 'custom/first.cp'))
     assert not os.path.exists(os.path.join(exp.location_dir, 'custom/second.cp'))
 

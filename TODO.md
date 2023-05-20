@@ -1,6 +1,6 @@
 ### CURRENT:
 
-- Proj methods make as Group methods (which is copying Box structure), and add them to API
++ Proj methods make as Group methods (which is copying Box structure), and add them to API
 
 - Do TODO-s in the code
   - check exp is not active when changing its num or moving to another group

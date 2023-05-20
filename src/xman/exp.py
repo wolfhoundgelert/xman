@@ -57,8 +57,14 @@ class Exp(ExpStruct):
     def is_ready_for_start(self):
         if self.is_manual:
             return False
-        return (self.status.status_str == ExpStructStatus.IN_PROGRESS and self.state == ExpState.IDLE) \
-            or self.status.status_str == ExpStructStatus.TODO
+        return (self.status.status_str == ExpStructStatus.IN_PROGRESS and
+                self.state == ExpState.IDLE) or self.status.status_str == ExpStructStatus.TO_DO
+
+    @property
+    def checkpoints_mediator(self) -> CheckpointsMediator:
+        if self.__checkpoints_mediator is None:
+            self.__checkpoints_mediator = CheckpointsMediator(self.location_dir)
+        return self.__checkpoints_mediator
 
     def info(self):
         text = super().info()
@@ -88,15 +94,13 @@ class Exp(ExpStruct):
             return self
         return None
 
-    def get_checkpoints_mediator(self): return CheckpointsMediator(self.location_dir)
-
     def delete_checkpoints(self, need_confirm=True, delete_custom_paths=False) -> Optional['Exp']:
         self._check_is_not_active()
         if not confirm.request(need_confirm, f"ATTENTION! Do you want to delete `{self}` "
                                               f"checkpoints?"):
             return None
         if delete_custom_paths:
-            lst = self.get_checkpoints_mediator().get_checkpoint_paths_list(check_files_exist=True)
+            lst = self.checkpoints_mediator.get_checkpoint_paths_list(check_files_exist=True)
             if lst is not None:
                 for cp_path in lst:
                     filesystem.delete_checkpoint(cp_path, self.location_dir)
@@ -109,7 +113,7 @@ class Exp(ExpStruct):
                                             f"with `delete_manual_result()` method first!")
         if self.is_ready_for_start:
             if filesystem.has_checkpoints_dir(self.location_dir) and \
-                    self.status.status_str == ExpStructStatus.TODO:
+                    self.status.status_str == ExpStructStatus.TO_DO:
                 raise IllegalOperationXManError(f"`{self}` contains checkpoints folder - delete it "
                                                 f"first with `delete_checkpoints()` method!")
             if self.__pipeline is None:
@@ -208,7 +212,7 @@ class Exp(ExpStruct):
         if pipeline_data is None:
             status = ExpStructStatus.EMPTY
         elif not pipeline_data.started:
-            status = ExpStructStatus.TODO
+            status = ExpStructStatus.TO_DO
         elif pipeline_data.error is not None:
             status = ExpStructStatus.ERROR
             resolution = str(pipeline_data.error)
@@ -225,6 +229,7 @@ class Exp(ExpStruct):
                         f"So, something extraordinary has happened - congrats and my condolences!)")
             self.__pipeline._destroy()
         self._data.manual_result = None
+        self.__checkpoints_mediator = None
         super()._destroy()
 
     def _check_is_not_active(self):
@@ -237,6 +242,7 @@ class Exp(ExpStruct):
         self._data: ExpData = None
         self.__state = None
         self.__pipeline: Pipeline = None
+        self.__checkpoints_mediator = None
         self.__updating = False
         super().__init__(location_dir, parent)
         self._api = ExpAPI(self)
