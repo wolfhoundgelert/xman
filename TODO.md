@@ -11,13 +11,15 @@
 
 - Rename `destroy_smth` in API methods because it seems like `destroy` method for GC
 
-- Check all needed API methods exist in XManAPI
+- [!!!] Check all needed API methods exist in XManAPI
 
 - XManAPI only wit methods for initialization, after a project is created `xman`-property is changed to ExpProjAPI, so we have new extended API. Don't forget duplicate initial methods in ExpProjAPI.
 
 - set manual result viewer - exp, group, proj level
 
 - set pipeline result viewer - exp, group, proj level
+
+- Remove all `os`, `os.path` usages - https://medium.com/@ageitgey/python-3-quick-tip-the-easy-way-to-deal-with-file-paths-on-windows-mac-and-linux-11a072b58d5f
 
 - [PRIO] [!!!] README.md  
   https://www.markdownguide.org/basic-syntax/  

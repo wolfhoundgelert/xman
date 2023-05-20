@@ -76,6 +76,10 @@ def test__pipeline_with_checkpoints():
     exp = helper.make_exp_from_nothing().make_pipeline_with_checkpoints(
         helper.train_with_mediator_custom_path, helper.train_params, True).start()
     exp.delete_checkpoints(need_confirm=False, delete_custom_paths=True)
+
+    cp_list = exp.get_checkpoints_mediator().get_checkpoint_paths_list()
+    cp_list
+    # TODO fix:
     assert not os.path.exists(os.path.join(exp.location_dir, 'custom/first.cp'))
     assert not os.path.exists(os.path.join(exp.location_dir, 'custom/second.cp'))
 
@@ -84,21 +88,21 @@ def test__destroy_group():
     config.set__is_pytest(True)
     helper.make_exp_from_nothing()
     xman.delete_group(1)
-    assert xman.proj._num_children == 0
+    assert xman.proj.num_groups() == 0
 
 
 def test__destroy_exp():
     config.set__is_pytest(True)
     helper.make_exp_from_nothing()
     xman.group(1).delete_exp(1)
-    assert xman.group(1)._num_children == 0
+    assert xman.group(1).num_exps() == 0
 
 
 def test__destroy_exp_after_pipeline_done():
     config.set__is_pytest(True)
     helper.make_exp_from_nothing().make_pipeline(helper.train, helper.train_params, True).start()
     xman.group(1).delete_exp(1)
-    assert xman.group(1)._num_children == 0
+    assert xman.group(1).num_exps() == 0
 
 
 def test__getting_exp():
@@ -132,14 +136,14 @@ def test__filter_exps_in_group():
         is_ready_for_start = True
 
     exp._obj.__class__ = MockExp
-    readies = group.filter_exps(ready_for_start=True)
+    readies = group.filter_exps(is_ready_for_start=True)
     assert len(readies) == 1 and readies[0] is exp
 
     class MockExp(Exp):
         is_active = True
 
     exp._obj.__class__ = MockExp
-    actives = group.filter_exps(active=True)
+    actives = group.filter_exps(is_active=True)
     assert len(actives) == 1 and actives[0] is exp
     xman.exp(1, 1).set_manual_status('DONE', "It's done.")
     manuals = xman.group(1).filter_exps(is_manual=True)

@@ -7,21 +7,16 @@ from .pipeline import CheckpointsMediator
 from .exp import Exp
 from .proj import ExpProj
 from .struct import ExpStructStatus, ExpStruct
-from .structbox import ExpStructBox
+
+
+def _get_apis_from_list(objs: List[Exp | ExpGroup]) -> List['ExpAPI | ExpGroupAPI']:
+    return [x.api for x in objs]
 
 
 class ExpStructStatusAPI:
 
-    EMPTY = 'EMPTY'
-    TODO = 'TODO'
-    IN_PROGRESS = 'IN_PROGRESS'
-    DONE = 'DONE'
-    ERROR = 'ERROR'
-    SUCCESS = 'SUCCESS'
-    FAIL = 'FAIL'
-
     @property
-    def status(self) -> str: return self._obj.status
+    def status_str(self) -> str: return self._obj.status_str
 
     @property
     def resolution(self) -> str: return self._obj.resolution
@@ -71,9 +66,9 @@ class ExpStructAPI:
         self._obj.update()
         return self._obj.is_manual
 
-    def tree(self):
+    def tree(self, depth: int = None):
         self._obj.update()
-        self._obj.tree()
+        self._obj.tree(depth)
 
     def info(self):
         self._obj.update()
@@ -224,38 +219,7 @@ class ExpAPI(ExpStructAPI):
     def __init__(self, obj: Exp): self._obj = obj  # for autocomplete
 
 
-class ExpStructBoxAPI(ExpStructAPI):
-
-    @staticmethod
-    def _get_apis_from_list(objs: List[Exp | ExpGroup]) -> List['ExpAPI | ExpGroupAPI']:
-        return [x.api for x in objs]
-
-    # TODO Make the methods below protected (or remove) and implement them as public in ExpGroupAPI
-    #  and ExpProjAPI: exps and groups, num_exps and num_groups, exps_nums and groups_nums,
-    #  exps_names and groups_names.
-
-    #  TODO Methods from ExpGroupAPI also duplicate in ExpProjAPI (and in XManAPI if it's needed)
-
-    def _children(self) -> List['ExpAPI | ExpGroupAPI']:
-        self._obj.update()
-        return self._get_apis_from_list(self._obj.children)
-    
-    def _num_children(self) -> int:
-        self._obj.update()
-        return self._obj.num_children
-
-    def _children_nums(self) -> List[int]:
-        self._obj.update()
-        return self._obj.children_nums
-
-    def _children_names(self) -> List[str]:
-        self._obj.update()
-        return self._obj.children_names
-
-    def __init__(self, obj: ExpStructBox): self._obj = obj  # for autocomplete
-
-
-class ExpGroupAPI(ExpStructBoxAPI):
+class ExpGroupAPI(ExpStructAPI):
 
     @property
     def proj(self) -> 'ExpProjAPI':
@@ -265,20 +229,20 @@ class ExpGroupAPI(ExpStructBoxAPI):
 
     def exps(self) -> List[ExpAPI]:
         self._obj.update()
-        exps = self._obj.exps
-        return self._get_apis_from_list(exps)
+        exps = self._obj.exps()
+        return _get_apis_from_list(exps)
 
     def num_exps(self) -> int:
         self._obj.update()
-        return self._obj.num_exps
+        return self._obj.num_exps()
 
     def exps_nums(self) -> List[int]:
         self._obj.update()
-        return self._obj.exps_nums
+        return self._obj.exps_nums()
 
     def exps_names(self) -> List[str]:
         self._obj.update()
-        return self._obj.exps_names
+        return self._obj.exps_names()
 
     def has_exp(self, num_or_name) -> bool:
         self._obj.update()
@@ -298,12 +262,19 @@ class ExpGroupAPI(ExpStructBoxAPI):
         exp = self._obj.exp(num_or_name)
         return exp.api
 
-    # TODO Update signature as in ExpGroup
-    def filter_exps(self, active: bool = None, manual: bool = None,
-                    ready_for_start: bool = None) -> List[ExpAPI]:
+    def filter_exps(self,
+                    mode: str = 'AND',
+                    custom_filter: Callable[[Exp], bool] = None,
+                    is_active: bool = None,
+                    is_manual: bool = None,
+                    is_ready_for_start: bool = None,
+                    status_or_list: str | List[str] = None,
+                    not_status_or_list: str | List[str] = None,
+                    ) -> List[ExpAPI]:
         self._obj.update()
-        exps = self._obj.filter_exps(active, manual, ready_for_start)
-        return self._get_apis_from_list(exps)
+        exps = self._obj.filter_exps(mode, custom_filter, is_active, is_manual, is_ready_for_start,
+                                     status_or_list, not_status_or_list)
+        return _get_apis_from_list(exps)
 
     def get_exp_for_start(self) -> Optional[ExpAPI]:
         self._obj.update()
@@ -321,7 +292,7 @@ class ExpGroupAPI(ExpStructBoxAPI):
     def __init__(self, obj: ExpGroup): self._obj = obj  # for autocomplete
 
 
-class ExpProjAPI(ExpStructBoxAPI):
+class ExpProjAPI(ExpStructAPI):
 
     @property
     def num(self) -> int:
@@ -330,6 +301,11 @@ class ExpProjAPI(ExpStructBoxAPI):
     def has_group(self, num_or_name) -> bool:
         self._obj.update()
         return self._obj.has_group(num_or_name)
+
+    def group(self, num_or_name) -> ExpGroupAPI:
+        self._obj.update()
+        group = self._obj.group(num_or_name)
+        return group.api
 
     def make_group(self, name, descr, num=None) -> ExpGroupAPI:
         self._obj.update()
@@ -340,19 +316,37 @@ class ExpProjAPI(ExpStructBoxAPI):
         self._obj.update()
         return self._obj.delete_group(num_or_name, need_confirm)
 
-    def group(self, num_or_name) -> ExpGroupAPI:
-        self._obj.update()
-        group = self._obj.group(num_or_name)
-        return group.api
-
     def groups(self) -> List[ExpGroupAPI]:
         self._obj.update()
         groups = self._obj.groups()
-        return self._get_apis_from_list(groups)
+        return _get_apis_from_list(groups)
+
+    def num_groups(self) -> int:
+        self._obj.update()
+        return self._obj.num_groups()
+
+    def groups_nums(self) -> List[int]:
+        self._obj.update()
+        return self._obj.groups_nums()
+
+    def groups_names(self) -> List[int]:
+        self._obj.update()
+        return self._obj.groups_names()
+
+    def change_group_num(self, num_or_name: int | str, new_num: int):
+        self._obj.update()
+        self._obj.change_group_num(num_or_name, new_num)
+
+    # TODO def filter_groups(self,
 
     def has_exp(self, group_num_or_name: int | str, exp_num_or_name: int | str) -> bool:
         self._obj.update()
         return self._obj.has_exp(group_num_or_name, exp_num_or_name)
+
+    def exp(self, group_num_or_name: int | str, exp_num_or_name: int | str) -> ExpAPI:
+        self._obj.update()
+        exp = self._obj.exp(group_num_or_name, exp_num_or_name)
+        return exp.api
 
     def make_exp(self, group_num_or_name, name, descr, num=None) -> ExpAPI:
         self._obj.update()
@@ -364,30 +358,33 @@ class ExpProjAPI(ExpStructBoxAPI):
         self._obj.update()
         return self._obj.delete_exp(group_num_or_name, exp_num_or_name, need_confirm)
 
-    def exp(self, group_num_or_name: int | str, exp_num_or_name: int | str) -> ExpAPI:
-        self._obj.update()
-        exp = self._obj.exp(group_num_or_name, exp_num_or_name)
-        return exp.api
-
     def exps(self, group_num_or_name=None) -> List[ExpAPI]:
         self._obj.update()
         exps = self._obj.exps(group_num_or_name)
-        return self._get_apis_from_list(exps)
+        return _get_apis_from_list(exps)
+
+    def num_exps(self, group_num_or_name=None) -> int:
+        self._obj.update()
+        return self._obj.num_exps(group_num_or_name)
+
+    def exps_nums(self, group_num_or_name=None) -> List[int]:
+        self._obj.update()
+        return self._obj.exps_nums(group_num_or_name)
+
+    def exps_names(self, group_num_or_name=None) -> List[int]:
+        self._obj.update()
+        return self._obj.exps_names(group_num_or_name)
 
     # TODO Actualize
     def filter_exps(self, active=None, manual=None) -> List[ExpAPI]:
         self._obj.update()
         exps = self._obj.filter_exps(active, manual)
-        return self._get_apis_from_list(exps)
+        return _get_apis_from_list(exps)
 
     def start(self, group_num_or_name: Optional[int | str] = None,
               exp_num_or_name: Optional[int | str] = None, autostart_next=False):
         self._obj.update()
         self._obj.start(group_num_or_name, exp_num_or_name, autostart_next)
-
-    def change_group_num(self, num_or_name: int | str, new_num: int):
-        self._obj.update()
-        self._obj.change_group_num(num_or_name, new_num)
 
     def move_exp(self, group_num_or_name, exp_num_or_name, new_group_num_or_name, new_exp_num):
         self._obj.update()
@@ -399,8 +396,9 @@ class ExpProjAPI(ExpStructBoxAPI):
 class XManAPI:
 
     @staticmethod
-    def dir_tree(target_dir, files_limit=10, files_first=True, sort_numbers=True):
-        tree.print_dir_tree(target_dir, files_limit, files_first, sort_numbers)
+    def dir_tree(target_dir: str, depth: int = 0, files_limit: int = 10,
+                 files_first: bool = True, sort_numbers: bool = True):
+        tree.print_dir_tree(target_dir, depth, files_limit, files_first, sort_numbers)
 
     @staticmethod
     def make_dir(dir_path, exist_ok=True): filesystem.make_dir(dir_path, exist_ok)

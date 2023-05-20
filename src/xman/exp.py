@@ -57,8 +57,8 @@ class Exp(ExpStruct):
     def is_ready_for_start(self):
         if self.is_manual:
             return False
-        return (self.status == ExpStructStatus.IN_PROGRESS and self.state == ExpState.IDLE) \
-            or self.status == ExpStructStatus.TODO
+        return (self.status.status_str == ExpStructStatus.IN_PROGRESS and self.state == ExpState.IDLE) \
+            or self.status.status_str == ExpStructStatus.TODO
 
     def info(self):
         text = super().info()
@@ -96,11 +96,11 @@ class Exp(ExpStruct):
                                               f"checkpoints?"):
             return None
         if delete_custom_paths:
-            cp_list = filesystem.load_checkpoints_list(self.location_dir)
-            if cp_list is not None:
-                for cp_path in cp_list:
-                    filesystem.delete_checkpoint(cp_path)
-        filesystem.delete_checkpoints_dir(self.location_dir, False)
+            lst = self.get_checkpoints_mediator().get_checkpoint_paths_list(check_files_exist=True)
+            if lst is not None:
+                for cp_path in lst:
+                    filesystem.delete_checkpoint(cp_path, self.location_dir)
+        filesystem.delete_checkpoints_dir(self.location_dir, need_confirm=False)
         return self
 
     def start(self) -> 'Exp':
@@ -109,7 +109,7 @@ class Exp(ExpStruct):
                                             f"with `delete_manual_result()` method first!")
         if self.is_ready_for_start:
             if filesystem.has_checkpoints_dir(self.location_dir) and \
-                    self.status == ExpStructStatus.TODO:
+                    self.status.status_str == ExpStructStatus.TODO:
                 raise IllegalOperationXManError(f"`{self}` contains checkpoints folder - delete it "
                                                 f"first with `delete_checkpoints()` method!")
             if self.__pipeline is None:
@@ -242,7 +242,7 @@ class Exp(ExpStruct):
         self._api = ExpAPI(self)
 
     def __str__(self):
-        state = f": {self.state}" if self.status == ExpStructStatus.IN_PROGRESS else ''
+        state = f": {self.state}" if self.status.status_str == ExpStructStatus.IN_PROGRESS else ''
         return f"Exp {self.num} [{self.status}{state}] {self._data.name} - {self._data.descr}"
 
     def __is_active_by_time_delta(self):

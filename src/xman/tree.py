@@ -27,25 +27,30 @@ def __sort_content_by_folders_and_files(target_dir, sort_numbers):
     return dirs, files
 
 
-def __dirs_part(target_dir, depth, result, files_limit, files_first, sort_numbers, dirs):
+def __dirs_part(
+        target_dir, depth, current_depth, result, files_limit, files_first, sort_numbers, dirs):
     for d in dirs:
         p = os.path.join(target_dir, d)
-        __process_dir(p, depth + 1, result, files_limit, files_first, sort_numbers)
+        __process_dir(p, depth, current_depth + 1, result, files_limit, files_first, sort_numbers)
 
 
-def __files_part(target_dir, depth, result, files):
+def __files_part(target_dir, current_depth, result, files):
     for f in files:
         p = os.path.join(target_dir, f)
         if f.startswith('...'):
-            result.append(f"{__tab * (depth + 1)}{f}")
+            result.append(f"{__tab * (current_depth + 1)}{f}")
             continue
-        result.append(f"{__tab * (depth + 1)}{os.path.basename(p)}")
+        result.append(f"{__tab * (current_depth + 1)}{os.path.basename(p)}")
 
 
-def __process_dir(target_dir, depth, result, files_limit, files_first, sort_numbers):
+def __process_dir(target_dir, depth, current_depth, result, files_limit, files_first, sort_numbers):
     if target_dir.endswith('/'):
         target_dir = target_dir[:-1]
-    result.append(f"{__tab * depth}{os.path.basename(target_dir) + '/'}")
+    result.append(f"{__tab * current_depth}{os.path.basename(target_dir) + '/'}")
+    if depth is not None and current_depth > depth:
+        if len(os.listdir(target_dir)):
+            result[-1] += '...'
+        return
     dirs, files = __sort_content_by_folders_and_files(target_dir, sort_numbers)
     files_len = len(files)
     if 0 < files_limit < files_len:
@@ -54,17 +59,18 @@ def __process_dir(target_dir, depth, result, files_limit, files_first, sort_numb
         trimmed.append(files[-1])
         files = trimmed
     if files_first:
-        __files_part(target_dir, depth, result, files)
-        __dirs_part(target_dir, depth, result, files_limit, files_first, sort_numbers, dirs)
+        __files_part(target_dir, current_depth, result, files)
+        __dirs_part(target_dir, depth, current_depth, result, files_limit, files_first, sort_numbers, dirs)
     else:
-        __dirs_part(target_dir, depth, result, files_limit, files_first, sort_numbers, dirs)
-        __files_part(target_dir, depth, result, files)
+        __dirs_part(target_dir, depth, current_depth, result, files_limit, files_first, sort_numbers, dirs)
+        __files_part(target_dir, current_depth, result, files)
 
 
-def print_dir_tree(target_dir, files_limit=10, files_first=True, sort_numbers=True):
+def print_dir_tree(target_dir: str, depth: int = None, files_limit: int = 10,
+                   files_first: bool = True, sort_numbers: bool = True):
     print()
     result = []
-    __process_dir(target_dir, 0, result, files_limit, files_first, sort_numbers)
+    __process_dir(target_dir, depth, 0, result, files_limit, files_first, sort_numbers)
     for it in result:
         print(it)
     print()

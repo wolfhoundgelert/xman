@@ -1,29 +1,46 @@
 import os
 import threading
+from pathlib import Path
 from threading import Timer
 from typing import Any, Callable, Optional, List
 
 from . import filesystem
 from .config import PipelineConfig
-from .error import get_error_str, get_error_stack_str
+from .error import get_error_str, get_error_stack_str, NotExistsXManError
 
 
 class CheckpointsMediator:
 
     @property
-    def exp_location_dir(self):
-        return self.__exp_location_dir
+    def exp_location_dir(self): return self.__exp_location_dir
 
     @property
-    def default_checkpoints_dir(self):
-        return self.__default_checkpoints_dir
+    def default_checkpoints_dir(self): return self.__default_checkpoints_dir
 
     def save_checkpoint(self, checkpoint: Any, replace: bool,
                         custom_path: str = None) -> str:
-        cp_list = self.get_checkpoint_paths_list()
+        # TODO Delete work plan or rework it the docs
+        """
+        + Saves all checkpoints placed inside the exp folder as relative to the folder.
+
+        + If a custom_path was placed outside the exp folder, the path will be saved as it was
+        provided.
+
+        + During loading the path will be tried first as a relative to the exp folder, then as it
+        is, if source via the relative path doesn't exist.
+
+        + If both paths aren't exist, then NotExist exception will be raised with mentioning of JSON
+        file which should be fixed manually or checkpoints folder should be deleted via special
+        method.
+
+        + Refine checkpoints on pipeline start
+
+        + Refine checkpoints on getting via mediator's method
+        """
+        cp_list = self.get_checkpoint_paths_list(check_files_exist=True)
         if replace and cp_list is not None:
             for cp_path in cp_list:
-                filesystem.delete_checkpoint(cp_path)
+                filesystem.delete_checkpoint(cp_path, self.__exp_location_dir)
             filesystem.delete_checkpoints_list(self.__exp_location_dir)
             cp_list = None
         if not filesystem.has_checkpoints_dir(self.__exp_location_dir):
@@ -32,17 +49,35 @@ class CheckpointsMediator:
         cp_list = [] if cp_list is None else cp_list
         cp_list.append(cp_path)
         filesystem.save_checkpoints_list(cp_list, self.__exp_location_dir)
-        return cp_path
+        return cp_path if custom_path is None else custom_path
 
-    def get_checkpoint_paths_list(self) -> Optional[List[str]]:
-        return filesystem.load_checkpoints_list(self.__exp_location_dir)
+    def get_checkpoint_paths_list(self, check_files_exist: bool = True) -> Optional[List[str]]:
+        lst = filesystem.load_checkpoints_list(self.__exp_location_dir)
+        if lst is None or not check_files_exist:
+            return lst
+        missed = []
+        for it in lst:
+            path = filesystem.resolve_checkpoint_path(it, self.__exp_location_dir)
+            if path is None:
+                missed.append(it)
+        if len(missed):
+            json_path = filesystem.get_checkpoints_list_path(self.__exp_location_dir)
+            NotExistsXManError(f"Can't resolve some checkpoints paths - {missed}! You can fix paths"
+                               f" right in the {json_path} or remove checkpoints via "
+                               f"`exp.delete_checkpoints()` method of the experiment structure.")
+        return lst
 
-    def load_checkpoint(self, checkpoint_path) -> Optional[Any]:
-        return filesystem.load_checkpoint(checkpoint_path)
+    def load_checkpoint(self, checkpoint_path: str) -> Optional[Any]:
+        path = filesystem.resolve_checkpoint_path(checkpoint_path, self.__exp_location_dir)
+        if path is None:
+            raise NotExistsXManError(f"Can't find checkpoint by the path `{checkpoint_path}`!")
+        return filesystem.load_checkpoint(path)
 
     def __init__(self, exp_location_dir: str):
         self.__exp_location_dir = exp_location_dir
         self.__default_checkpoints_dir = filesystem.get_checkpoints_dir_path(exp_location_dir)
+        # Check checkpoints are ok (paths can be lost during files or folders moving:
+        self.get_checkpoint_paths_list(check_files_exist=True)
 
 
 class PipelineData:  # Saved in exp._data.pipeline

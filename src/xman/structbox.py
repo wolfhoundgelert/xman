@@ -9,7 +9,7 @@ class ExpStructBox(ExpStruct):
 
     def info(self):
         text = super().info()
-        for child in self.children:
+        for child in self.children():
             text += util.tab(f"\n\n{child.info()}")
         return text
 
@@ -23,12 +23,12 @@ class ExpStructBox(ExpStruct):
             if num not in self.__num_to_child:
                 child = maker.recreate_child(self, num)
                 self._add_child(child)
-        for child in self.children:
+        for child in self.children():
             if child.num not in nums:
                 self._remove_child(child)
         for name in list(self.__name_to_child.keys()):
             del self.__name_to_child[name]
-        for child in self.children:
+        for child in self.children():
             child.update()
             self.__name_to_child[child._data.name] = child
         # Status should be updated at the end of the inherited updating hierarchy
@@ -137,7 +137,7 @@ class ExpStructBox(ExpStruct):
         return status, resolution
 
     def _destroy(self):
-        for child in self.children:
+        for child in self.children():
             child._destroy()
         self.__num_to_child.clear()
         self.__num_to_child = None
@@ -151,10 +151,10 @@ class ExpStructBox(ExpStruct):
         self.__updating = False
         super().__init__(location_dir, parent)
 
-    def __children_has_status(self, status_or_list, all_children: bool):
-        sl = status_or_list if type(status_or_list) is list else [status_or_list]
-        for child in self.children:
-            s = child.status.status
+    def __children_has_status(self, status_str_or_list, all_children: bool):
+        sl = status_str_or_list if type(status_str_or_list) is list else [status_str_or_list]
+        for child in self.children():
+            s = child.status.status_str
             if all_children:
                 if s not in sl:
                     return False

@@ -1,8 +1,8 @@
-from typing import List, Optional
+from typing import List, Optional, Callable
 
 from . import filesystem, filter
-from .error import NothingToDoXManError, IllegalOperationXManError, NotExistsXManError, \
-    AlreadyExistsXManError, ArgumentsXManError
+from .error import NothingToDoXManError, NotExistsXManError, AlreadyExistsXManError, \
+    ArgumentsXManError
 from .structbox import ExpStructBox
 from .group import ExpGroup
 from .exp import Exp
@@ -43,8 +43,13 @@ class ExpProj(ExpStructBox):
         self.group(num_or_name)._check_has_no_active_exps()
         self.change_child_num(num_or_name, new_num)
 
-    def filter_groups(self):
-        pass  # TODO
+    def filter_groups(self,
+                      mode: str = 'AND',
+                      custom_filter: Callable[[ExpGroup], bool] = None,
+                      status_or_list: str | List[str] = None,
+                      not_status_or_list: str | List[str] = None,
+                      ) -> List[ExpGroup]:
+        return filter.groups(self.groups(), mode, custom_filter, status_or_list, not_status_or_list)
 
     def has_exp(self, group_num_or_name, exp_num_or_name) -> bool:
         return self.group(group_num_or_name).has_exp(exp_num_or_name)
@@ -60,28 +65,31 @@ class ExpProj(ExpStructBox):
 
     def exps(self, group_num_or_name=None) -> List[Exp]:
         if group_num_or_name is not None:
-            return self.group(group_num_or_name).exps
+            return self.group(group_num_or_name).exps()
         result = []
         for it in self.groups():
-            result.extend(it.exps)
+            result.extend(it.exps())
         return result
 
     def num_exps(self, group_num_or_name=None) -> int:
         if group_num_or_name is not None:
-            return self.group(group_num_or_name).num_exps
+            return self.group(group_num_or_name).num_exps()
         return len(self.exps())
 
     def exps_nums(self, group_num_or_name=None) -> List[int]:
         if group_num_or_name is not None:
-            return self.group(group_num_or_name).exps_nums
+            return self.group(group_num_or_name).exps_nums()
         return [x.num for x in self.exps()]
 
     def exps_names(self, group_num_or_name=None) -> List[str]:
         if group_num_or_name is not None:
-            return self.group(group_num_or_name).exps_names
+            return self.group(group_num_or_name).exps_names()
         return [x.name for x in self.exps()]
 
-    def filter_exps(self, group_num_or_name: int | str = None,
+    def filter_exps(self,
+                    group_num_or_name: int | str = None,
+                    mode: str = 'AND',
+                    custom_filter: Callable[[Exp], bool] = None,
                     is_active: bool = None,
                     is_manual: bool = None,
                     is_ready_for_start: bool = None,
@@ -89,10 +97,10 @@ class ExpProj(ExpStructBox):
                     not_status_or_list: str | List[str] = None,
                     ) -> List[Exp]:
         if group_num_or_name is not None:
-            return self.group(group_num_or_name).filter_exps(
-                is_active, is_manual, is_ready_for_start, status_or_list, not_status_or_list)
-        return filter.exps(self.exps(),
-                    is_active, is_manual, is_ready_for_start, status_or_list, not_status_or_list)
+            return self.group(group_num_or_name).filter_exps(mode, custom_filter, is_active,
+                                is_manual, is_ready_for_start, status_or_list, not_status_or_list)
+        return filter.exps(self.exps(), mode, custom_filter, is_active, is_manual,
+                           is_ready_for_start, status_or_list, not_status_or_list)
 
     def get_exp_for_start(self, group_num_or_name=None) -> Optional[Exp]:
         if group_num_or_name is not None:
@@ -108,7 +116,7 @@ class ExpProj(ExpStructBox):
             raise ArgumentsXManError(f"Need to specify `group_num_or_name` if `exp_num_or_name` is "
                                      f"specified!")
         elif group_num_or_name is not None and exp_num_or_name is None:
-            exp = self.gget_exp_for_start(group_num_or_name)
+            exp = self.get_exp_for_start(group_num_or_name)
         elif group_num_or_name is not None and exp_num_or_name is not None:
             exp = self.exp(group_num_or_name, exp_num_or_name)
         if exp is None:

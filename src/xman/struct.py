@@ -28,19 +28,19 @@ class ExpStructStatus:
     __WORKFLOW = (EMPTY, TODO, IN_PROGRESS, (DONE, ERROR), (SUCCESS, FAIL))
 
     @staticmethod
-    def has_status(status: str):
-        return util.check_has_value_in_class_public_constants(status, ExpStructStatus)
+    def has_status(status_str: str):
+        return util.check_has_value_in_class_public_constants(status_str, ExpStructStatus)
 
     @staticmethod
-    def _check(status, resolution):
-        ExpStructStatus.has_status(status)
-        if status in (ExpStructStatus.SUCCESS, ExpStructStatus.FAIL) and resolution is None:
+    def _check(status_str, resolution):
+        ExpStructStatus.has_status(status_str)
+        if status_str in (ExpStructStatus.SUCCESS, ExpStructStatus.FAIL) and resolution is None:
             raise ArgumentsXManError(f"SUCCESS and FAIL manual statuses "
                                      f"require setting resolutions!")
 
     @staticmethod
-    def _fit_parameters(status_obj, status, resolution, manual):
-        return status_obj is not None and status_obj.status == status \
+    def _fit_parameters(status_obj, status_str, resolution, manual):
+        return status_obj is not None and status_obj.status_str == status_str \
                 and status_obj.resolution == resolution and status_obj.manual == manual
 
     @property
@@ -48,10 +48,10 @@ class ExpStructStatus:
 
     @property
     def next(self) -> Optional[str]:
-        if ExpStructStatus.__WORKFLOW[-1] == self.status:
+        if ExpStructStatus.__WORKFLOW[-1] == self.status_str:
             return None
         for i, it in enumerate(ExpStructStatus.__WORKFLOW[:-1]):
-            if it == self.status or (type(it) is tuple and self.status in it):
+            if it == self.status_str or (type(it) is tuple and self.status_str in it):
                 return ExpStructStatus.__WORKFLOW[i + 1]
 
     # Printing in jupyter notebook - https://stackoverflow.com/a/41454816/9751954
@@ -60,11 +60,11 @@ class ExpStructStatus:
 
     def __init__(self, status: str, resolution: str = None, manual: bool = False):
         ExpStructStatus._check(status, resolution)
-        self.status = status
+        self.status_str = status
         self.resolution = resolution
         self.manual = manual
 
-    def __str__(self): return self.status + ' *' if self.manual else self.status
+    def __str__(self): return self.status_str + ' *' if self.manual else self.status_str
 
 
 class ExpStruct:
@@ -95,7 +95,7 @@ class ExpStruct:
     @property
     def is_manual(self): return self._data.manual_status is not None
 
-    def tree(self): tree.print_dir_tree(self.location_dir)
+    def tree(self, depth: int = None): tree.print_dir_tree(self.location_dir, depth)
 
     def info(self):
         text = str(self)

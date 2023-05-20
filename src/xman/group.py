@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, List, Callable
 
 from . import filter
 from .error import NothingToDoXManError, IllegalOperationXManError
@@ -41,14 +41,16 @@ class ExpGroup(ExpStructBox):
         self.change_child_num(num_or_name, new_num)
 
     def filter_exps(self,
+                    mode: str = 'AND',
+                    custom_filter: Callable[[Exp], bool] = None,
                     is_active: bool = None,
                     is_manual: bool = None,
                     is_ready_for_start: bool = None,
                     status_or_list: str | List[str] = None,
                     not_status_or_list: str | List[str] = None,
                     ) -> List[Exp]:
-        return filter.exps(self.exps(), is_active, is_manual, is_ready_for_start, status_or_list,
-                           not_status_or_list)
+        return filter.exps(self.exps(), mode, custom_filter, is_active, is_manual,
+                           is_ready_for_start, status_or_list, not_status_or_list)
 
     def get_exp_for_start(self) -> Optional[Exp]:
         ready_list = self.filter_exps(is_ready_for_start=True)

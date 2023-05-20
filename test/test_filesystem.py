@@ -1,4 +1,6 @@
 import os
+from pathlib import Path
+
 import pytest
 
 from xman.error import IllegalOperationXManError
@@ -9,6 +11,7 @@ import helper
 
 def test__has_checkpoints_dir():
     exp = helper.make_exp_from_nothing()
+    exp.make_pipeline_with_checkpoints(helper.train_with_mediator, helper.train_params)
     xman.make_dir(os.path.join(exp.location_dir, 'checkpoints/'))
     assert filesystem.has_checkpoints_dir(exp.location_dir)
     with pytest.raises(IllegalOperationXManError, match="contains checkpoints folder"):
@@ -54,12 +57,15 @@ def test__change_exp_num_in_path():
     path = '../gitignore/testproj/group1/exp1'
     new_path = '../gitignore/testproj/group1/exp2'
     assert filesystem.change_exp_num_in_path(path, 2) == new_path
+
     path = '../gitignore/testproj/group1/exp1/.data'
     new_path = '../gitignore/testproj/group1/exp2/.data'
     assert filesystem.change_exp_num_in_path(path, 2) == new_path
+
     path = '../gitignore/testproj/group1/exp42'
     new_path = '../gitignore/testproj/group1/exp24'
     assert filesystem.change_exp_num_in_path(path, 24) == new_path
+
     path = '../gitignore/testproj/group1/exp42/.data'
     new_path = '../gitignore/testproj/group1/exp24/.data'
     assert filesystem.change_exp_num_in_path(path, 24) == new_path
@@ -69,12 +75,36 @@ def test__change_group_num_in_path():
     path = '../gitignore/testproj/group1'
     new_path = '../gitignore/testproj/group2'
     assert filesystem.change_group_num_in_path(path, 2) == new_path
+
     path = '../gitignore/testproj/group1/exp1'
     new_path = '../gitignore/testproj/group2/exp1'
     assert filesystem.change_group_num_in_path(path, 2) == new_path
+
     path = '../gitignore/testproj/group42'
     new_path = '../gitignore/testproj/group24'
     assert filesystem.change_group_num_in_path(path, 24) == new_path
+
     path = '../gitignore/testproj/group42/exp1'
     new_path = '../gitignore/testproj/group24/exp1'
     assert filesystem.change_group_num_in_path(path, 24) == new_path
+
+
+def test__get_related_path():
+    anchor_folder = '/path/to/folder'
+
+    path = '/path/to/folder/file.txt'
+    result = filesystem.__get_related_path(path, anchor_folder)
+    assert result == str(Path('file.txt'))
+
+    path = '/path/to/other_folder/subfolder/file.txt'
+    result = filesystem.__get_related_path(path, anchor_folder)
+    assert result == str(Path('../other_folder/subfolder/file.txt'))
+
+    path = '/path/outside/folder/file.txt'
+    result = filesystem.__get_related_path(path, anchor_folder)
+    assert result == str(Path('../../outside/folder/file.txt'))
+
+    # TODO remove debug
+    print(f"\nDEBUG: {result}\n")
+    # TODO remove debug
+    print(f"\nDEBUG: {str((Path(anchor_folder) / Path('../../outside/folder/file.txt')).resolve())}\n")
