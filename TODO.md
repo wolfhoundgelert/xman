@@ -1,25 +1,25 @@
 ### CURRENT:
 
+- Add notes saving: pickle, text, json
+
 + Proj methods make as Group methods (which is copying Box structure), and add them to API
 
-- Do TODO-s in the code
-  - check exp is not active when changing its num or moving to another group
-  - check exp is not active in other places 
-  - `get_active_experiments` for ExpProj and ExpGroup and their API
++ Do TODO-s in the code
+  + check exp is not active when changing its num or moving to another group
+  + check exp is not active in other places 
+  + `get_active_experiments` for ExpProj and ExpGroup and their API - better use `filter_exps`
 
-- [!!!] Review destroy of active exp from active notebook (where pipeline was started) perspective and from passive notebook (just loaded the proj with active exp). Check that destroy from passive doesn't delete anything and brake active.
++ [!!!] Review destroy of active exp from active notebook (where pipeline was started) perspective and from passive notebook (just loaded the proj with active exp). Check that destroy from passive doesn't delete anything and brake active.
 
-- Rename `destroy_smth` in API methods because it seems like `destroy` method for GC
++ Rename `destroy_smth` in API methods because it seems like `destroy` method for GC
 
 - [!!!] Check all needed API methods exist in XManAPI
 
-- XManAPI only wit methods for initialization, after a project is created `xman`-property is changed to ExpProjAPI, so we have new extended API. Don't forget duplicate initial methods in ExpProjAPI.
+- XManAPI only with methods for initialization, after a project is created `xman`-property is changed to ExpProjAPI, so we have new extended API. Don't forget duplicate initial methods in ExpProjAPI.
 
 - set manual result viewer - exp, group, proj level
 
 - set pipeline result viewer - exp, group, proj level
-
-- Remove all `os`, `os.path` usages - https://medium.com/@ageitgey/python-3-quick-tip-the-easy-way-to-deal-with-file-paths-on-windows-mac-and-linux-11a072b58d5f
 
 - [PRIO] [!!!] README.md  
   https://www.markdownguide.org/basic-syntax/  
@@ -28,11 +28,14 @@
 
 ### BUGS:
 
+- Can't upload `xman` on pypi.org 
+  +  Write a letter about `xman` repo to `support@pypi.org`
+  - https://github.com/pypi/support/issues/2738
+  - https://stackoverflow.com/questions/76304501/cant-register-my-package-on-pypi-org-pip-with-a-name-released-for-me-by-the-p
+
 
 
 ### TODO:
-
-- Write a letter about `xman` repo to `support@pypi.org`
 
 - Documentation for each API method - py docstrings
 

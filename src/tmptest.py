@@ -1,15 +1,15 @@
 import shutil
 import os
 
-# from xman import xman
+from xman import xman
 
 proj_dir = '../gitignore/experiments'
-proj_dir = fr"{proj_dir}"
 
-from pathlib import Path
-print(proj_dir)
-print(Path(proj_dir).as_posix())
-print(Path(proj_dir).resolve().as_posix())
+
+from xman import filesystem
+# filesystem.__save_json('test string\another string', os.path.join(proj_dir, 'test.json'))
+print("test string\u0007nother string")
+
 
 # xman.dir_tree(proj_dir)
 #

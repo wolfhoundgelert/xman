@@ -222,6 +222,11 @@ class Exp(ExpStruct):
             status = ExpStructStatus.IN_PROGRESS
         return status, resolution
 
+    def _check_is_not_active(self):
+        if self.is_active:
+            raise IllegalOperationXManError(f"Illegal operation while the experiment is active - "
+                                            f"has a pipeline that is executing right now!")
+
     def _destroy(self):
         if self.__pipeline is not None:
             if self.is_active:
@@ -231,11 +236,6 @@ class Exp(ExpStruct):
         self._data.manual_result = None
         self.__checkpoints_mediator = None
         super()._destroy()
-
-    def _check_is_not_active(self):
-        if self.is_active:
-            raise IllegalOperationXManError(f"Illegal operation while the experiment is active - "
-                                            f"has a pipeline that is executing right now!")
 
     def __init__(self, location_dir, parent):
         from .api import ExpAPI
