@@ -66,6 +66,16 @@ class ExpStructAPI:
         self._obj.update()
         return self._obj.is_manual
 
+    @property
+    def result_viewer(self) -> Callable[[Any], str]:
+        # self._obj.update()  # No need to update
+        return self._obj.result_viewer
+
+    @result_viewer.setter
+    def result_viewer(self, value: Callable[[Any], str]):
+        # self._obj.update()  # No need to update
+        self._obj.result_viewer = value
+
     def tree(self, depth: int = None):
         self._obj.update()
         self._obj.tree(depth)
@@ -163,8 +173,13 @@ class ExpAPI(ExpStructAPI):
 
     @property
     def checkpoints_mediator(self) -> CheckpointsMediator:
-        # `self._obj._update()` isn't needed
+        # self._obj.update()  # No need to update
         return self._obj.checkpoints_mediator
+
+    def view_result(self) -> str:
+        self._obj.update()
+        text = self._obj.view
+        print(text)
 
     def make_pipeline(self, run_func: Callable[..., Any],
                       params: dict, save_on_storage: bool = False) -> 'ExpAPI':

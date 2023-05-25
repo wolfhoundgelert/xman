@@ -39,7 +39,8 @@ class Exp(ExpStruct):
         if manual_result is not None and pipeline_result is not None:
             raise IllegalOperationXManError(f"There are two results in the `{self}` - manual result"
                                             f" and pipeline result! Use `get_manual_result()` or "
-                                            f"`get_pipeline_result()` instead.")
+                                            f"`get_pipeline_result()` for checking them and delete "
+                                            f"manual result or pipeline.")
         return pipeline_result if manual_result is None else manual_result
 
     @property
@@ -69,8 +70,16 @@ class Exp(ExpStruct):
     def info(self):
         text = super().info()
         if self.result is not None:
-            text += util.tab(f"\nResult:\n{util.tab(str(self.result))}")
+            text += util.tab(f"\nResult:\n{util.tab(self.view_result())}")
         return text
+
+    def view_result(self) -> str:
+        rv = self.result_viewer
+        if rv is None and self.parent is not None:
+            rv = self.parent.result_viewer
+            if rv is None and self.parent.parent is not None:
+                rv = self.parent.parent.result_viewer
+        return str(self.result) if rv is None else rv(self.result)
 
     def make_pipeline(self, run_func: Callable[..., Any],
                       params: dict, save_on_storage: bool = False) -> 'Exp':
@@ -192,6 +201,7 @@ class Exp(ExpStruct):
         self._data.manual_result = None
         self._data.manual_status = None
         self._data.manual_status_resolution = None
+        self.result_viewer = None
         self._save()
         return self
 

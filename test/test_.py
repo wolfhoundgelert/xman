@@ -3,9 +3,8 @@ import sys
 
 import pytest
 
-from xman.api import ExpAPI
-from xman.error import AlreadyExistsXManError, ArgumentsXManError
-from xman.exp import ExpState, Exp
+from xman.error import AlreadyExistsXManError
+from xman.exp import Exp
 
 
 def test__xman_init():  # Just for adding xman's `src` to paths and config `is_pytest` setting
@@ -149,10 +148,29 @@ def test__filter_exps_in_group():
 
 
 def test__filter_exps_in_proj():
-    pass  # TODO
+    pass  # TODO ChatGPT
     # assert False
 
 
 def test__filter_exps_in_xman():
-    pass  # TODO
+    pass  # TODO ChatGPT
     # assert False
+
+
+def test__result_viewer():
+    exp = helper.make_exp_from_nothing()
+    exp.set_manual_result({'foo': 123, 'bar': 'asdf', 'biz': [1, 2]})
+    exp.result_viewer = lambda x: f"foo={x['foo']}, bar={x['bar']}"
+    assert filesystem.__has(filesystem.get_result_viewer_path(exp.location_dir))
+    assert exp.result_viewer(exp.result) == 'foo=123, bar=asdf'
+
+
+def test__view_result():
+    exp = helper.make_exp_from_nothing()
+    exp.set_manual_result({'foo': 123, 'bar': 'asdf'})
+    exp.proj.result_viewer = lambda x: f"foo={x['foo']}"
+    assert exp._obj.view_result() == 'foo=123'
+    exp.group.result_viewer = lambda x: f"bar={x['bar']}"
+    assert exp._obj.view_result() == 'bar=asdf'
+    exp.result_viewer = lambda x: f"foo={x['foo']}, bar={x['bar']}"
+    assert exp._obj.view_result() == 'foo=123, bar=asdf'

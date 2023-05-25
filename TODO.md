@@ -1,5 +1,9 @@
 ### CURRENT:
 
++ set result viewer - exp, group, proj level
+
+- XManInitAPI only with methods for initialization, after a project is created `xman`-property is changed to XManAPI, so we have new extended API.
+
 - Add notes saving: pickle, text, json
 
 + Proj methods make as Group methods (which is copying Box structure), and add them to API
@@ -15,15 +19,10 @@
 
 - [!!!] Check all needed API methods exist in XManAPI
 
-- XManAPI only with methods for initialization, after a project is created `xman`-property is changed to ExpProjAPI, so we have new extended API. Don't forget duplicate initial methods in ExpProjAPI.
-
-- set manual result viewer - exp, group, proj level
-
-- set pipeline result viewer - exp, group, proj level
-
 - [PRIO] [!!!] README.md  
   https://www.markdownguide.org/basic-syntax/  
   https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax  
+
 
 
 ### BUGS:

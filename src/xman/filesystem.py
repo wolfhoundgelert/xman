@@ -4,7 +4,7 @@ import shutil
 import time
 import re
 from pathlib import Path
-from typing import Optional, Any
+from typing import Optional, Any, Callable
 import cloudpickle as pickle  # dill as pickle, pickle
 
 from .error import ArgumentsXManError, IllegalOperationXManError, NotImplementedXManError, \
@@ -51,6 +51,9 @@ def __get_checkpoint_path(location_dir):
     formatted_time = time.strftime("%Y-%m-%d__%H_%M_%S", time.gmtime(current_time_s))
     fname = formatted_time + '--' + str(current_time_ns)[-9:]
     return os.path.join(get_checkpoints_dir_path(location_dir), fname)
+
+
+def get_result_viewer_path(location_dir): return os.path.join(location_dir, '.viewer')
 
 
 def get_dir_num(target_dir):
@@ -174,7 +177,8 @@ def save_pipeline_run_data(run_data, location_dir):
     __save_pickle(run_data, __get_run_path(location_dir))
 
 
-def load_pipeline_run_data(location_dir): return __load_from_file(__get_run_path(location_dir))
+def load_pipeline_run_data(location_dir):
+    return __load_from_file(__get_run_path(location_dir), is_pickle=True)
 
 
 def delete_pipeline_run_data(location_dir): __delete_file(__get_run_path(location_dir))
@@ -183,7 +187,8 @@ def delete_pipeline_run_data(location_dir): __delete_file(__get_run_path(locatio
 def save_run_timestamp(location_dir): __save_pickle(time.time(), __get_run_time_path(location_dir))
 
 
-def load_run_timestamp(location_dir): return __load_from_file(__get_run_time_path(location_dir))
+def load_run_timestamp(location_dir):
+    return __load_from_file(__get_run_time_path(location_dir), is_pickle=True)
 
 
 def delete_run_timestamp(location_dir): __delete_file(__get_run_time_path(location_dir))
@@ -215,7 +220,7 @@ def save_checkpoint(checkpoint, location_dir, custom_path=None) -> str:
     return path
 
 
-def load_checkpoint(cp_path): return __load_from_file(cp_path)
+def load_checkpoint(cp_path): return __load_from_file(cp_path, is_pickle=True)
 
 
 def delete_checkpoint(cp_path, location_dir):
@@ -243,8 +248,19 @@ def resolve_checkpoint_path(cp_path: str, location_dir: str) -> Optional[str]:
     if path.resolve().exists():
         return str(path.as_posix())
     if cp_p.resolve().exists():
-        return cp_p
+        return cp_path
     return None
+
+
+def save_result_viewer(viewer, location_dir):
+    __save_pickle(viewer, get_result_viewer_path(location_dir))
+
+
+def load_result_viewer(location_dir) -> Optional[Callable[[Any], str]]:
+    return __load_from_file(get_result_viewer_path(location_dir), is_pickle=True)
+
+
+def delete_result_viewer(location_dir): __delete_file(get_result_viewer_path(location_dir))
 
 
 def __get_related_path(path, anchor_folder):

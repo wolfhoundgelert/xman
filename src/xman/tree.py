@@ -66,6 +66,7 @@ def __process_dir(target_dir, depth, current_depth, result, files_limit, files_f
         __files_part(target_dir, current_depth, result, files)
 
 
+# TODO Move prints to the API, rename to `dir_tree`
 def print_dir_tree(target_dir: str, depth: int = None, files_limit: int = 10,
                    files_first: bool = True, sort_numbers: bool = True):
     print()

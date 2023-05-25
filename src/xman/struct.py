@@ -1,5 +1,5 @@
 import os
-from typing import Optional, Type
+from typing import Optional, Type, Callable, Any
 from copy import deepcopy
 
 from .error import NotExistsXManError, ArgumentsXManError, AlreadyExistsXManError
@@ -93,7 +93,19 @@ class ExpStruct:
     def status(self) -> ExpStructStatus: return self.__status
 
     @property
-    def is_manual(self): return self._data.manual_status is not None
+    def is_manual(self) -> bool: return self._data.manual_status is not None
+
+    @property
+    def result_viewer(self) -> Callable[[Any], str]:  # TODO Add to the API
+        if self.__result_viewer is None:
+            self.__result_viewer = filesystem.load_result_viewer(self.location_dir)
+        return self.__result_viewer
+
+    @result_viewer.setter
+    def result_viewer(self, value: Callable[[Any], str]):  # TODO Add to the API
+        filesystem.delete_result_viewer(self.location_dir) if value is None \
+            else filesystem.save_result_viewer(value, self.location_dir)
+        self.__result_viewer = value
 
     def tree(self, depth: int = None): tree.print_dir_tree(self.location_dir, depth)
 
@@ -182,6 +194,7 @@ class ExpStruct:
         self._parent = None
         self._data = None
         self.__status = None
+        self.__result_viewer = None
 
     def __init__(self, location_dir, parent):
         from .structbox import ExpStructBox
@@ -193,6 +206,7 @@ class ExpStruct:
         self._data: ExpStructData = None
         self.__time = None
         self.__status = None
+        self.__result_viewer = None
         self.__updating = False
         self.update()
         self._api: ExpStructAPI = None
