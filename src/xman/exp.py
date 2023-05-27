@@ -198,10 +198,13 @@ class Exp(ExpStruct):
         if self._data.pipeline is not None:
             self.delete_pipeline(need_confirm=False)
         self.delete_checkpoints(need_confirm=False, delete_custom_paths=True)
+        self.__checkpoints_mediator = None
         self._data.manual_result = None
         self._data.manual_status = None
         self._data.manual_status_resolution = None
         self.result_viewer = None
+        self.note.clear()
+        self.__note = None
         self._save()
         return self
 

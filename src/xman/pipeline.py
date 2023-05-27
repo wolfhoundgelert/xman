@@ -1,6 +1,5 @@
 import os
 import threading
-from pathlib import Path
 from threading import Timer
 from typing import Any, Callable, Optional, List
 
@@ -19,7 +18,7 @@ class CheckpointsMediator:
 
     def save_checkpoint(self, checkpoint: Any, replace: bool,
                         custom_path: str = None) -> str:
-        # TODO Delete work plan or rework it the docs
+        # TODO Delete work plan or rework it to the docs
         """
         + Saves all checkpoints placed inside the exp folder as relative to the folder.
 

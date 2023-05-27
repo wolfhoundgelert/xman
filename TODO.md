@@ -2,9 +2,7 @@
 
 + set result viewer - exp, group, proj level
 
-- XManInitAPI only with methods for initialization, after a project is created `xman`-property is changed to XManAPI, so we have new extended API.
-
-- Add notes saving: pickle, text, json
++ Add notes saving: pickle, text, json
 
 + Proj methods make as Group methods (which is copying Box structure), and add them to API
 

@@ -3,18 +3,20 @@ import sys
 
 import pytest
 
+
+# def test__xman_init():  # Just for adding xman's `src` to paths and config `is_pytest` setting
+#     xman_path = os.path.abspath(os.path.join('src'))
+#     if xman_path not in sys.path:
+#         sys.path.insert(0, xman_path)
+#         # sys.path.remove(xman_path)
+#     config.set__is_pytest(True)
+
+
 from xman.error import AlreadyExistsXManError
 from xman.exp import Exp
-
-
-def test__xman_init():  # Just for adding xman's `src` to paths and config `is_pytest` setting
-    xman_path = os.path.abspath(os.path.join('src'))
-    if xman_path not in sys.path:
-        sys.path.insert(0, xman_path)
-    config.set__is_pytest(True)
-
-
+from xman.pipeline import CheckpointsMediator
 from xman import xman, filesystem
+from xman.filesystem import FileType
 from xman import config
 import helper
 
@@ -161,7 +163,6 @@ def test__result_viewer():
     exp = helper.make_exp_from_nothing()
     exp.set_manual_result({'foo': 123, 'bar': 'asdf', 'biz': [1, 2]})
     exp.result_viewer = lambda x: f"foo={x['foo']}, bar={x['bar']}"
-    assert filesystem.__has(filesystem.get_result_viewer_path(exp.location_dir))
     assert exp.result_viewer(exp.result) == 'foo=123, bar=asdf'
 
 
@@ -174,3 +175,61 @@ def test__view_result():
     assert exp._obj.view_result() == 'bar=asdf'
     exp.result_viewer = lambda x: f"foo={x['foo']}, bar={x['bar']}"
     assert exp._obj.view_result() == 'foo=123, bar=asdf'
+
+
+def test__note():
+    config.set__is_pytest(True)
+    exp = helper.make_exp_from_nothing()
+    assert exp.note is not None
+    exp.note.pickle = 'Some object'
+    exp.note.clear()
+    assert not filesystem.has(filesystem.get_note_path(exp.location_dir, FileType.PICKLE))
+    exp.note.pickle = 'Another object'
+    exp.note()  # TODO Remove after checking
+    exp.clear()
+    exp.note()  # TODO Remove after checking
+    assert not filesystem.has(filesystem.get_note_path(exp.location_dir, FileType.PICKLE))
+
+
+def test__note_txt():
+    exp = helper.make_exp_from_nothing()
+    assert not filesystem.has(filesystem.get_note_path(exp.location_dir, FileType.TXT))
+    exp.note.txt = "This is my note.\nNew line."
+    assert filesystem.has(filesystem.get_note_path(exp.location_dir, FileType.TXT))
+    assert exp.note.txt == "This is my note.\nNew line."
+    exp.note.txt = None
+    assert not filesystem.has(filesystem.get_note_path(exp.location_dir, FileType.TXT))
+    assert exp.note.txt is None
+    assert len(exp.note.get_list()) == 0
+    assert not exp.note.has_any
+    exp.note.pickle = 1
+    exp.note.txt = 'hello'
+    assert len(exp.note.get_list()) == 2
+    assert exp.note.get_existence_str() == "txt true, json false, pickle true"
+    assert exp.note.has_any
+    exp.note.clear()
+    assert len(exp.note.get_list()) == 0
+    assert exp.note.get_existence_str() == "txt false, json false, pickle false"
+    assert not exp.note.has_any
+
+
+def test__note_json():
+    exp = helper.make_exp_from_nothing()
+    assert not filesystem.has(filesystem.get_note_path(exp.location_dir, FileType.JSON))
+    exp.note.json = {'name': 'Isaac', 'mood': 'apple'}
+    assert filesystem.has(filesystem.get_note_path(exp.location_dir, FileType.JSON))
+    assert exp.note.json['mood'] == 'apple'
+    exp.note.json = None
+    assert not filesystem.has(filesystem.get_note_path(exp.location_dir, FileType.JSON))
+    assert exp.note.json is None
+
+
+def test__note_pickle():
+    exp = helper.make_exp_from_nothing()
+    assert not filesystem.has(filesystem.get_note_path(exp.location_dir, FileType.PICKLE))
+    exp.note.pickle = CheckpointsMediator(exp.location_dir)
+    assert filesystem.has(filesystem.get_note_path(exp.location_dir, FileType.PICKLE))
+    assert exp.note.pickle.exp_location_dir == exp.location_dir
+    exp.note.pickle = None
+    assert not filesystem.has(filesystem.get_note_path(exp.location_dir, FileType.PICKLE))
+    assert exp.note.pickle is None

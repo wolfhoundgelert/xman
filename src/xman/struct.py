@@ -1,9 +1,10 @@
 import os
-from typing import Optional, Type, Callable, Any
+from typing import Optional, Type, Callable, Any, Tuple
 from copy import deepcopy
 
 from .error import NotExistsXManError, ArgumentsXManError, AlreadyExistsXManError
 from . import util, filesystem, tree, confirm
+from .note import Note
 
 
 class ExpStructData:
@@ -13,6 +14,7 @@ class ExpStructData:
         self.descr = descr
         self.manual_status = None
         self.manual_status_resolution = None
+        self.result_viewer = None
 
 
 class ExpStructStatus:
@@ -44,7 +46,16 @@ class ExpStructStatus:
                 and status_obj.resolution == resolution and status_obj.manual == manual
 
     @property
-    def workflow(self): return deepcopy(ExpStructStatus.__WORKFLOW)
+    def status_str(self) -> str: return self.__status_str
+
+    @property
+    def resolution(self) -> str: return self.__resolution
+
+    @property
+    def manual(self) -> bool: return self.__manual
+
+    @property
+    def workflow(self) -> Tuple[str | Tuple[str, str]]: return deepcopy(ExpStructStatus.__WORKFLOW)
 
     @property
     def next(self) -> Optional[str]:
@@ -60,9 +71,9 @@ class ExpStructStatus:
 
     def __init__(self, status: str, resolution: str = None, manual: bool = False):
         ExpStructStatus._check(status, resolution)
-        self.status_str = status
-        self.resolution = resolution
-        self.manual = manual
+        self.__status_str = status
+        self.__resolution = resolution
+        self.__manual = manual
 
     def __str__(self): return self.status_str + ' *' if self.manual else self.status_str
 
@@ -96,23 +107,27 @@ class ExpStruct:
     def is_manual(self) -> bool: return self._data.manual_status is not None
 
     @property
-    def result_viewer(self) -> Callable[[Any], str]:  # TODO Add to the API
-        if self.__result_viewer is None:
-            self.__result_viewer = filesystem.load_result_viewer(self.location_dir)
-        return self.__result_viewer
+    def result_viewer(self) -> Callable[[Any], str]: return self._data.result_viewer
 
     @result_viewer.setter
-    def result_viewer(self, value: Callable[[Any], str]):  # TODO Add to the API
-        filesystem.delete_result_viewer(self.location_dir) if value is None \
-            else filesystem.save_result_viewer(value, self.location_dir)
-        self.__result_viewer = value
+    def result_viewer(self, value: Callable[[Any], str]):
+        self._data.result_viewer = value
+        self._save()
+
+    @property
+    def note(self) -> Note:
+        if self.__note is None:
+            self.__note = Note(self.location_dir)
+        return self.__note
 
     def tree(self, depth: int = None): tree.print_dir_tree(self.location_dir, depth)
 
     def info(self):
         text = str(self)
-        if self.status.resolution:
+        if self.status.resolution is not None:
             text += util.tab(f"\nResolution: {self.status.resolution}")
+        if self.note.has_any:
+            text += util.tab(f"\nNotes: {self.note.get_existence_str()}")
         return text
 
     def start(self): util.override_it()
@@ -194,7 +209,6 @@ class ExpStruct:
         self._parent = None
         self._data = None
         self.__status = None
-        self.__result_viewer = None
 
     def __init__(self, location_dir, parent):
         from .structbox import ExpStructBox
@@ -206,7 +220,7 @@ class ExpStruct:
         self._data: ExpStructData = None
         self.__time = None
         self.__status = None
-        self.__result_viewer = None
+        self.__note: Note = None
         self.__updating = False
         self.update()
         self._api: ExpStructAPI = None

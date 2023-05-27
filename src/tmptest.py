@@ -10,6 +10,13 @@ from xman import filesystem
 # filesystem.__save_json('test string\another string', os.path.join(proj_dir, 'test.json'))
 print("test string\u0007nother string")
 
+xman.exp(1, 1).note.json = {"param1": 123, "param2": 'dsfas'}
+xman.exp(1, 1).note.text = "Some text here"
+xman.exp(1, 1).note.pickle = some_object
+
+xman.exp(1, 1).note.json
+xman.exp(1, 1).note.txt
+xman.exp(1, 1).note.pickle
 
 # xman.dir_tree(proj_dir)
 #

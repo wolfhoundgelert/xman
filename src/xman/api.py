@@ -3,6 +3,7 @@ from typing import Any, Optional, Callable, List
 from . import tree, maker, filesystem
 from .error import NotImplementedXManError, IllegalOperationXManError
 from .group import ExpGroup
+from .note import Note
 from .pipeline import CheckpointsMediator
 from .exp import Exp
 from .proj import ExpProj
@@ -11,31 +12,6 @@ from .struct import ExpStructStatus, ExpStruct
 
 def _get_apis_from_list(objs: List[Exp | ExpGroup]) -> List['ExpAPI | ExpGroupAPI']:
     return [x.api for x in objs]
-
-
-class ExpStructStatusAPI:
-
-    @property
-    def status_str(self) -> str: return self._obj.status_str
-
-    @property
-    def resolution(self) -> str: return self._obj.resolution
-
-    @property
-    def manual(self) -> bool: return self._obj.manual
-
-    @property
-    def workflow(self) -> str: return self._obj.workflow
-
-    @property
-    def next(self) -> Optional[str]: return self._obj.next
-
-    # Printing in jupyter notebook - https://stackoverflow.com/a/41454816/9751954
-    def _repr_pretty_(self, p, cycle): p.text(str(self) if not cycle else '...')
-
-    def __init__(self, obj: ExpStructStatus): self._obj = obj
-
-    def __str__(self): return str(self._obj)
 
 
 class ExpStructAPI:
@@ -57,9 +33,9 @@ class ExpStructAPI:
         return self._obj.descr
 
     @property
-    def status(self) -> ExpStructStatusAPI:
+    def status(self) -> ExpStructStatus:
         self._obj.update()
-        return ExpStructStatusAPI(self._obj.status)
+        return self._obj.status
 
     @property
     def is_manual(self) -> bool:
@@ -68,13 +44,18 @@ class ExpStructAPI:
 
     @property
     def result_viewer(self) -> Callable[[Any], str]:
-        # self._obj.update()  # No need to update
+        self._obj.update()
         return self._obj.result_viewer
 
     @result_viewer.setter
     def result_viewer(self, value: Callable[[Any], str]):
-        # self._obj.update()  # No need to update
+        self._obj.update()
         self._obj.result_viewer = value
+
+    @property
+    def note(self) -> Note:
+        # self._obj.update()  # No need to update
+        return self._obj.note
 
     def tree(self, depth: int = None):
         self._obj.update()
@@ -444,6 +425,10 @@ class XManAPI:
         proj = maker.recreate_proj(location_dir)
         self.__proj = proj.api
         return self.__proj
+
+    def reload(self):
+        self.__check_proj()
+        self.load_proj(self.__proj.location_dir)
 
     def info(self):
         self.__check_proj()

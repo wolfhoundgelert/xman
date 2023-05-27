@@ -3,6 +3,7 @@ import os
 import shutil
 import time
 import re
+from enum import Enum
 from pathlib import Path
 from typing import Optional, Any, Callable
 import cloudpickle as pickle  # dill as pickle, pickle
@@ -12,11 +13,18 @@ from .error import ArgumentsXManError, IllegalOperationXManError, NotImplemented
 from . import util, maker, confirm
 
 
+class FileType(Enum):
+
+    TXT = '.txt'
+    JSON = '.json'
+    PICKLE = '.pickle'
+
+
 def make_dir(dir_path, exist_ok=True): os.makedirs(dir_path, exist_ok=exist_ok)
 
 
 def delete_dir(dir_path, need_confirm=True) -> bool:
-    if __has(dir_path) and len(os.listdir(dir_path)) > 0 and not confirm.request(
+    if has(dir_path) and len(os.listdir(dir_path)) > 0 and not confirm.request(
             need_confirm, f"ATTENTION! Dir `{dir_path}` isn't empty - delete anyway?"):
         return False
     shutil.rmtree(dir_path, ignore_errors=True)
@@ -27,14 +35,10 @@ def rename_or_move_dir(dir_path, new_path): shutil.move(dir_path, new_path)
 
 
 def __get_data_path(location_dir): return os.path.join(location_dir, '.data')
-
-
 def __get_time_path(location_dir): return os.path.join(location_dir, '.time')
 
 
 def __get_run_path(location_dir): return os.path.join(location_dir, '.run')
-
-
 def __get_run_time_path(location_dir): return os.path.join(location_dir, '.run_time')
 
 
@@ -45,15 +49,16 @@ def get_checkpoints_list_path(location_dir):
     return os.path.join(get_checkpoints_dir_path(location_dir), 'list.json')
 
 
+def get_note_path(location_dir, file_type: FileType):
+    return os.path.join(location_dir, 'note' + file_type.value)
+
+
 def __get_checkpoint_path(location_dir):
     current_time_ns = time.time_ns()
     current_time_s = current_time_ns // 10 ** 9  # Convert nanoseconds to seconds
     formatted_time = time.strftime("%Y-%m-%d__%H_%M_%S", time.gmtime(current_time_s))
     fname = formatted_time + '--' + str(current_time_ns)[-9:]
     return os.path.join(get_checkpoints_dir_path(location_dir), fname)
-
-
-def get_result_viewer_path(location_dir): return os.path.join(location_dir, '.viewer')
 
 
 def get_dir_num(target_dir):
@@ -114,11 +119,11 @@ def get_children_nums(parent):
     return __get_dir_nums_by_pattern(parent.location_dir, child_dir_prefix)
 
 
-def __has(path) -> bool: return os.path.exists(path)
+def has(path) -> bool: return os.path.exists(path)
 
 
 def prepare_dir(dir_path):
-    if __has(dir_path):
+    if has(dir_path):
         if not os.path.isdir(dir_path):
             raise ArgumentsXManError(f"`{dir_path}` is not a directory!")
         elif len(os.listdir(dir_path)) > 0:
@@ -127,74 +132,75 @@ def prepare_dir(dir_path):
         make_dir(dir_path)
 
 
-def __save_pickle(obj, path):
-    make_dir(os.path.dirname(path))
-    with open(path, 'wb') as f:
-        pickle.dump(obj, f)
+def __save_to_file(obj, file_path, file_type: FileType):
+    make_dir(os.path.dirname(file_path))
+    if file_type is FileType.TXT:
+        with open(file_path, 'w') as f:
+            f.write(str(obj))
+    if file_type is FileType.JSON:
+        with open(file_path, 'w') as f:
+            json.dump(obj, f, indent=4)
+    if file_type is FileType.PICKLE:
+        with open(file_path, 'wb') as f:
+            pickle.dump(obj, f)
 
 
-def __load_pickle(path):
-    with open(path, 'rb') as f:
-        return pickle.load(f)
+def __load_from_file(file_path, file_type: FileType) -> Optional[Any]:
+    if has(file_path):
+        if file_type is FileType.TXT:
+            with open(file_path, 'r') as f:
+                return f.read()
+        if file_type is FileType.JSON:
+            with open(file_path, 'r') as f:
+                return json.load(f)
+        if file_type is FileType.PICKLE:
+            with open(file_path, 'rb') as f:
+                return pickle.load(f)
+    return None
 
 
-def __save_json(obj, path):
-    with open(path, 'w') as f:
-        json.dump(obj, f, indent=4)
-
-
-def __load_json(path):
-    with open(path, 'r') as f:
-        return json.load(f)
+def __delete_file(file_path):
+    if has(file_path):
+        os.remove(file_path)
 
 
 def save_data_and_time(data, location_dir) -> float:
-    __save_pickle(data, __get_data_path(location_dir))
+    __save_to_file(data, __get_data_path(location_dir), FileType.PICKLE)
     t = time.time()
-    __save_pickle(t, __get_time_path(location_dir))
+    __save_to_file(t, __get_time_path(location_dir), FileType.PICKLE)
     return t
 
 
 def load_fresh_data_and_time(location_dir, last_data, last_time):
-    t = __load_pickle(__get_time_path(location_dir))
+    t = __load_from_file(__get_time_path(location_dir), FileType.PICKLE)
     if last_time != t:
-        return __load_pickle(__get_data_path(location_dir)), t
+        return __load_from_file(__get_data_path(location_dir), FileType.PICKLE), t
     return last_data, last_time
 
 
-def __delete_file(file_path):
-    if __has(file_path):
-        os.remove(file_path)
-
-
-def __load_from_file(file_path, is_pickle=True) -> Optional[Any]:
-    if __has(file_path):
-        return __load_pickle(file_path) if is_pickle else __load_json(file_path)
-    return None
-
-
 def save_pipeline_run_data(run_data, location_dir):
-    __save_pickle(run_data, __get_run_path(location_dir))
+    __save_to_file(run_data, __get_run_path(location_dir), FileType.PICKLE)
 
 
 def load_pipeline_run_data(location_dir):
-    return __load_from_file(__get_run_path(location_dir), is_pickle=True)
+    return __load_from_file(__get_run_path(location_dir), FileType.PICKLE)
 
 
 def delete_pipeline_run_data(location_dir): __delete_file(__get_run_path(location_dir))
 
 
-def save_run_timestamp(location_dir): __save_pickle(time.time(), __get_run_time_path(location_dir))
+def save_run_timestamp(location_dir):
+    __save_to_file(time.time(), __get_run_time_path(location_dir), FileType.PICKLE)
 
 
 def load_run_timestamp(location_dir):
-    return __load_from_file(__get_run_time_path(location_dir), is_pickle=True)
+    return __load_from_file(__get_run_time_path(location_dir), FileType.PICKLE)
 
 
 def delete_run_timestamp(location_dir): __delete_file(__get_run_time_path(location_dir))
 
 
-def has_checkpoints_dir(location_dir): return __has(get_checkpoints_dir_path(location_dir))
+def has_checkpoints_dir(location_dir): return has(get_checkpoints_dir_path(location_dir))
 
 
 def make_checkpoints_dir(location_dir): make_dir(get_checkpoints_dir_path(location_dir))
@@ -207,7 +213,7 @@ def delete_checkpoints_dir(location_dir, need_confirm=True) -> bool:
 def save_checkpoint(checkpoint, location_dir, custom_path=None) -> str:
     loc_dir = Path(location_dir).resolve()
     if custom_path is not None:
-        __save_pickle(checkpoint, custom_path)
+        __save_to_file(checkpoint, custom_path, FileType.PICKLE)
         path = Path(custom_path).resolve()
         if path.is_relative_to(loc_dir):
             path = str(path.relative_to(loc_dir).as_posix())
@@ -215,12 +221,12 @@ def save_checkpoint(checkpoint, location_dir, custom_path=None) -> str:
             path = custom_path
     else:
         path = Path(__get_checkpoint_path(location_dir)).resolve()
-        __save_pickle(checkpoint, path)
+        __save_to_file(checkpoint, path, FileType.PICKLE)
         path = str(path.relative_to(loc_dir).as_posix())
     return path
 
 
-def load_checkpoint(cp_path): return __load_from_file(cp_path, is_pickle=True)
+def load_checkpoint(cp_path): return __load_from_file(cp_path, FileType.PICKLE)
 
 
 def delete_checkpoint(cp_path, location_dir):
@@ -231,11 +237,11 @@ def delete_checkpoint(cp_path, location_dir):
 
 
 def save_checkpoints_list(cp_list, location_dir):
-    __save_json(cp_list, get_checkpoints_list_path(location_dir))
+    __save_to_file(cp_list, get_checkpoints_list_path(location_dir), FileType.JSON)
 
 
 def load_checkpoints_list(location_dir) -> Optional[Any]:
-    return __load_from_file(get_checkpoints_list_path(location_dir), is_pickle=False)
+    return __load_from_file(get_checkpoints_list_path(location_dir), FileType.JSON)
 
 
 def delete_checkpoints_list(location_dir): __delete_file(get_checkpoints_list_path(location_dir))
@@ -252,21 +258,19 @@ def resolve_checkpoint_path(cp_path: str, location_dir: str) -> Optional[str]:
     return None
 
 
-def save_result_viewer(viewer, location_dir):
-    __save_pickle(viewer, get_result_viewer_path(location_dir))
+def save_note(obj, location_dir, file_type: FileType):
+    __save_to_file(obj, get_note_path(location_dir, file_type), file_type)
 
 
-def load_result_viewer(location_dir) -> Optional[Callable[[Any], str]]:
-    return __load_from_file(get_result_viewer_path(location_dir), is_pickle=True)
+def load_note(location_dir, file_type: FileType):
+    return __load_from_file(get_note_path(location_dir, file_type), file_type)
 
 
-def delete_result_viewer(location_dir): __delete_file(get_result_viewer_path(location_dir))
+def delete_note(location_dir, file_type): __delete_file(get_note_path(location_dir, file_type))
 
 
+# TODO Need to refine if it will be used!
 def __get_related_path(path, anchor_folder):
-    """
-    Need to refine if it will be used!
-    """
     path = Path(path).resolve()
     anchor_folder = Path(anchor_folder).resolve()
     if anchor_folder in path.parents:
