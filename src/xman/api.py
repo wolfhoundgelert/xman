@@ -66,16 +66,15 @@ class ExpStructAPI:
         text = self._obj.info()
         print(text)
 
-    def start(self):
+    def update(self):
         self._obj.update()
-        self._obj.start()
 
     def set_manual_status(self, status: str, resolution: str) -> 'ExpStructAPI':
         self._obj.update()
         self._obj.set_manual_status(status, resolution)
         return self
 
-    def delete_manual_status(self, need_confirm=True) -> Optional['ExpStructAPI']:
+    def delete_manual_status(self, need_confirm: bool = True) -> Optional['ExpStructAPI']:
         self._obj.update()
         obj = self._obj.delete_manual_status(need_confirm)
         return None if obj is None else self
@@ -90,13 +89,10 @@ class ExpStructAPI:
         self._obj.fail(resolution)
         return self
 
-    def edit(self, name=None, descr=None):
+    def edit(self, name: Optional[str] = None, descr: Optional[str] = None):
         # Need to update parent (and all its children) to check other children on the same name:
         self._obj.update() if self._obj.parent is None else self._obj.parent.update()
         self._obj.edit(name, descr)
-
-    def _update(self):
-        self._obj.update()
 
     # Printing in jupyter notebook - https://stackoverflow.com/a/41454816/9751954
     def _repr_pretty_(self, p, cycle): p.text(str(self) if not cycle else '...')
@@ -112,13 +108,13 @@ class ExpAPI(ExpStructAPI):
 
     @property
     def group(self) -> 'ExpGroupAPI':
-        group = self._obj.parent
+        group = self._obj.group
         group.update()
         return group.api
 
     @property
     def proj(self) -> 'ExpProjAPI':
-        proj = self._obj.parent.parent
+        proj = self._obj.proj
         proj.update()
         return proj.api
 
@@ -179,28 +175,28 @@ class ExpAPI(ExpStructAPI):
         self._obj.update()
         return self._obj.get_pipeline_result()
 
-    def delete_pipeline(self, need_confirm=True) -> Optional['ExpAPI']:
+    def delete_pipeline(self, need_confirm: bool = True) -> Optional['ExpAPI']:
         self._obj.update()
         obj = self._obj.delete_pipeline(need_confirm)
         return None if obj is None else self
 
-    def delete_checkpoints(self, need_confirm=True,
-                           delete_custom_paths=False) -> Optional['ExpAPI']:
+    def delete_checkpoints(self, need_confirm: bool = True,
+                           delete_custom_paths: bool = False) -> Optional['ExpAPI']:
         self._obj.update()
         obj = self._obj.delete_checkpoints(need_confirm, delete_custom_paths)
         return None if obj is None else self
 
-    def start(self):
+    def start(self) -> 'ExpAPI':
         self._obj.update()
         self._obj.start()
         return self
 
-    def set_manual_result(self, result) -> 'ExpAPI':
+    def set_manual_result(self, result: Any) -> 'ExpAPI':
         self._obj.update()
         obj = self._obj.set_manual_result(result)
         return None if obj is None else self
 
-    def delete_manual_result(self, need_confirm=True) -> Optional['ExpAPI']:
+    def delete_manual_result(self, need_confirm: bool = True) -> Optional['ExpAPI']:
         self._obj.update()
         obj = self._obj.delete_manual_result(need_confirm)
         return None if obj is None else self
@@ -209,7 +205,12 @@ class ExpAPI(ExpStructAPI):
         self._obj.update()
         return self._obj.get_manual_result()
 
-    def clear(self, need_confirm=True) -> Optional['ExpAPI']:
+    def delete_all_manual(self, need_confirm: bool = True) -> Optional['ExpAPI']:
+        self._obj.update()
+        obj = self._obj.delete_all_manual(need_confirm)
+        return None if obj is None else self
+
+    def clear(self, need_confirm: bool = True) -> Optional['ExpAPI']:
         self._obj.update()
         obj = self._obj.clear(need_confirm)
         return None if obj is None else self
@@ -224,6 +225,24 @@ class ExpGroupAPI(ExpStructAPI):
         proj = self._obj.parent
         proj.update()
         return proj.api
+
+    def has_exp(self, num_or_name: int | str) -> bool:
+        self._obj.update()
+        return self._obj.has_exp(num_or_name)
+
+    def exp(self, num_or_name: int | str) -> ExpAPI:
+        self._obj.update()
+        exp = self._obj.exp(num_or_name)
+        return exp.api
+
+    def make_exp(self, name: str, descr: str, num: Optional[int] = None) -> ExpAPI:
+        self._obj.update()
+        exp = self._obj.make_exp(name, descr, num)
+        return exp.api
+
+    def delete_exp(self, num_or_name: int | str, need_confirm: bool = True) -> bool:
+        self._obj.update()
+        return self._obj.delete_exp(num_or_name, need_confirm)
 
     def exps(self) -> List[ExpAPI]:
         self._obj.update()
@@ -242,32 +261,18 @@ class ExpGroupAPI(ExpStructAPI):
         self._obj.update()
         return self._obj.exps_names()
 
-    def has_exp(self, num_or_name) -> bool:
+    def change_exp_num(self, num_or_name: int | str, new_num: int):
         self._obj.update()
-        return self._obj.has_exp(num_or_name)
-
-    def make_exp(self, name, descr, num=None) -> ExpAPI:
-        self._obj.update()
-        exp = self._obj.make_exp(name, descr, num)
-        return exp.api
-
-    def delete_exp(self, num_or_name, need_confirm=True) -> bool:
-        self._obj.update()
-        return self._obj.delete_exp(num_or_name, need_confirm)
-
-    def exp(self, num_or_name) -> ExpAPI:
-        self._obj.update()
-        exp = self._obj.exp(num_or_name)
-        return exp.api
+        self._obj.change_exp_num(num_or_name, new_num)
 
     def filter_exps(self,
                     mode: str = 'AND',
-                    custom_filter: Callable[[Exp], bool] = None,
-                    is_active: bool = None,
-                    is_manual: bool = None,
-                    is_ready_for_start: bool = None,
-                    status_or_list: str | List[str] = None,
-                    not_status_or_list: str | List[str] = None,
+                    custom_filter: Optional[Callable[[Exp], bool]] = None,
+                    is_active: Optional[bool] = None,
+                    is_manual: Optional[bool] = None,
+                    is_ready_for_start: Optional[bool] = None,
+                    status_or_list: Optional[str | List[str]] = None,
+                    not_status_or_list: Optional[str | List[str]] = None,
                     ) -> List[ExpAPI]:
         self._obj.update()
         exps = self._obj.filter_exps(mode, custom_filter, is_active, is_manual, is_ready_for_start,
@@ -279,13 +284,9 @@ class ExpGroupAPI(ExpStructAPI):
         exp = self._obj.get_exp_for_start()
         return None if exp is None else exp.api
 
-    def start(self, exp_num_or_name=None, autostart_next=False):
+    def start(self, exp_num_or_name: Optional[int | str] = None, autostart_next: bool = False):
         self._obj.update()
         self._obj.start(exp_num_or_name, autostart_next)
-
-    def change_exp_num(self, num_or_name: int | str, new_num: int):
-        self._obj.update()
-        self._obj.change_exp_num(num_or_name, new_num)
 
     def __init__(self, obj: ExpGroup): self._obj = obj  # for autocomplete
 
@@ -296,21 +297,21 @@ class ExpProjAPI(ExpStructAPI):
     def num(self) -> int:
         raise NotImplementedXManError(f"`num` property isn't supported for a project!")
 
-    def has_group(self, num_or_name) -> bool:
+    def has_group(self, num_or_name: int | str) -> bool:
         self._obj.update()
         return self._obj.has_group(num_or_name)
 
-    def group(self, num_or_name) -> ExpGroupAPI:
+    def group(self, num_or_name: int | str) -> ExpGroupAPI:
         self._obj.update()
         group = self._obj.group(num_or_name)
         return group.api
 
-    def make_group(self, name, descr, num=None) -> ExpGroupAPI:
+    def make_group(self, name: str, descr: str, num: Optional[int] = None) -> ExpGroupAPI:
         self._obj.update()
         group = self._obj.make_group(name, descr, num)
         return group.api
 
-    def delete_group(self, num_or_name, need_confirm=True) -> bool:
+    def delete_group(self, num_or_name: int | str, need_confirm: bool = True) -> bool:
         self._obj.update()
         return self._obj.delete_group(num_or_name, need_confirm)
 
@@ -327,7 +328,7 @@ class ExpProjAPI(ExpStructAPI):
         self._obj.update()
         return self._obj.groups_nums()
 
-    def groups_names(self) -> List[int]:
+    def groups_names(self) -> List[str]:
         self._obj.update()
         return self._obj.groups_names()
 
@@ -335,7 +336,15 @@ class ExpProjAPI(ExpStructAPI):
         self._obj.update()
         self._obj.change_group_num(num_or_name, new_num)
 
-    # TODO def filter_groups(self,
+    def filter_groups(self,
+                      mode: str = 'AND',
+                      custom_filter: Optional[Callable[[ExpGroup], bool]] = None,
+                      status_or_list: Optional[str | List[str]] = None,
+                      not_status_or_list: Optional[str | List[str]] = None,
+                      ) -> List[ExpGroupAPI]:
+        self._obj.update()
+        groups = self._obj.filter_groups(mode, custom_filter, status_or_list, not_status_or_list)
+        return _get_apis_from_list(groups)
 
     def has_exp(self, group_num_or_name: int | str, exp_num_or_name: int | str) -> bool:
         self._obj.update()
@@ -346,45 +355,61 @@ class ExpProjAPI(ExpStructAPI):
         exp = self._obj.exp(group_num_or_name, exp_num_or_name)
         return exp.api
 
-    def make_exp(self, group_num_or_name, name, descr, num=None) -> ExpAPI:
+    def make_exp(self, group_num_or_name: int | str, name: str, descr: str,
+                 num: Optional[int] = None) -> ExpAPI:
         self._obj.update()
         exp = self._obj.make_exp(group_num_or_name, name, descr, num)
         return exp.api
 
     def delete_exp(self, group_num_or_name: int | str, exp_num_or_name: int | str,
-                   need_confirm=True) -> bool:
+                   need_confirm: bool = True) -> bool:
         self._obj.update()
         return self._obj.delete_exp(group_num_or_name, exp_num_or_name, need_confirm)
 
-    def exps(self, group_num_or_name=None) -> List[ExpAPI]:
+    def exps(self, group_num_or_name: Optional[int | str] = None) -> List[ExpAPI]:
         self._obj.update()
         exps = self._obj.exps(group_num_or_name)
         return _get_apis_from_list(exps)
 
-    def num_exps(self, group_num_or_name=None) -> int:
+    def num_exps(self, group_num_or_name: Optional[int | str] = None) -> int:
         self._obj.update()
         return self._obj.num_exps(group_num_or_name)
 
-    def exps_nums(self, group_num_or_name=None) -> List[int]:
+    def exps_nums(self, group_num_or_name: Optional[int | str] = None) -> List[int]:
         self._obj.update()
         return self._obj.exps_nums(group_num_or_name)
 
-    def exps_names(self, group_num_or_name=None) -> List[int]:
+    def exps_names(self, group_num_or_name: Optional[int | str] = None) -> List[str]:
         self._obj.update()
         return self._obj.exps_names(group_num_or_name)
 
-    # TODO Actualize
-    def filter_exps(self, active=None, manual=None) -> List[ExpAPI]:
+    def filter_exps(self,
+                    group_num_or_name: Optional[int | str] = None,
+                    mode: str = 'AND',
+                    custom_filter: Optional[Callable[[Exp], bool]] = None,
+                    is_active: Optional[bool] = None,
+                    is_manual: Optional[bool] = None,
+                    is_ready_for_start: Optional[bool] = None,
+                    status_or_list: Optional[str | List[str]] = None,
+                    not_status_or_list: Optional[str | List[str]] = None,
+                    ) -> List[ExpAPI]:
         self._obj.update()
-        exps = self._obj.filter_exps(active, manual)
+        exps = self._obj.filter_exps(group_num_or_name, mode, custom_filter, is_active, is_manual,
+                                     is_ready_for_start, status_or_list, not_status_or_list)
         return _get_apis_from_list(exps)
 
+    def get_exp_for_start(self, group_num_or_name: Optional[int | str] = None) -> Optional[ExpAPI]:
+        self._obj.update()
+        exp = self._obj.get_exp_for_start(group_num_or_name)
+        return None if exp is None else exp.api
+
     def start(self, group_num_or_name: Optional[int | str] = None,
-              exp_num_or_name: Optional[int | str] = None, autostart_next=False):
+              exp_num_or_name: Optional[int | str] = None, autostart_next: bool = False):
         self._obj.update()
         self._obj.start(group_num_or_name, exp_num_or_name, autostart_next)
 
-    def move_exp(self, group_num_or_name, exp_num_or_name, new_group_num_or_name, new_exp_num):
+    def move_exp(self, group_num_or_name: int | str, exp_num_or_name: int | str,
+                 new_group_num_or_name: int | str, new_exp_num: int):
         self._obj.update()
         self._obj.move_exp(group_num_or_name, exp_num_or_name, new_group_num_or_name, new_exp_num)
 
@@ -399,19 +424,25 @@ class XManAPI:
         tree.print_dir_tree(target_dir, depth, files_limit, files_first, sort_numbers)
 
     @staticmethod
-    def make_dir(dir_path, exist_ok=True): filesystem.make_dir(dir_path, exist_ok)
+    def make_dir(dir_path: str, exist_ok: bool = True): filesystem.make_dir(dir_path, exist_ok)
 
     @staticmethod
-    def delete_dir(dir_path, need_confirm=True) -> bool:
+    def delete_dir(dir_path: str, need_confirm: bool = True) -> bool:
         return filesystem.delete_dir(dir_path, need_confirm)
 
     @staticmethod
-    def rename_or_move_dir(dir_path, new_path): filesystem.rename_or_move_dir(dir_path, new_path)
+    def rename_or_move_dir(dir_path: str, new_path: str):
+        filesystem.rename_or_move_dir(dir_path, new_path)
+
+    @property
+    def location_dir(self) -> str:
+        self.__check_proj()
+        return self.__proj.location_dir
 
     @property
     def proj(self) -> ExpProjAPI:
         self.__check_proj()
-        self.__proj._update()
+        self.__proj.update()
         return self.__proj
 
     def make_proj(self, location_dir: str, name: str, descr: str) -> ExpProjAPI:
@@ -434,46 +465,81 @@ class XManAPI:
         self.__check_proj()
         self.__proj.info()
 
-    def make_group(self, name, descr, num=None):
+    def update(self):
         self.__check_proj()
-        return self.__proj.make_group(name, descr, num)
+        self.__proj.update()
 
-    def delete_group(self, num_or_name, need_confirm=True) -> bool:
+    def has_group(self, num_or_name: int | str) -> bool:
         self.__check_proj()
-        return self.__proj.delete_group(num_or_name, need_confirm)
+        return self.__proj.has_group(num_or_name)
 
-    def group(self, num_or_name):
+    def group(self, num_or_name: int | str) -> ExpGroupAPI:
         self.__check_proj()
         return self.__proj.group(num_or_name)
 
-    def groups(self):
+    def make_group(self, name: str, descr: str, num: Optional[int] = None) -> ExpGroupAPI:
+        self.__check_proj()
+        return self.__proj.make_group(name, descr, num)
+
+    def delete_group(self, num_or_name: int | str, need_confirm: bool = True) -> bool:
+        self.__check_proj()
+        return self.__proj.delete_group(num_or_name, need_confirm)
+
+    def groups(self) -> List[ExpGroupAPI]:
         self.__check_proj()
         return self.__proj.groups()
 
-    def make_exp(self, group_num_or_name, name, descr, num=None):
+    def filter_groups(self,
+                      mode: str = 'AND',
+                      custom_filter: Optional[Callable[[ExpGroup], bool]] = None,
+                      status_or_list: Optional[str | List[str]] = None,
+                      not_status_or_list: Optional[str | List[str]] = None,
+                      ) -> List[ExpGroupAPI]:
+        self.__check_proj()
+        return self.__proj.filter_groups(mode, custom_filter, status_or_list, not_status_or_list)
+
+    def has_exp(self, group_num_or_name: int | str, exp_num_or_name: int | str) -> bool:
+        self.__check_proj()
+        return self.__proj.has_exp(group_num_or_name, exp_num_or_name)
+
+    def exp(self, group_num_or_name: int | str, exp_num_or_name: int | str) -> ExpAPI:
+        self.__check_proj()
+        return self.__proj.exp(group_num_or_name, exp_num_or_name)
+
+    def make_exp(self, group_num_or_name: int | str, name: str, descr: str,
+                 num: Optional[int] = None) -> ExpAPI:
         self.__check_proj()
         return self.__proj.make_exp(group_num_or_name, name, descr, num)
 
     def delete_exp(self, group_num_or_name: int | str, exp_num_or_name: int | str,
-                   need_confirm=True) -> bool:
+                   need_confirm: bool = True) -> bool:
         self.__check_proj()
         return self.__proj.delete_exp(group_num_or_name, exp_num_or_name, need_confirm)
 
-    def exp(self, group_num_or_name: int | str, exp_num_or_name: int | str):
-        self.__check_proj()
-        return self.__proj.exp(group_num_or_name, exp_num_or_name)
-
-    def exps(self, group_num_or_name=None):
+    def exps(self, group_num_or_name: Optional[int | str] = None) -> List[ExpAPI]:
         self.__check_proj()
         return self.__proj.exps(group_num_or_name)
 
-    # TODO Actualize
-    def filter_exps(self, active=None, manual=None) -> List[ExpAPI]:
+    def filter_exps(self,
+                    group_num_or_name: Optional[int | str] = None,
+                    mode: str = 'AND',
+                    custom_filter: Optional[Callable[[Exp], bool]] = None,
+                    is_active: Optional[bool] = None,
+                    is_manual: Optional[bool] = None,
+                    is_ready_for_start: Optional[bool] = None,
+                    status_or_list: Optional[str | List[str]] = None,
+                    not_status_or_list: Optional[str | List[str]] = None,
+                    ) -> List[ExpAPI]:
         self.__check_proj()
-        return self.__proj.filter_exps(active, manual)
+        return self.__proj.filter_exps(group_num_or_name, mode, custom_filter, is_active, is_manual,
+                                       is_ready_for_start, status_or_list, not_status_or_list)
+
+    def get_exp_for_start(self, group_num_or_name: Optional[int | str] = None) -> Optional[ExpAPI]:
+        self.__check_proj()
+        return self.__proj.get_exp_for_start(group_num_or_name)
 
     def start(self, group_num_or_name: Optional[int | str] = None,
-              exp_num_or_name: Optional[int | str] = None, autostart_next=False):
+              exp_num_or_name: Optional[int | str] = None, autostart_next: bool = False):
         self.__check_proj()
         self.__proj.start(group_num_or_name, exp_num_or_name, autostart_next)
 

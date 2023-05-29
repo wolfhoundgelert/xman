@@ -8,6 +8,9 @@ from .exp import Exp
 
 class ExpGroup(ExpStructBox):
 
+    @property
+    def proj(self) -> 'ExpProj': return self.parent
+
     def update(self):
         if self.__updating:
             return
@@ -18,13 +21,14 @@ class ExpGroup(ExpStructBox):
             self._update_status()
         self.__updating = False
 
-    def has_exp(self, num_or_name) -> bool: return self.has_child(num_or_name)
+    def has_exp(self, num_or_name: int | str) -> bool: return self.has_child(num_or_name)
 
-    def exp(self, num_or_name) -> Exp: return self.child(num_or_name)
+    def exp(self, num_or_name: int | str) -> Exp: return self.child(num_or_name)
 
-    def make_exp(self, name, descr, num=None) -> Exp: return self.make_child(name, descr, num)
+    def make_exp(self, name: str, descr: str, num: Optional[int] = None) -> Exp:
+        return self.make_child(name, descr, num)
 
-    def delete_exp(self, num_or_name, need_confirm=True) -> bool:
+    def delete_exp(self, num_or_name: int | str, need_confirm: bool = True) -> bool:
         self.exp(num_or_name)._check_is_not_active()
         return self.delete_child(num_or_name, need_confirm)
 
@@ -36,18 +40,18 @@ class ExpGroup(ExpStructBox):
 
     def exps_names(self) -> List[str]: return self.children_names()
 
-    def change_exp_num(self, num_or_name, new_num):
+    def change_exp_num(self, num_or_name: int | str, new_num: int):
         self.exp(num_or_name)._check_is_not_active()
         self.change_child_num(num_or_name, new_num)
 
     def filter_exps(self,
                     mode: str = 'AND',
-                    custom_filter: Callable[[Exp], bool] = None,
-                    is_active: bool = None,
-                    is_manual: bool = None,
-                    is_ready_for_start: bool = None,
-                    status_or_list: str | List[str] = None,
-                    not_status_or_list: str | List[str] = None,
+                    custom_filter: Optional[Callable[[Exp], bool]] = None,
+                    is_active: Optional[bool] = None,
+                    is_manual: Optional[bool] = None,
+                    is_ready_for_start: Optional[bool] = None,
+                    status_or_list: Optional[str | List[str]] = None,
+                    not_status_or_list: Optional[str | List[str]] = None,
                     ) -> List[Exp]:
         return filter.exps(self.exps(), mode, custom_filter, is_active, is_manual,
                            is_ready_for_start, status_or_list, not_status_or_list)
@@ -56,7 +60,7 @@ class ExpGroup(ExpStructBox):
         ready_list = self.filter_exps(is_ready_for_start=True)
         return ready_list[0] if len(ready_list) else None
 
-    def start(self, exp_num_or_name=None, autostart_next=False):
+    def start(self, exp_num_or_name: Optional[int | str] = None, autostart_next: bool = False):
         if exp_num_or_name is None:
             exp = self.get_exp_for_start()
             if exp is None:

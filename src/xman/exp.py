@@ -30,6 +30,12 @@ class ExpState:
 class Exp(ExpStruct):
 
     @property
+    def group(self) -> 'ExpGroup': return self.parent
+
+    @property
+    def proj(self) -> 'ExpProj': return self.parent.parent
+
+    @property
     def state(self) -> str: return self.__state
 
     @property
@@ -55,7 +61,7 @@ class Exp(ExpStruct):
     def is_active(self) -> bool: return self.state == ExpState.ACTIVE
 
     @property
-    def is_ready_for_start(self):
+    def is_ready_for_start(self) -> bool:
         if self.is_manual:
             return False
         return (self.status.status_str == ExpStructStatus.IN_PROGRESS and
@@ -90,7 +96,7 @@ class Exp(ExpStruct):
                                params: dict, save_on_storage: bool = False) -> 'Exp':
         return self.__make_pipeline(run_func_with_mediator, True, params, save_on_storage)
 
-    def delete_pipeline(self, need_confirm=True) -> Optional['Exp']:
+    def delete_pipeline(self, need_confirm: bool = True) -> Optional['Exp']:
         self._check_is_not_active()
         if self._data.pipeline is None:
             raise NotExistsXManError(f"There's no pipeline in exp `{self}`!")
@@ -103,7 +109,8 @@ class Exp(ExpStruct):
             return self
         return None
 
-    def delete_checkpoints(self, need_confirm=True, delete_custom_paths=False) -> Optional['Exp']:
+    def delete_checkpoints(self, need_confirm: bool = True, delete_custom_paths: bool = False)\
+            -> Optional['Exp']:
         self._check_is_not_active()
         if not confirm.request(need_confirm, f"ATTENTION! Do you want to delete `{self}` "
                                               f"checkpoints?"):
@@ -155,7 +162,7 @@ class Exp(ExpStruct):
             raise IllegalOperationXManError(f"There's no pipeline in the `{self}`!")
         return self._data.pipeline.result
 
-    def set_manual_result(self, result) -> 'Exp':
+    def set_manual_result(self, result: Any) -> 'Exp':
         if self._data.manual_result is not None:
             raise AlreadyExistsXManError(f"Already has a manual result!")
         self._data.manual_result = result
@@ -167,7 +174,7 @@ class Exp(ExpStruct):
             raise IllegalOperationXManError(f"There's no manual result in the `{self}`!")
         return self._data.manual_result
 
-    def delete_manual_result(self, need_confirm=True) -> Optional['Exp']:
+    def delete_manual_result(self, need_confirm: bool = True) -> Optional['Exp']:
         if self._data.manual_result is None:
             raise NotExistsXManError(f"There's no manual result in the `{self}`!")
         if not confirm.request(need_confirm, f"ATTENTION! The manual result for the `{self} will "
@@ -177,7 +184,7 @@ class Exp(ExpStruct):
         self._save()
         return self
 
-    def delete_all_manual(self, need_confirm=True) -> Optional['Exp']:
+    def delete_all_manual(self, need_confirm: bool = True) -> Optional['Exp']:
         if not self.is_manual and not self._data.manual_result:
             raise NothingToDoXManError(f"There's nothing manual to delete!")
         if not confirm.request(need_confirm, f"ATTENTION! Manual status and resolution, and manual"
@@ -189,7 +196,7 @@ class Exp(ExpStruct):
         self._save()
         return self
 
-    def clear(self, need_confirm=True) -> Optional['Exp']:
+    def clear(self, need_confirm: bool = True) -> Optional['Exp']:
         self._check_is_not_active()
         if not confirm.request(need_confirm,
                                 f"ATTENTION! The `{self}` will be cleared as it just was "

@@ -20,14 +20,14 @@ class ExpProj(ExpStructBox):
             self._update_status()
         self.__updating = False
 
-    def has_group(self, num_or_name) -> bool: return self.has_child(num_or_name)
+    def has_group(self, num_or_name: int | str) -> bool: return self.has_child(num_or_name)
 
-    def group(self, num_or_name) -> ExpGroup: return self.child(num_or_name)
+    def group(self, num_or_name: int | str) -> ExpGroup: return self.child(num_or_name)
 
-    def make_group(self, name, descr, num=None) -> ExpGroup:
+    def make_group(self, name: str, descr: str, num: Optional[int] = None) -> ExpGroup:
         return self.make_child(name, descr, num)
 
-    def delete_group(self, num_or_name, need_confirm=True) -> bool:
+    def delete_group(self, num_or_name: int | str, need_confirm: bool = True) -> bool:
         self.group(num_or_name)._check_has_no_active_exps()
         return self.delete_child(num_or_name, need_confirm)
 
@@ -39,31 +39,33 @@ class ExpProj(ExpStructBox):
 
     def groups_names(self) -> List[str]: return self.children_names()
 
-    def change_group_num(self, num_or_name, new_num):
+    def change_group_num(self, num_or_name: int | str, new_num: int):
         self.group(num_or_name)._check_has_no_active_exps()
         self.change_child_num(num_or_name, new_num)
 
     def filter_groups(self,
                       mode: str = 'AND',
-                      custom_filter: Callable[[ExpGroup], bool] = None,
-                      status_or_list: str | List[str] = None,
-                      not_status_or_list: str | List[str] = None,
+                      custom_filter: Optional[Callable[[ExpGroup], bool]] = None,
+                      status_or_list: Optional[str | List[str]] = None,
+                      not_status_or_list: Optional[str | List[str]] = None,
                       ) -> List[ExpGroup]:
         return filter.groups(self.groups(), mode, custom_filter, status_or_list, not_status_or_list)
 
-    def has_exp(self, group_num_or_name, exp_num_or_name) -> bool:
+    def has_exp(self, group_num_or_name: int | str, exp_num_or_name: int | str) -> bool:
         return self.group(group_num_or_name).has_exp(exp_num_or_name)
 
-    def exp(self, group_num_or_name, exp_num_or_name) -> Exp:
+    def exp(self, group_num_or_name: int | str, exp_num_or_name: int | str) -> Exp:
         return self.group(group_num_or_name).exp(exp_num_or_name)
 
-    def make_exp(self, group_num_or_name, name, descr, num=None) -> Exp:
+    def make_exp(self, group_num_or_name: int | str, name: str, descr: str,
+                 num: Optional[int] = None) -> Exp:
         return self.group(group_num_or_name).make_exp(name, descr, num)
 
-    def delete_exp(self, group_num_or_name, exp_num_or_name, need_confirm=True) -> bool:
+    def delete_exp(self, group_num_or_name: int | str, exp_num_or_name: int | str,
+                   need_confirm: bool = True) -> bool:
         return self.group(group_num_or_name).delete_exp(exp_num_or_name, need_confirm)
 
-    def exps(self, group_num_or_name=None) -> List[Exp]:
+    def exps(self, group_num_or_name: Optional[int | str] = None) -> List[Exp]:
         if group_num_or_name is not None:
             return self.group(group_num_or_name).exps()
         result = []
@@ -71,30 +73,30 @@ class ExpProj(ExpStructBox):
             result.extend(it.exps())
         return result
 
-    def num_exps(self, group_num_or_name=None) -> int:
+    def num_exps(self, group_num_or_name: Optional[int | str] = None) -> int:
         if group_num_or_name is not None:
             return self.group(group_num_or_name).num_exps()
         return len(self.exps())
 
-    def exps_nums(self, group_num_or_name=None) -> List[int]:
+    def exps_nums(self, group_num_or_name: Optional[int | str] = None) -> List[int]:
         if group_num_or_name is not None:
             return self.group(group_num_or_name).exps_nums()
         return [x.num for x in self.exps()]
 
-    def exps_names(self, group_num_or_name=None) -> List[str]:
+    def exps_names(self, group_num_or_name: Optional[int | str] = None) -> List[str]:
         if group_num_or_name is not None:
             return self.group(group_num_or_name).exps_names()
         return [x.name for x in self.exps()]
 
     def filter_exps(self,
-                    group_num_or_name: int | str = None,
+                    group_num_or_name: Optional[int | str] = None,
                     mode: str = 'AND',
-                    custom_filter: Callable[[Exp], bool] = None,
-                    is_active: bool = None,
-                    is_manual: bool = None,
-                    is_ready_for_start: bool = None,
-                    status_or_list: str | List[str] = None,
-                    not_status_or_list: str | List[str] = None,
+                    custom_filter: Optional[Callable[[Exp], bool]] = None,
+                    is_active: Optional[bool] = None,
+                    is_manual: Optional[bool] = None,
+                    is_ready_for_start: Optional[bool] = None,
+                    status_or_list: Optional[str | List[str]] = None,
+                    not_status_or_list: Optional[str | List[str]] = None,
                     ) -> List[Exp]:
         if group_num_or_name is not None:
             return self.group(group_num_or_name).filter_exps(mode, custom_filter, is_active,
@@ -102,13 +104,14 @@ class ExpProj(ExpStructBox):
         return filter.exps(self.exps(), mode, custom_filter, is_active, is_manual,
                            is_ready_for_start, status_or_list, not_status_or_list)
 
-    def get_exp_for_start(self, group_num_or_name=None) -> Optional[Exp]:
+    def get_exp_for_start(self, group_num_or_name: Optional[int | str] = None) -> Optional[Exp]:
         if group_num_or_name is not None:
             return self.group(group_num_or_name).get_exp_for_start()
         ready_list = filter.exps(self.exps(), is_ready_for_start=True)
         return ready_list[0] if len(ready_list) else None
 
-    def start(self, group_num_or_name=None, exp_num_or_name=None, autostart_next=False):
+    def start(self, group_num_or_name: Optional[int | str] = None,
+              exp_num_or_name: Optional[int | str] = None, autostart_next: bool = False):
         exp = None
         if group_num_or_name is None and exp_num_or_name is None:
             exp = self.get_exp_for_start()
@@ -125,7 +128,8 @@ class ExpProj(ExpStructBox):
         if autostart_next:
             self.start(autostart_next=True)
 
-    def move_exp(self, group_num_or_name, exp_num_or_name, new_group_num_or_name, new_exp_num):
+    def move_exp(self, group_num_or_name: int | str, exp_num_or_name: int | str,
+                 new_group_num_or_name: int | str, new_exp_num: int):
         exp = self.exp(group_num_or_name, exp_num_or_name)
         exp._check_is_not_active()
         group = self.group(group_num_or_name)

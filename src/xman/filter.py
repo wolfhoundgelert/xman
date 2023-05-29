@@ -31,6 +31,7 @@ def __check_and_get_status_list(status_or_list):
 
 
 class Mode:
+
     AND = 'AND'
     OR = 'OR'
 

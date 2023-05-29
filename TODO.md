@@ -15,7 +15,13 @@
 
 + Rename `destroy_smth` in API methods because it seems like `destroy` method for GC
 
-- [!!!] Check all needed API methods exist in XManAPI
++ `filter_exps` from `XManAPI`, `XManProjAPI`, `XManGroupAPI` and their target classes should be implemented as a global filter system in `filter.py`.
+
++ [!!!] Check all needed API methods exist in XManAPI
+  + Implement checking system via pytest tests
+  + Check and align
+
+- [!!!] Unlink result from the main data, move to `.result` - if someone put checkpoint into the result, it will be a cause of low performance. The same for manual result?
 
 - [PRIO] [!!!] README.md  
   https://www.markdownguide.org/basic-syntax/  
@@ -45,8 +51,6 @@
 
 ### BACKLOG:
 
-- [???] `filter_exps` from `XManAPI`, `XManProjAPI`, `XManGroupAPI` and their target classes should be implemented as a global filter system in `filter.py`.
-
 - [LOW] Add `__str__` and `_repr_pretty_` to XMan, show there the credits, version, quick help and links to documentation.
 
 - [LOW] How to solve the issue of multiple `update`-s in a chain `a.foo().bar().biz()`. I need to register each call in some `UpdateManager`, if it's the first call - set `is_chain` status to `True`, this status activates some other thread (e.g. by minimal timer) for setting `is_chain` back to `False`. Each of methods (foo, bar, biz) check `is_chain` flag, and if it's `True`, they skip `update`. In this case, the flag will be cleared right after the chain and the next chain starts again with `update`. I can add this logic to the root `super().update()` and it will return `False` if the chain were marked:
@@ -64,8 +68,6 @@
 - [PRIO] How to parallel a huge grid-search (gs) exp? gs has number of experiments, but they all have the same env, so don't need to save each env separately. Does a group assume having the same env for all its children (exps)? 
 
 - [PRIO] [!!!] Each exp takes ~ 2GB of disk size. Need to investigate how to reduce memory consumption. Maybe save separately proj-env, group-env, exp-env.
-
-- [LOW] Implement filter: `xman.filter(...what to filter...)` - see `filter.py`
 
 - [LOW] Save data classes in json format for human reading availability
 

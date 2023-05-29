@@ -185,9 +185,7 @@ def test__note():
     exp.note.clear()
     assert not filesystem.has(filesystem.get_note_path(exp.location_dir, FileType.PICKLE))
     exp.note.pickle = 'Another object'
-    exp.note()  # TODO Remove after checking
     exp.clear()
-    exp.note()  # TODO Remove after checking
     assert not filesystem.has(filesystem.get_note_path(exp.location_dir, FileType.PICKLE))
 
 

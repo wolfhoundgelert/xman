@@ -9,12 +9,12 @@ from .note import Note
 
 class ExpStructData:
 
-    def __init__(self, name, descr):
-        self.name = name
-        self.descr = descr
-        self.manual_status = None
-        self.manual_status_resolution = None
-        self.result_viewer = None
+    def __init__(self, name: str, descr: str):
+        self.name: str = name
+        self.descr: str = descr
+        self.manual_status: str = None
+        self.manual_status_resolution: str = None
+        self.result_viewer: Callable[[Any], str] = None
 
 
 class ExpStructStatus:
@@ -130,8 +130,6 @@ class ExpStruct:
             text += util.tab(f"\nNotes: {self.note.get_existence_str()}")
         return text
 
-    def start(self): util.override_it()
-
     def set_manual_status(self, status: str, resolution: str) -> 'ExpStruct':
         ExpStructStatus._check(status, resolution)
         self._data.manual_status = status
@@ -145,7 +143,7 @@ class ExpStruct:
     def fail(self, resolution: str) -> Optional['ExpStruct']:
         return self.set_manual_status(ExpStructStatus.FAIL, resolution)
 
-    def delete_manual_status(self, need_confirm) -> Optional['ExpStruct']:
+    def delete_manual_status(self, need_confirm: bool = True) -> Optional['ExpStruct']:
         if not self.status.manual:
             raise NotExistsXManError(f"There's no manual status in the struct `{self}`")
         if confirm.request(need_confirm,
@@ -158,7 +156,7 @@ class ExpStruct:
             return self
         return None
 
-    def edit(self, name=None, descr=None):
+    def edit(self, name: Optional[str] = None, descr: Optional[str] = None):
         need_save = False
         if self._data.name != name:
             if self._parent is not None and self._parent.has_child(name):
