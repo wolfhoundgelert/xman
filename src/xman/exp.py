@@ -254,6 +254,8 @@ class Exp(ExpStruct):
                         f"So, something extraordinary has happened - congrats and my condolences!)")
             self.__pipeline._destroy()
         self._data.manual_result = None
+        self._data.pipeline = None
+        self._data = None
         self.__checkpoints_mediator = None
         super()._destroy()
 
