@@ -31,6 +31,7 @@ def recreate_proj(location_dir) -> Optional[ExpProj]:
         for group in proj.groups():
             if not platform.check_colab_forked_folders(group):
                 return None
+    return proj
 
 
 def make_and_save_struct_data(struct_cls, location_dir, name, descr):
