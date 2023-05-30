@@ -21,7 +21,11 @@
   + Implement checking system via pytest tests
   + Check and align
 
-- [!!!] Unlink result from the main data, move to `.result` - if someone put checkpoint into the result, it will be a cause of low performance. The same for manual result?
++ [!!!] Unlink result from the main data, move to `.result` - if someone put checkpoint into the result, it will be a cause of low performance. The same for manual result.
+
++ `result_viewer` rename to `result_stringifier` (returns string)
+
++ Add `result_viewer` as Callable[[Any], None] and `view_result()` will call it
 
 - [PRIO] [!!!] README.md  
   https://www.markdownguide.org/basic-syntax/  

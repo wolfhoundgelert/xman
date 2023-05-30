@@ -43,12 +43,22 @@ class ExpStructAPI:
         return self._obj.is_manual
 
     @property
-    def result_viewer(self) -> Callable[[Any], str]:
+    def result_stringifier(self) -> Callable[[Any], str]:
+        self._obj.update()
+        return self._obj.result_stringifier
+
+    @result_stringifier.setter
+    def result_stringifier(self, value: Callable[[Any], str]):
+        self._obj.update()
+        self._obj.result_stringifier = value
+
+    @property
+    def result_viewer(self) -> Callable[[Any], None]:
         self._obj.update()
         return self._obj.result_viewer
 
     @result_viewer.setter
-    def result_viewer(self, value: Callable[[Any], str]):
+    def result_viewer(self, value: Callable[[Any], None]):
         self._obj.update()
         self._obj.result_viewer = value
 
@@ -134,6 +144,26 @@ class ExpAPI(ExpStructAPI):
         return self._obj.state
 
     @property
+    def has_pipeline(self) -> bool:
+        self._obj.update()
+        return self._obj.has_pipeline
+
+    @property
+    def has_result(self) -> bool:
+        self._obj.update()
+        return self._obj.has_result
+
+    @property
+    def has_pipeline_result(self) -> bool:
+        self._obj.update()
+        return self._obj.has_pipeline_result
+
+    @property
+    def has_manual_result(self) -> bool:
+        self._obj.update()
+        return self._obj.has_manual_result
+
+    @property
     def result(self) -> Optional[Any]:
         self._obj.update()
         return self._obj.result
@@ -153,10 +183,13 @@ class ExpAPI(ExpStructAPI):
         # self._obj.update()  # No need to update
         return self._obj.checkpoints_mediator
 
-    def view_result(self) -> str:
+    def stringify_result(self) -> str:
         self._obj.update()
-        text = self._obj.view
-        print(text)
+        return self._obj.stringify_result()
+
+    def view_result(self):
+        self._obj.update()
+        self._obj.view_result()
 
     def make_pipeline(self, run_func: Callable[..., Any],
                       params: dict, save_on_storage: bool = False) -> 'ExpAPI':
@@ -171,7 +204,7 @@ class ExpAPI(ExpStructAPI):
         self._obj.make_pipeline_with_checkpoints(run_func_with_mediator, params, save_on_storage)
         return self
 
-    def get_pipeline_result(self) -> Optional[Any]:
+    def get_pipeline_result(self) -> Any:
         self._obj.update()
         return self._obj.get_pipeline_result()
 
@@ -191,6 +224,10 @@ class ExpAPI(ExpStructAPI):
         self._obj.start()
         return self
 
+    def get_manual_result(self) -> Any:
+        self._obj.update()
+        return self._obj.get_manual_result()
+
     def set_manual_result(self, result: Any) -> 'ExpAPI':
         self._obj.update()
         obj = self._obj.set_manual_result(result)
@@ -200,10 +237,6 @@ class ExpAPI(ExpStructAPI):
         self._obj.update()
         obj = self._obj.delete_manual_result(need_confirm)
         return None if obj is None else self
-
-    def get_manual_result(self) -> Optional[Any]:
-        self._obj.update()
-        return self._obj.get_manual_result()
 
     def delete_all_manual(self, need_confirm: bool = True) -> Optional['ExpAPI']:
         self._obj.update()

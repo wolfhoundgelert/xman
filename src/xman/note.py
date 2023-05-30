@@ -13,7 +13,7 @@ class Note:
     def txt(self, obj: Any):
         file_type = filesystem.FileType.TXT
         filesystem.delete_note(self.__location_dir, file_type) if obj is None \
-            else filesystem.save_note(obj, self.__location_dir, file_type)
+            else filesystem.save_note(self.__location_dir, obj, file_type)
 
     @property
     def json(self) -> Any:
@@ -23,7 +23,7 @@ class Note:
     def json(self, obj: Any):
         file_type = filesystem.FileType.JSON
         filesystem.delete_note(self.__location_dir, file_type) if obj is None \
-            else filesystem.save_note(obj, self.__location_dir, file_type)
+            else filesystem.save_note(self.__location_dir, obj, file_type)
 
     @property
     def pickle(self) -> Any:
@@ -33,7 +33,7 @@ class Note:
     def pickle(self, obj: Any):
         file_type = filesystem.FileType.PICKLE
         filesystem.delete_note(self.__location_dir, file_type) if obj is None \
-            else filesystem.save_note(obj, self.__location_dir, file_type)
+            else filesystem.save_note(self.__location_dir, obj, file_type)
 
     @property
     def has_any(self):

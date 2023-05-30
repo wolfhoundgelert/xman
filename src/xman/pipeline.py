@@ -39,15 +39,15 @@ class CheckpointsMediator:
         cp_list = self.get_checkpoint_paths_list(check_files_exist=True)
         if replace and cp_list is not None:
             for cp_path in cp_list:
-                filesystem.delete_checkpoint(cp_path, self.__exp_location_dir)
+                filesystem.delete_checkpoint(self.__exp_location_dir, cp_path)
             filesystem.delete_checkpoints_list(self.__exp_location_dir)
             cp_list = None
         if not filesystem.has_checkpoints_dir(self.__exp_location_dir):
             filesystem.make_checkpoints_dir(self.__exp_location_dir)
-        cp_path = filesystem.save_checkpoint(checkpoint, self.__exp_location_dir, custom_path)
+        cp_path = filesystem.save_checkpoint(self.__exp_location_dir, checkpoint, custom_path)
         cp_list = [] if cp_list is None else cp_list
         cp_list.append(cp_path)
-        filesystem.save_checkpoints_list(cp_list, self.__exp_location_dir)
+        filesystem.save_checkpoints_list(self.__exp_location_dir, cp_list)
         return cp_path if custom_path is None else custom_path
 
     def get_checkpoint_paths_list(self, check_files_exist: bool = True) -> Optional[List[str]]:
@@ -56,7 +56,7 @@ class CheckpointsMediator:
             return lst
         missed = []
         for it in lst:
-            path = filesystem.resolve_checkpoint_path(it, self.__exp_location_dir)
+            path = filesystem.resolve_checkpoint_path(self.__exp_location_dir, it)
             if path is None:
                 missed.append(it)
         if len(missed):
@@ -67,7 +67,7 @@ class CheckpointsMediator:
         return lst
 
     def load_checkpoint(self, checkpoint_path: str) -> Optional[Any]:
-        path = filesystem.resolve_checkpoint_path(checkpoint_path, self.__exp_location_dir)
+        path = filesystem.resolve_checkpoint_path(self.__exp_location_dir, checkpoint_path)
         if path is None:
             raise NotExistsXManError(f"Can't find checkpoint by the path `{checkpoint_path}`!")
         return filesystem.load_checkpoint(path)
@@ -86,7 +86,6 @@ class PipelineData:  # Saved in exp._data.pipeline
         self.finished: bool = False
         self.error: str = None
         self.error_stack: str = None
-        self.result: Any = None
 
 
 class PipelineRunData:  # Saved in `.run` file, might be really heavy (several GB)
@@ -109,9 +108,10 @@ class Pipeline:
         try:
             if run_data.with_mediator:
                 self.__mediator = CheckpointsMediator(self.__location_dir)
-                data.result = run_data.run_func(self.__mediator, **run_data.params)
+                result = run_data.run_func(self.__mediator, **run_data.params)
             else:
-                data.result = run_data.run_func(**run_data.params)
+                result = run_data.run_func(**run_data.params)
+            filesystem.save_pipeline_result(self.__location_dir, result)
             data.finished = True
         except Exception as e:
             error = e

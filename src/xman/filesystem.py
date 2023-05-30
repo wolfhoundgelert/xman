@@ -5,7 +5,7 @@ import time
 import re
 from enum import Enum
 from pathlib import Path
-from typing import Optional, Any, Callable
+from typing import Optional, Any
 import cloudpickle as pickle  # dill as pickle, pickle
 
 from .error import ArgumentsXManError, IllegalOperationXManError, NotImplementedXManError, \
@@ -38,8 +38,14 @@ def __get_data_path(location_dir): return os.path.join(location_dir, '.data')
 def __get_time_path(location_dir): return os.path.join(location_dir, '.time')
 
 
+def get_manual_result_path(location_dir): return os.path.join(location_dir, '.manual_result')
+
+
 def __get_run_path(location_dir): return os.path.join(location_dir, '.run')
 def __get_run_time_path(location_dir): return os.path.join(location_dir, '.run_time')
+
+
+def get_pipeline_result_path(location_dir): return os.path.join(location_dir, '.pipeline_result')
 
 
 def get_checkpoints_dir_path(location_dir): return os.path.join(location_dir, 'checkpoints/')
@@ -61,8 +67,8 @@ def __get_checkpoint_path(location_dir):
     return os.path.join(get_checkpoints_dir_path(location_dir), fname)
 
 
-def get_dir_num(target_dir):
-    match = re.search(r'[1-9][0-9]*$', target_dir)
+def get_dir_num(dir_path):
+    match = re.search(r'[1-9][0-9]*$', dir_path)
     return int(match.group()) if match else None
 
 
@@ -78,10 +84,10 @@ def change_group_num_in_path(path: str, new_group_num: int) -> str:
     return change_num_in_path_by_pattern(path, 'group', new_group_num)
 
 
-def __get_dir_nums_by_pattern(location_dir, dir_pattern):
+def __get_dir_nums_by_pattern(dir_path, dir_pattern):
     regex = fr'^{dir_pattern}([1-9][0-9]*)$'
-    names = os.listdir(location_dir)
-    dirs = [x for x in names if os.path.isdir(os.path.join(location_dir, x))]
+    names = os.listdir(dir_path)
+    dirs = [x for x in names if os.path.isdir(os.path.join(dir_path, x))]
     nums = []
     for it in dirs:
         match = re.match(regex, it)
@@ -164,7 +170,7 @@ def __delete_file(file_path):
         os.remove(file_path)
 
 
-def save_data_and_time(data, location_dir) -> float:
+def save_data_and_time(location_dir, data) -> float:
     __save_to_file(data, __get_data_path(location_dir), FileType.PICKLE)
     t = time.time()
     __save_to_file(t, __get_time_path(location_dir), FileType.PICKLE)
@@ -178,7 +184,18 @@ def load_fresh_data_and_time(location_dir, last_data, last_time):
     return last_data, last_time
 
 
-def save_pipeline_run_data(run_data, location_dir):
+def save_manual_result(location_dir, manual_result):
+    __save_to_file(manual_result, get_manual_result_path(location_dir), file_type=FileType.PICKLE)
+
+
+def load_manual_result(location_dir):
+    return __load_from_file(get_manual_result_path(location_dir), file_type=FileType.PICKLE)
+
+
+def delete_manual_result(location_dir): __delete_file(get_manual_result_path(location_dir))
+
+
+def save_pipeline_run_data(location_dir, run_data):
     __save_to_file(run_data, __get_run_path(location_dir), FileType.PICKLE)
 
 
@@ -200,6 +217,18 @@ def load_run_timestamp(location_dir):
 def delete_run_timestamp(location_dir): __delete_file(__get_run_time_path(location_dir))
 
 
+def save_pipeline_result(location_dir, pipeline_result):
+    __save_to_file(pipeline_result, get_pipeline_result_path(location_dir),
+                   file_type=FileType.PICKLE)
+
+
+def load_pipeline_result(location_dir):
+    return __load_from_file(get_pipeline_result_path(location_dir), file_type=FileType.PICKLE)
+
+
+def delete_pipeline_result(location_dir): __delete_file(get_pipeline_result_path(location_dir))
+
+
 def has_checkpoints_dir(location_dir): return has(get_checkpoints_dir_path(location_dir))
 
 
@@ -210,7 +239,7 @@ def delete_checkpoints_dir(location_dir, need_confirm=True) -> bool:
     return delete_dir(get_checkpoints_dir_path(location_dir), need_confirm)
 
 
-def save_checkpoint(checkpoint, location_dir, custom_path=None) -> str:
+def save_checkpoint(location_dir, checkpoint, custom_path=None) -> str:
     loc_dir = Path(location_dir).resolve()
     if custom_path is not None:
         __save_to_file(checkpoint, custom_path, FileType.PICKLE)
@@ -229,14 +258,14 @@ def save_checkpoint(checkpoint, location_dir, custom_path=None) -> str:
 def load_checkpoint(cp_path): return __load_from_file(cp_path, FileType.PICKLE)
 
 
-def delete_checkpoint(cp_path, location_dir):
-    path = resolve_checkpoint_path(cp_path, location_dir)
+def delete_checkpoint(location_dir, cp_path):
+    path = resolve_checkpoint_path(location_dir, cp_path)
     if path is None:
         raise NotExistsXManError(f"Can't resolve checkpoint path `{cp_path}`!")
     __delete_file(path)
 
 
-def save_checkpoints_list(cp_list, location_dir):
+def save_checkpoints_list(location_dir, cp_list):
     __save_to_file(cp_list, get_checkpoints_list_path(location_dir), FileType.JSON)
 
 
@@ -247,7 +276,7 @@ def load_checkpoints_list(location_dir) -> Optional[Any]:
 def delete_checkpoints_list(location_dir): __delete_file(get_checkpoints_list_path(location_dir))
 
 
-def resolve_checkpoint_path(cp_path: str, location_dir: str) -> Optional[str]:
+def resolve_checkpoint_path(location_dir: str, cp_path: str) -> Optional[str]:
     cp_p = Path(cp_path)
     ld_p = Path(location_dir)
     path = ld_p / cp_p
@@ -258,7 +287,7 @@ def resolve_checkpoint_path(cp_path: str, location_dir: str) -> Optional[str]:
     return None
 
 
-def save_note(obj, location_dir, file_type: FileType):
+def save_note(location_dir, obj, file_type: FileType):
     __save_to_file(obj, get_note_path(location_dir, file_type), file_type)
 
 

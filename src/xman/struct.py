@@ -14,7 +14,8 @@ class ExpStructData:
         self.descr: str = descr
         self.manual_status: str = None
         self.manual_status_resolution: str = None
-        self.result_viewer: Callable[[Any], str] = None
+        self.result_stringifier: Callable[[Any], str] = None
+        self.result_viewer: Callable[[Any], None] = None
 
 
 class ExpStructStatus:
@@ -107,10 +108,19 @@ class ExpStruct:
     def is_manual(self) -> bool: return self._data.manual_status is not None
 
     @property
-    def result_viewer(self) -> Callable[[Any], str]: return self._data.result_viewer
+    def result_stringifier(self) -> Callable[[Any], str]:
+        return self._data.result_stringifier
+
+    @result_stringifier.setter
+    def result_stringifier(self, value: Callable[[Any], str]):
+        self._data.result_stringifier = value
+        self._save()
+
+    @property
+    def result_viewer(self) -> Callable[[Any], None]: return self._data.result_viewer
 
     @result_viewer.setter
-    def result_viewer(self, value: Callable[[Any], str]):
+    def result_viewer(self, value: Callable[[Any], None]):
         self._data.result_viewer = value
         self._save()
 
@@ -199,7 +209,7 @@ class ExpStruct:
     # Printing in jupyter notebook - https://stackoverflow.com/a/41454816/9751954
     def _repr_pretty_(self, p, cycle): p.text(str(self) if not cycle else '...')
 
-    def _save(self): self.__time = filesystem.save_data_and_time(self._data, self.location_dir)
+    def _save(self): self.__time = filesystem.save_data_and_time(self.location_dir, self._data)
 
     def _destroy(self):
         self._api._obj = None

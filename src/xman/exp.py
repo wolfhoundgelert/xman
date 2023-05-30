@@ -15,7 +15,6 @@ class ExpData(ExpStructData):
     def __init__(self, name, descr):
         super().__init__(name, descr)
         self.pipeline: PipelineData = None
-        self.manual_result: Any = None
 
 
 class ExpState:
@@ -39,15 +38,31 @@ class Exp(ExpStruct):
     def state(self) -> str: return self.__state
 
     @property
+    def has_pipeline(self) -> bool: return self._data.pipeline is not None
+
+    @property
+    def has_result(self) -> bool: return self.has_pipeline_result or self.has_manual_result
+
+    @property
+    def has_pipeline_result(self) -> bool:
+        return filesystem.has(filesystem.get_pipeline_result_path(self.location_dir))
+
+    @property
+    def has_manual_result(self) -> bool:
+        return filesystem.has(filesystem.get_manual_result_path(self.location_dir))
+
+    @property
     def result(self) -> Optional[Any]:
-        manual_result = self._data.manual_result
-        pipeline_result = None if self._data.pipeline is None else self._data.pipeline.result
-        if manual_result is not None and pipeline_result is not None:
+        if self.has_manual_result and self.has_pipeline_result:
             raise IllegalOperationXManError(f"There are two results in the `{self}` - manual result"
                                             f" and pipeline result! Use `get_manual_result()` or "
                                             f"`get_pipeline_result()` for checking them and delete "
-                                            f"manual result or pipeline.")
-        return pipeline_result if manual_result is None else manual_result
+                                            f"manual or pipeline result.")
+        if self.has_manual_result:
+            return self.get_manual_result()
+        if self.has_pipeline_result:
+            return self.get_pipeline_result()
+        raise IllegalOperationXManError(f"There's no any result in the `{self}`!")
 
     @property
     def error(self) -> Optional[str]:
@@ -64,8 +79,8 @@ class Exp(ExpStruct):
     def is_ready_for_start(self) -> bool:
         if self.is_manual:
             return False
-        return (self.status.status_str == ExpStructStatus.IN_PROGRESS and
-                self.state == ExpState.IDLE) or self.status.status_str == ExpStructStatus.TO_DO
+        return self.status.status_str == ExpStructStatus.TO_DO or \
+            (self.status.status_str == ExpStructStatus.IN_PROGRESS and self.state == ExpState.IDLE)
 
     @property
     def checkpoints_mediator(self) -> CheckpointsMediator:
@@ -75,17 +90,25 @@ class Exp(ExpStruct):
 
     def info(self):
         text = super().info()
-        if self.result is not None:
-            text += util.tab(f"\nResult:\n{util.tab(self.view_result())}")
+        if self.has_result:
+            text += util.tab(f"\nResult:\n{util.tab(self.stringify_result())}")
         return text
 
-    def view_result(self) -> str:
+    def stringify_result(self) -> str:
+        rs = self.result_stringifier
+        if rs is None and self.parent is not None:
+            rs = self.parent.result_stringifier
+            if rs is None and self.parent.parent is not None:
+                rs = self.parent.parent.result_stringifier
+        return str(self.result) if rs is None else rs(self.result)
+
+    def view_result(self):
         rv = self.result_viewer
         if rv is None and self.parent is not None:
             rv = self.parent.result_viewer
             if rv is None and self.parent.parent is not None:
                 rv = self.parent.parent.result_viewer
-        return str(self.result) if rv is None else rv(self.result)
+        print(self.result) if rv is None else rv(self.result)
 
     def make_pipeline(self, run_func: Callable[..., Any],
                       params: dict, save_on_storage: bool = False) -> 'Exp':
@@ -119,12 +142,12 @@ class Exp(ExpStruct):
             lst = self.checkpoints_mediator.get_checkpoint_paths_list(check_files_exist=True)
             if lst is not None:
                 for cp_path in lst:
-                    filesystem.delete_checkpoint(cp_path, self.location_dir)
+                    filesystem.delete_checkpoint(self.location_dir, cp_path)
         filesystem.delete_checkpoints_dir(self.location_dir, need_confirm=False)
         return self
 
     def start(self) -> 'Exp':
-        if self._data.manual_result is not None:
+        if self.has_manual_result:
             raise IllegalOperationXManError(f"The `{self}` already has a manual result - delete it "
                                             f"with `delete_manual_result()` method first!")
         if self.is_ready_for_start:
@@ -157,43 +180,42 @@ class Exp(ExpStruct):
                 raise IllegalOperationXManError(f"`The {self}` was already finished!")
         return self
 
-    def get_pipeline_result(self) -> Optional[Any]:
-        if self._data.pipeline is None:
-            raise IllegalOperationXManError(f"There's no pipeline in the `{self}`!")
-        return self._data.pipeline.result
+    def get_pipeline_result(self) -> Any:
+        if not self.has_pipeline_result:
+            raise IllegalOperationXManError(f"There's no pipeline result in the `{self}`!")
+        return filesystem.load_pipeline_result(self.location_dir)
+
+    def get_manual_result(self) -> Any:
+        if not self.has_manual_result:
+            raise IllegalOperationXManError(f"There's no manual result in the `{self}`!")
+        return filesystem.load_manual_result(self.location_dir)
 
     def set_manual_result(self, result: Any) -> 'Exp':
-        if self._data.manual_result is not None:
-            raise AlreadyExistsXManError(f"Already has a manual result!")
-        self._data.manual_result = result
-        self._save()
+        if self.has_manual_result:
+            raise AlreadyExistsXManError(f"Already has a manual result! Delete it first with "
+                                         f"`delete_manual_result()` method.")
+        filesystem.save_manual_result(self.location_dir, result)
         return self
 
-    def get_manual_result(self) -> Optional[Any]:
-        if self._data.manual_result is None:
-            raise IllegalOperationXManError(f"There's no manual result in the `{self}`!")
-        return self._data.manual_result
-
     def delete_manual_result(self, need_confirm: bool = True) -> Optional['Exp']:
-        if self._data.manual_result is None:
+        if not self.has_manual_result:
             raise NotExistsXManError(f"There's no manual result in the `{self}`!")
         if not confirm.request(need_confirm, f"ATTENTION! The manual result for the `{self} will "
                                               f"be deleted - proceed?"):
             return None
-        self._data.manual_result = None
-        self._save()
+        filesystem.delete_manual_result(self.location_dir)
         return self
 
     def delete_all_manual(self, need_confirm: bool = True) -> Optional['Exp']:
-        if not self.is_manual and not self._data.manual_result:
-            raise NothingToDoXManError(f"There's nothing manual to delete!")
+        if not self.is_manual and not self.has_manual_result:
+            raise NothingToDoXManError(f"There's nothing manual to delete in the `{self}`!")
         if not confirm.request(need_confirm, f"ATTENTION! Manual status and resolution, and manual"
                                              f"result will be deleted - proceed?"):
             return None
         self._data.manual_status = None
         self._data.manual_status_resolution = None
-        self._data.manual_result = None
-        self._save()
+        if self.has_manual_result:
+            filesystem.delete_manual_result(self.location_dir)
         return self
 
     def clear(self, need_confirm: bool = True) -> Optional['Exp']:
@@ -202,13 +224,17 @@ class Exp(ExpStruct):
                                 f"ATTENTION! The `{self}` will be cleared as it just was "
                                 f"created - proceed?"):
             return None
-        if self._data.pipeline is not None:
+        if self.has_pipeline:
             self.delete_pipeline(need_confirm=False)
+        if self.has_pipeline_result:
+            filesystem.delete_pipeline_result(self.location_dir)
         self.delete_checkpoints(need_confirm=False, delete_custom_paths=True)
         self.__checkpoints_mediator = None
-        self._data.manual_result = None
+        if self.has_manual_result:
+            filesystem.delete_manual_result(self.location_dir)
         self._data.manual_status = None
         self._data.manual_status_resolution = None
+        self.result_stringifier = None
         self.result_viewer = None
         self.note.clear()
         self.__note = None
@@ -253,7 +279,6 @@ class Exp(ExpStruct):
                 raise UnpredictableLogicXManError(f"It shouldn't be, but if you're reading this... "
                         f"So, something extraordinary has happened - congrats and my condolences!)")
             self.__pipeline._destroy()
-        self._data.manual_result = None
         self._data.pipeline = None
         self._data = None
         self.__checkpoints_mediator = None
@@ -264,7 +289,7 @@ class Exp(ExpStruct):
         self._data: ExpData = None
         self.__state = None
         self.__pipeline: Pipeline = None
-        self.__checkpoints_mediator = None
+        self.__checkpoints_mediator: CheckpointsMediator = None
         self.__updating = False
         super().__init__(location_dir, parent)
         self._api = ExpAPI(self)

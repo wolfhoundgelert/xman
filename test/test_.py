@@ -159,22 +159,31 @@ def test__filter_exps_in_xman():
     # assert False
 
 
+def test__result_stringifier():
+    exp = helper.make_exp_from_nothing()
+    exp.set_manual_result({'foo': 123, 'bar': 'asdf', 'biz': [1, 2]})
+    exp.result_stringifier = lambda x: f"foo={x['foo']}, bar={x['bar']}"
+    assert exp.stringify_result() == 'foo=123, bar=asdf'
+
+
+def test__stringify_result():
+    exp = helper.make_exp_from_nothing()
+    exp.set_manual_result({'foo': 123, 'bar': 'asdf'})
+    exp.proj.result_stringifier = lambda x: f"foo={x['foo']}"
+    assert exp._obj.stringify_result() == 'foo=123'
+    exp.group.result_stringifier = lambda x: f"bar={x['bar']}"
+    assert exp._obj.stringify_result() == 'bar=asdf'
+    exp.result_stringifier = lambda x: f"foo={x['foo']}, bar={x['bar']}"
+    assert exp._obj.stringify_result() == 'foo=123, bar=asdf'
+
+
 def test__result_viewer():
     exp = helper.make_exp_from_nothing()
     exp.set_manual_result({'foo': 123, 'bar': 'asdf', 'biz': [1, 2]})
-    exp.result_viewer = lambda x: f"foo={x['foo']}, bar={x['bar']}"
-    assert exp.result_viewer(exp.result) == 'foo=123, bar=asdf'
-
-
-def test__view_result():
-    exp = helper.make_exp_from_nothing()
-    exp.set_manual_result({'foo': 123, 'bar': 'asdf'})
-    exp.proj.result_viewer = lambda x: f"foo={x['foo']}"
-    assert exp._obj.view_result() == 'foo=123'
-    exp.group.result_viewer = lambda x: f"bar={x['bar']}"
-    assert exp._obj.view_result() == 'bar=asdf'
-    exp.result_viewer = lambda x: f"foo={x['foo']}, bar={x['bar']}"
-    assert exp._obj.view_result() == 'foo=123, bar=asdf'
+    rv_func = lambda result: print(f"Result: {result}")
+    exp.result_viewer = rv_func
+    assert exp.result_viewer == rv_func
+    exp.view_result()
 
 
 def test__note():

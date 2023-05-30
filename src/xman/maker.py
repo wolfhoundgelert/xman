@@ -37,7 +37,7 @@ def make_and_save_struct_data(struct_cls, location_dir, name, descr):
     filesystem.prepare_dir(location_dir) if struct_cls == ExpProj else \
         filesystem.make_dir(location_dir, exist_ok=False)
     data = __get_data_class(struct_cls)(name, descr)
-    filesystem.save_data_and_time(data, location_dir)
+    filesystem.save_data_and_time(location_dir, data)
 
 
 def get_child_class(parent_obj_or_cls):
@@ -79,7 +79,7 @@ def make_pipeline(exp, run_func, with_mediator, params, save_on_storage=False):
     exp._data.pipeline = PipelineData()
     run_data = PipelineRunData(run_func, with_mediator, params)
     if save_on_storage:
-        filesystem.save_pipeline_run_data(run_data, exp.location_dir)
+        filesystem.save_pipeline_run_data(exp.location_dir, run_data)
     return Pipeline(exp.location_dir, exp._data.pipeline, run_data)
 
 

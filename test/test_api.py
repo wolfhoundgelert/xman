@@ -260,8 +260,8 @@ def test__ExpProjAPI_vs_XManAPI():
     excludes = ['move_exp', 'delete_dir', 'is_manual', 'name', 'make_dir', 'rename_or_move_dir',
                 'num_groups', 'descr', 'num_exps', 'note', 'dir_tree', 'make_proj', 'num',
                 'set_manual_status', 'groups_nums', 'result_viewer', 'load_proj', 'edit', 'fail',
-                'reload', 'exps_names', 'exps_nums', 'proj', 'status', 'success',
-                'delete_manual_status', 'groups_names', 'tree', 'change_group_num']
+                'reload', 'exps_names', 'exps_nums', 'proj', 'status', 'success', 'tree',
+                'delete_manual_status', 'groups_names', 'change_group_num', 'result_stringifier']
     result = check_api(ExpProjAPI, XManAPI, excludes)
     if result is not None:
         info, _, _ = result
