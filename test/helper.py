@@ -1,6 +1,5 @@
 import os
 import shutil
-import time
 
 from xman import xman
 from xman.api import ExpProjAPI, ExpGroupAPI, ExpAPI

@@ -158,8 +158,8 @@ class ExpStruct:
             raise NotExistsXManError(f"There's no manual status in the struct `{self}`")
         if confirm.request(need_confirm,
                             f"ATTENTION! Do you want to delete the manual status "
-                            f"`{self._data.manual_status}` and its resolution "
-                            f"`{self._data.manual_status_resolution}` of exp `{self}`?"):
+                            f"`{self._data.manual_status}`\nand its resolution "
+                            f"`{self._data.manual_status_resolution}`\nof exp `{self}`?"):
             self._data.manual_status = None
             self._data.manual_status_resolution = None
             self._save()

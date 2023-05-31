@@ -25,7 +25,7 @@ def make_dir(dir_path, exist_ok=True): os.makedirs(dir_path, exist_ok=exist_ok)
 
 def delete_dir(dir_path, need_confirm=True) -> bool:
     if has(dir_path) and len(os.listdir(dir_path)) > 0 and not confirm.request(
-            need_confirm, f"ATTENTION! Dir `{dir_path}` isn't empty - delete anyway?"):
+            need_confirm, f"ATTENTION! Dir `{dir_path}`\nisn't empty - delete anyway?"):
         return False
     shutil.rmtree(dir_path, ignore_errors=True)
     return True

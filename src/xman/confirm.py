@@ -16,4 +16,4 @@ def request(need_confirm, request):
 def delete_struct_and_all_its_content(struct: ExpStruct, need_confirm):
     p = struct.location_dir
     return request(need_confirm,
-                    f"ATTENTION! Remove `{struct}` and all its `{p}` dir with all its content?")
+                    f"ATTENTION! Remove `{struct}`\nand its dir `{p}`\nwith all its content?")
