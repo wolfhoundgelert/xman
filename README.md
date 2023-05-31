@@ -3,11 +3,10 @@
 `xMan` (E**x**periment **Man**ager) is a `Python` library for effective managing and organizing experiments in `Jupyter Notebooks` on thе `Google Colab` platform or local machines, or right in the Python `REPL` (Read-Eval-Print Loop) interactive mode.
 
 It offers the following key features:
-<ul style="list-style-type: none;">
-    <li>⭐ Keeping track of your experiments, providing a clear overview of your progress.</li>
-    <li>⭐ Saving results in a centralized location, such as a shared Google Drive folder, with the option to use intermediate checkpoints.</li>
-    <li>⭐ Running experiments in parallel across multiple Google Colab accounts, making it a powerful tool for AI, ML, NN, and DL students, learners, enthusiasts, researchers and their teams. 😍 </li>
-</ul>
+- ⭐ Keeping track of your experiments, providing a clear overview of your progress.
+- ⭐ Saving results in a centralized location, such as a shared Google Drive folder, with the option to use intermediate checkpoints.
+- ⭐ Running experiments in parallel across multiple Google Colab accounts, making it a powerful tool for AI, ML, NN, and DL students, learners, enthusiasts, researchers and their teams. 😍
+
 
 
 ## Installation
@@ -144,6 +143,10 @@ TODO
 TODO
 
 ### Pipeline Experiments
+
+TODO
+
+### Running in parallel under different Google Colab accounts
 
 TODO
 
