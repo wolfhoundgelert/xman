@@ -52,6 +52,8 @@
   - Each protected method with some logic should be covered by tests
   - Each private method with some logic should be covered by tests
 
+- Add `__str__` and `_repr_pretty_` to XMan, show there the credits, version, quick help and links to documentation.
+
 
 ### BACKLOG:
 
