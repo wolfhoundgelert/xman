@@ -1,10 +1,10 @@
 # xMan
 
-`xMan` (E**x**periment **Man**ager) is a `Python` library for effective managing and organizing experiments in `Jupyter Notebooks` on thе `Google Colab` platform or local machines, or right in the Python `REPL` (Read-Eval-Print Loop) interactive mode.
+`xMan` (E**x**periment **Man**ager) is a `Python` library for effectively managing and organising experiments in `Jupyter Notebooks` on thе `Google Colab` platform or local machines, or right in the Python `REPL` (Read-Eval-Print Loop) interactive mode.
 
 It offers the following key features:
 - ⭐ Keeping track of your experiments, providing a clear overview of your progress.
-- ⭐ Saving results in a centralized location, such as a shared Google Drive folder, with the option to use intermediate checkpoints.
+- ⭐ Saving results in a centralised location, such as a shared Google Drive folder, with the option to use intermediate checkpoints.
 - ⭐ Running experiments in parallel across multiple Google Colab accounts, making it a powerful tool for AI, ML, NN, and DL students, learners, enthusiasts, researchers and their teams. 😍
 
 
@@ -33,7 +33,7 @@ from google.colab import drive
 drive.mount('/content/drive')
 ```
 
-Import xman library:
+Import `xMan` library:
 ```python
 from xman import xman
 ```
@@ -53,7 +53,7 @@ Or we can load already existed project:
 xman.load_proj('./drive/MyDrive/xman_exps')
 ```
 
-Experiment is something we can "run" in a code (or in our life) with specified parameters. When we change parameters, we make a new experiment. Similar experiments combine into a group, that is defined by some aspect we examine with our experiments with different parameters.
+Experiment is something we can "run" in a code (or in our life) with specified parameters. When we change parameters, we make a new experiment. Similar experiments combine into a group that is defined by some aspect we examine with our experiments with different parameters.
 
 Thereby, we need to create a new group of experiments:
 ```python
@@ -68,7 +68,7 @@ xman.make_exp(1, 'My Exp 1', 'My exp 1 descr')
 # or xman.proj.group(1).make_exp('My Group 1', 'My Exp 1', 'My exp 1 descr')
 ```
 
-You can view the information about your proj, groups and exps:
+You can view the information about your `proj`, `groups` and `exps`:
 ```python
 # Detailed info:
 xman.info()  # for the entire project
@@ -109,7 +109,7 @@ As you probably already noticed:
     exp.start()
     exp.view_result()
     ```
-2. Groups and exps can be reached by their nums and names (so, group names should be unique in the project, and exps names should be unique in a one particular group):
+2. Groups and exps can be reached by their numbers and names (so, group names should be unique in the project, and exps names should be unique in a one particular group):
     ```python
     xman.group(1)  # or xman.group('My Group 1')
     xman.exp(1, 1)  # or xman.exp('My Group 1', 'My Exp 1') or combine nums and names
@@ -131,11 +131,11 @@ As you probably already noticed:
 ## Sharing across Google Colab accounts
 <details><summary>Click to expand/collapse</summary>
 
-In `Google Drive` share your project folder with some other account. Login on `Google Drive` under that account. On the left-side panel choose `Shared with me` option, find the project shared folder, right click menu, choose `Add shortcut to Drive`. In the opened window choose `All locations` tab, click `My Drive` option, then click `Add` button below.
+In `Google Drive` share your project folder with some other account. Login on `Google Drive` under that account. On the left-side panel choose the `Shared with me` option, find the project shared folder, right click menu, choose `Add shortcut to Drive`. In the opened window choose the `All locations` tab, click `My Drive` option, then click `Add` button below.
 
 Now you can open `My Drive` on the left-side panel and find the project shared folder there. 
 
-Open a new `Jupyter Notebook` or a shared copy of the original one. I recommend always make a copy of your shared notebooks when you (or your teammates) work under other `Google Colab` accounts - it will keep your notebooks from cells output conflicting during execution.
+Open a new `Jupyter Notebook` or a shared copy of the original one. I recommend always making a copy of your shared notebooks when you (or your teammates) work under other `Google Colab` accounts - it will keep your notebooks from cell output conflicting during execution.
 
 In that notebook load the project:
 ```python
@@ -162,7 +162,7 @@ xman.info()
 ## Performing Experiments
 <details><summary>Click to expand/collapse</summary>
 
-A lifecycle of any experiment, either it is `ML` experiment written in code or it is some live experiment performing on a physics lesson, can be described by statuses from the next workflow:
+A life cycle of any experiment, either it is `ML` experiment written in code or it is some live experiment performing on a physics lesson, can be described by statuses from the next workflow:
 
 `EMPTY` -> `TO_DO` -> `IN_PROGRESS` -> `DONE` or `ERROR` -> `SUCCESS` or `FAIL`
 
@@ -170,13 +170,13 @@ And it doesn't matter, we are performing our experiment manually and only writin
 
 `EMPTY` - we just created a new exp record in our project and here we have only our exp name and description.
 
-`TO_DO` - we prepared our exp for the execution (gathered the all we need together and ready to start the exp).
+`TO_DO` - we prepared our exp for the execution (gathered all we need together and ready to start the exp).
 
 `IN_PROGRESS` - the exp was started, and now it is in progress.
 
-`DONE` or `ERROR` - our exp was finished smooth, or we encountered some issues which didn't allow us to get a result.
+`DONE` or `ERROR` - our exp was finished smoothly, or we encountered some issues which didn't allow us to get a result.
 
-`SUCCESS` or `FAIL` - we reviewed that we have after the previous step and decided the exp was successful (output was significant good, and we can use that further) or we failed (nothing significant, or we had even worse results than before).
+`SUCCESS` or `FAIL` - we reviewed what we have after the previous step and decided the exp was successful (output was significant good, and we can use that further) or we failed (nothing significantly, or we had even worse results than before).
 
 As was mentioned before, `xMan` provides 2 approaches for managing experiments: manually and with setting executable pipeline.
 
@@ -194,7 +194,7 @@ xman.exp(1, 1).info()
 #    Exp 1 [TO_DO *] My Exp 1 - My exp 1 descr    
 #        Resolution: Ready for start
 ```
-Pay attention on the `*` in the status `[TO_DO *]`, it says that the `exp` has a manual status and considered as a manual exp.
+Pay attention on the `*` in the status `[TO_DO *]`, it says that the `exp` has a manual status and is considered as a manual exp.
 
 If some `exp` has a manual status, it can't be fed with an executable pipeline until the manual status is deleted. Use `xman.exp(...).delete_manual_status()` for deleting the manual status and making `exp` not manual again.
 
@@ -367,7 +367,7 @@ You can delete checkpoints with `xman.exp(2, 2).delete_checkpoints()`.
 <details><summary>Click to expand/collapse</summary>
 
 First, read the information about `Sharing across Google Colab accounts` in this document above. After you share your project, there are 2 ways of running experiments in parallel under different `Google Colab` accounts:
-1. You can load your project under the second account, duplicate your `Jupyter Notebook` into this account, reinit all needed cells (e.g. prepare the data, define methods and variables, init your model), create and `start()` your new experiment (or just `start()` if the exp was already created under the first account).
+1. You can load your project under the second account, duplicate your `Jupyter Notebook` into this account, re-init all needed cells (e.g. prepare the data, define methods and variables, init your model), create and `start()` your new experiment (or just `start()` if the exp was already created under the first account).
 2. Or you can make a pipeline for your new exp with a `save_on_storage=True` flag under the first account and just initiate the project under the second account (you don't need to duplicate your original notebook - just load the project, see `Sharing across Google Colab accounts` section).
    ```python
    xman.exp(...).make_pipeline(train_pipeline, params, save_on_storage=True)
@@ -375,11 +375,11 @@ First, read the information about `Sharing across Google Colab accounts` in this
    xman.exp(...).make_pipeline_with_checkpoints(
       train_pipeline_with_mediator, params, save_on_storage=True)
    ```   
-   Pay attention on that making your pipeline with the `save_on_storage=True` flag saves your run-function and parameters with all the dependencies they need (other definitions and variables). So it can be storage space consumable if you work with some big dataset - raw needed data from the current `Google Colab` session will be saved on your `Google Drive` in the according to the exp folder (it's easy to be several GB).
+   Pay attention to making your pipeline with the `save_on_storage=True` flag saves your run-function and parameters with all the dependencies they need (other definitions and variables). So it can be storage space consumable if you work with some big dataset - raw needed data from the current `Google Colab` session will be saved on your `Google Drive` in the according to the exp folder (it's easy to be several GB).
 
-   P.S. You can use not only `xman.exp(...).start()`, but also `xman.group(...).start()`, and even `xman.start()` - these methods search ready for start experiments and start them. You can use `autostart_next=True` parameter if you prepared several experiments in advance.
+   P.S. You can use not only `xman.exp(...).start()`, but also `xman.group(...).start()`, and even `xman.start()` - these methods search ready to start experiments and start them. You can use `autostart_next=True` parameter if you prepared several experiments in advance.
 
-All your results will be saved into the project shared `Google Drive` folder, so you can use as many accounts as you want. Despite on which approach you'll choose, you can create any mess with or in your notebooks without worrying about it - all the results will be saved and organized in your project in one place. Sounds amazing, yeah? 😀 Just don't forget to duplicate your notebooks (not only share them) under different accounts to avoid conflicting between cell's output in the notebook's history.
+All your results will be saved into the project shared `Google Drive` folder, so you can use as many accounts as you want. Regardless of which approach you'll choose, you can create any mess with or in your notebooks without worrying about it - all the results will be saved and organised in your project in one place. Sounds amazing, yeah? 😀 Just don't forget to duplicate your notebooks (not only share them) under different accounts to avoid conflicting between cell's output in the notebook's history.
 
 </details>
 
@@ -391,7 +391,7 @@ All your results will be saved into the project shared `Google Drive` folder, so
 - API Documentation coverage
 - CI/CD
 - `grid-search` implementation (there are some issues with storage space consumption).
-- `xman.guide_me()` will advise you what to next (load proj, create group, create exp, finalise finished exps and so on). 
+- `xman.guide_me()` will advise you what to do next (load proj, create group, create exp, finalise completed exps and so on). 
 - Project management control modes, e.g. you can activate `STRICT` mode, in this case you're not allowed to make a new exp group until you finalise with `success` or `fail` all exps from the previous one - it will help you to keep things from getting messed up.
 
 
