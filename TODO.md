@@ -1,40 +1,5 @@
 ### CURRENT:
 
-+ set result viewer - exp, group, proj level
-
-+ Add notes saving: pickle, text, json
-
-+ Proj methods make as Group methods (which is copying Box structure), and add them to API
-
-+ Do TODO-s in the code
-  + check exp is not active when changing its num or moving to another group
-  + check exp is not active in other places 
-  + `get_active_experiments` for ExpProj and ExpGroup and their API - better use `filter_exps`
-
-+ [!!!] Review destroy of active exp from active notebook (where pipeline was started) perspective and from passive notebook (just loaded the proj with active exp). Check that destroy from passive doesn't delete anything and brake active.
-
-+ Rename `destroy_smth` in API methods because it seems like `destroy` method for GC
-
-+ `filter_exps` from `XManAPI`, `XManProjAPI`, `XManGroupAPI` and their target classes should be implemented as a global filter system in `filter.py`.
-
-+ change exp or group num
-
-+ Move exp into another group
-
-+ [!!!] Check all needed API methods exist in XManAPI
-  + Implement checking system via pytest tests
-  + Check and align
-
-+ [!!!] Unlink result from the main data, move to `.result` - if someone put checkpoint into the result, it will be a cause of low performance. The same for manual result.
-
-+ `result_viewer` rename to `result_stringifier` (returns string)
-
-+ Add `result_viewer` as Callable[[Any], None] and `view_result()` will call it
-
-- [PRIO] [!!!] README.md  
-  https://www.markdownguide.org/basic-syntax/  
-  https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax  
-
 
 
 ### BUGS:
