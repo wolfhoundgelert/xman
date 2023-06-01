@@ -17,6 +17,10 @@
 
 + `filter_exps` from `XManAPI`, `XManProjAPI`, `XManGroupAPI` and their target classes should be implemented as a global filter system in `filter.py`.
 
++ change exp or group num
+
++ Move exp into another group
+
 + [!!!] Check all needed API methods exist in XManAPI
   + Implement checking system via pytest tests
   + Check and align
@@ -79,12 +83,8 @@
 
 - [???] XManError.__process_stack: Limit stack len via a config tb.format_stack()[:STACK_LIMIT]
 
-- [LOW] change exp or group num
-
-- [LOW] Move exp into another group
-
 - [???] Add printable info about timings on exp execution, savings, loadings
-- 
+
 - [???] Set `.lock` file during writing, then remove. If there's an attempt to read during an exp was locked, set a series of timeouts, then raise an error that exp wasn't unlocked for somehow (too long writing time or some error with removing `.lock` file after writing). Error: "pickle data was truncated", then group has an error status and can't update for actual status (active in the other notebook and account)
 
 - [???] Add printable info on start, save, load, etc...

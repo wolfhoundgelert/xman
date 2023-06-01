@@ -22,7 +22,7 @@ The `xMan` library can be downloaded from the `GitHub` [repository](https://gith
 </details>
 
 
-## Usage
+## First Glance
 <details><summary>Click to expand/collapse</summary>
 
 Let's assume that we work in Google Colab and want our experiments to be saved in Google Drive folder, which we can share lately among other Google Colab (and related Google Drive) accounts - it will be useful if we work in a team or/and want to execute experiments in parallel under different Google Colab accounts.
@@ -364,26 +364,39 @@ You can delete checkpoints with `xman.exp(2, 2).delete_checkpoints()`.
 </details>
 
 ### Running in parallel under different Google Colab accounts
+<details><summary>Click to expand/collapse</summary>
 
-TODO
+First, read the information about `Sharing across Google Colab accounts` in this document above. After you share your project, there are 2 ways of running experiments in parallel under different `Google Colab` accounts:
+1. You can load your project under the second account, duplicate your `Jupyter Notebook` into this account, reinit all needed cells (e.g. prepare the data, define methods and variables, init your model), create and `start()` your new experiment (or just `start()` if the exp was already created under the first account).
+2. Or you can make a pipeline for your new exp with a `save_on_storage=True` flag under the first account and just initiate the project under the second account (you don't need to duplicate your original notebook - just load the project, see `Sharing across Google Colab accounts` section).
+   ```python
+   xman.exp(...).make_pipeline(train_pipeline, params, save_on_storage=True)
+   # or
+   xman.exp(...).make_pipeline_with_checkpoints(
+      train_pipeline_with_mediator, params, save_on_storage=True)
+   ```   
+   Pay attention on that making your pipeline with the `save_on_storage=True` flag saves your run-function and parameters with all the dependencies they need (other definitions and variables). So it can be storage space consumable if you work with some big dataset - raw needed data from the current `Google Colab` session will be saved on your `Google Drive` in the according to the exp folder (it's easy to be several GB).
+
+   P.S. You can use not only `xman.exp(...).start()`, but also `xman.group(...).start()`, and even `xman.start()` - these methods search ready for start experiments and start them. You can use `autostart_next=True` parameter if you prepared several experiments in advance.
+
+All your results will be saved into the project shared `Google Drive` folder, so you can use as many accounts as you want. Despite on which approach you'll choose, you can create any mess with or in your notebooks without worrying about it - all the results will be saved and organized in your project in one place. Sounds amazing, yeah? 😀 Just don't forget to duplicate your notebooks (not only share them) under different accounts to avoid conflicting between cell's output in the notebook's history.
+
+</details>
 
 </details>
 
 ## What's next
+
 - Tests coverage
 - API Documentation coverage
-- `grid-search` implementing (there are some issues with storage space consumption)
-
-TODO
-
+- CI/CD
+- `grid-search` implementation (there are some issues with storage space consumption).
+- `xman.guide_me()` will advise you what to next (load proj, create group, create exp, finalise finished exps and so on). 
+- Project management control modes, e.g. you can activate `STRICT` mode, in this case you're not allowed to make a new exp group until you finalise with `success` or `fail` all exps from the previous one - it will help you to keep things from getting messed up.
 
 
 ## Conclusion
 
-TODO: It's not a secret, that takes a lot of time and many attempts to find best parameters, so gives competitive advantage
+It is not a secret that `AI`, `ML`, `NN`, `DL` experiments take a huge amount of time, because often you have to sort through a huge number of parameters and configurations that cannot be kept in your head, and, for example, the process of training neural networks can take hours. This tool can help you to streamline your experiments and, moreover, run them in parallel under different `Google Colab` accounts. This gives you a competitive edge in the rapidly evolving AI technologies space.
 
-
-<details><summary>Click to expand/collapse</summary>
-
-   This is the content that will be hidden initially and can be toggled by clicking the summary above.
-</details>
+Good luck! ❤️
