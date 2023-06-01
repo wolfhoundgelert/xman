@@ -1,6 +1,6 @@
 # xMan
 
-`xMan` (E**x**periment **Man**ager) is a `Python` library for effectively managing and organising experiments in `Jupyter Notebooks` on thе `Google Colab` platform or local machines, or right in the Python `REPL` (Read-Eval-Print Loop) interactive mode.
+`xMan` (E**x**periment **Man**ager) is a `Python` library for effective management and organising experiments in `Jupyter Notebooks` on thе `Google Colab` platform or local machines, or right in the Python `REPL` (Read-Eval-Print Loop) interactive mode.
 
 It offers the following key features:
 - ⭐ Keeping track of your experiments, providing a clear overview of your progress.
