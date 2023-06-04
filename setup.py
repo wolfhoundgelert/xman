@@ -1,12 +1,22 @@
 from setuptools import setup
-from xman import __version__
+import re
+
+
+with open('src/xman/__init__.py') as f:
+    version_match = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]', f.read(), re.MULTILINE)
+    if version_match:
+        version = version_match.group(1)
+    else:
+        raise RuntimeError("Version not found!")
+
 
 with open('src/requirements.txt') as f:
     requirements = f.read().splitlines()
 
+
 setup(
     name='xMan',
-    version=__version__,
+    version=version,
     packages=['xman'],
     package_dir={'': 'src'},
     url='https://github.com/wolfhoundgelert/xman',
@@ -18,5 +28,6 @@ setup(
                 'across different Colab accounts.',
     install_requires=requirements,
 )
+
 
 # TODO https://github.com/pypi/support/issues/2738
