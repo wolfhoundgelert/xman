@@ -18,6 +18,7 @@ class FileType(Enum):
     TXT = '.txt'
     JSON = '.json'
     PICKLE = '.pickle'
+    DILL_RECURSE = '.dr'
 
 
 def make_dir(dir_path, exist_ok=True): os.makedirs(dir_path, exist_ok=exist_ok)
@@ -143,12 +144,15 @@ def __save_to_file(obj, file_path, file_type: FileType):
     if file_type is FileType.TXT:
         with open(file_path, 'w') as f:
             f.write(str(obj))
-    if file_type is FileType.JSON:
+    elif file_type is FileType.JSON:
         with open(file_path, 'w') as f:
             json.dump(obj, f, indent=4)
-    if file_type is FileType.PICKLE:
+    elif file_type is FileType.PICKLE:
         with open(file_path, 'wb') as f:
             pickle.dump(obj, f)
+    elif file_type is FileType.DILL_RECURSE:
+        with open(file_path, 'wb') as f:
+            pickle.dump(obj, f, recurse=True)
 
 
 def __load_from_file(file_path, file_type: FileType) -> Optional[Any]:
@@ -156,10 +160,13 @@ def __load_from_file(file_path, file_type: FileType) -> Optional[Any]:
         if file_type is FileType.TXT:
             with open(file_path, 'r') as f:
                 return f.read()
-        if file_type is FileType.JSON:
+        elif file_type is FileType.JSON:
             with open(file_path, 'r') as f:
                 return json.load(f)
-        if file_type is FileType.PICKLE:
+        elif file_type is FileType.PICKLE:
+            with open(file_path, 'rb') as f:
+                return pickle.load(f)
+        elif file_type is FileType.DILL_RECURSE:
             with open(file_path, 'rb') as f:
                 return pickle.load(f)
     return None
@@ -196,11 +203,11 @@ def delete_manual_result(location_dir): __delete_file(get_manual_result_path(loc
 
 
 def save_pipeline_run_data(location_dir, run_data):
-    __save_to_file(run_data, __get_run_path(location_dir), FileType.PICKLE)
+    __save_to_file(run_data, __get_run_path(location_dir), FileType.DILL_RECURSE)
 
 
 def load_pipeline_run_data(location_dir):
-    return __load_from_file(__get_run_path(location_dir), FileType.PICKLE)
+    return __load_from_file(__get_run_path(location_dir), FileType.DILL_RECURSE)
 
 
 def delete_pipeline_run_data(location_dir): __delete_file(__get_run_path(location_dir))

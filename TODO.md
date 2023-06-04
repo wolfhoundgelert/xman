@@ -11,9 +11,13 @@
 
 ### BUGS:
 
+- Colab cash doesn't allow to get actual info about experiments "/content/drive/.shortcut-targets-by-id/1G9R8MCoshlzIuEOrmbNzHnDSWEZi-4-b"
+  - There also "/content/drive/.Trash-0"
+  - There also "/content/drive/.file-revisions-by-id"
+
 - Opened under another account project doesn't recognize exp running in the first group as IN_PROGRESS and ACTIVE. Shows it as TO_DO. (exp 3.1 in DL2/hw_6-1)
 
-- Create exp with saving on storage, run exp and stop in manually in the cell. Start once again:  
+- Create exp with saving on storage, run exp and stop it manually in the cell. Start once again:
   ```
   IllegalOperationXManError: Can't recreate pipeline for exp `Exp 2 [IN_PROGRESS: IDLE] Baseline `mean` - {'aggregation_type': 'mean'}` - there's no `.run` data file! Use `save=True` for `make_pipeline()` method if you need to preserve `run_func` and `params` for other session.
   ```
