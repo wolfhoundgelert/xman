@@ -96,17 +96,17 @@ class Exp(ExpStruct):
 
     def stringify_result(self) -> str:
         rs = self.result_stringifier
-        if rs is None and self.parent is not None:
+        if rs is None:
             rs = self.parent.result_stringifier
-            if rs is None and self.parent.parent is not None:
+            if rs is None:
                 rs = self.parent.parent.result_stringifier
         return str(self.result) if rs is None else rs(self.result)
 
     def view_result(self):
         rv = self.result_viewer
-        if rv is None and self.parent is not None:
+        if rv is None:
             rv = self.parent.result_viewer
-            if rv is None and self.parent.parent is not None:
+            if rv is None:
                 rv = self.parent.parent.result_viewer
         print(self.result) if rv is None else rv(self.result)
 
@@ -296,7 +296,8 @@ class Exp(ExpStruct):
 
     def __str__(self):
         state = f": {self.state}" if self.status.status_str == ExpStructStatus.IN_PROGRESS else ''
-        return f"Exp {self.num} [{self.status}{state}] {self._data.name} - {self._data.descr}"
+        return f"Exp {self.group.num}.{self.num} [{self.status}{state}] " \
+               f"{self._data.name} - {self._data.descr}"
 
     def __is_active_by_time_delta(self):
         run_timestamp = filesystem.load_run_timestamp(self.location_dir)

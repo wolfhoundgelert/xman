@@ -1,8 +1,24 @@
 ### CURRENT:
 
++ "Exp 1 [DONE]" -> "Exp 2.1 [DONE]" (add group number)
+
++ For `exp.success()` and `exp.fail()` check there's no other success or fail status - need that guard
+
+- Can't unpickle exp after re-oping in other notebook (DL2, hw_6-1, Group 1, Exp 1 and 2)
+  + Try to use `dill` instead of `cloudpickle`
+
 
 
 ### BUGS:
+
+- Opened under another account project doesn't recognize exp running in the first group as IN_PROGRESS and ACTIVE. Shows it as TO_DO. (exp 3.1 in DL2/hw_6-1)
+
+- Create exp with saving on storage, run exp and stop in manually in the cell. Start once again:  
+  ```
+  IllegalOperationXManError: Can't recreate pipeline for exp `Exp 2 [IN_PROGRESS: IDLE] Baseline `mean` - {'aggregation_type': 'mean'}` - there's no `.run` data file! Use `save=True` for `make_pipeline()` method if you need to preserve `run_func` and `params` for other session.
+  ```
+  
+- Make 2 exp-s, xman.start(). The second exp started, but the first one was expected.f
 
 - Can't upload `xman` on pypi.org 
   +  Write a letter about `xman` repo to `support@pypi.org`
@@ -12,6 +28,8 @@
 
 
 ### TODO:
+
+- Possibility to mark some exp with some marker in `info()`. I want to mark best or interesting exps. And clean that marker if it's needed.
 
 - Documentation for each API method - py docstrings
 

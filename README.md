@@ -43,7 +43,7 @@ We can check our Google Drive directory:
 xman.dir_tree('./drive/MyDrive')
 ```
 
-Create a folder for our experiments specifying the path, name and description:
+Make a new project for our experiments specifying the path, name and description:
 ```python
 xman.make_proj('./drive/MyDrive/xman_exps', "My Proj Name", "My proj descr")
 ```

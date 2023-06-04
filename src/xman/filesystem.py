@@ -6,7 +6,7 @@ import re
 from enum import Enum
 from pathlib import Path
 from typing import Optional, Any
-import cloudpickle as pickle  # dill as pickle, pickle
+import dill as pickle  # dill as pickle, cloudpickle as pickle, pickle
 
 from .error import ArgumentsXManError, IllegalOperationXManError, NotImplementedXManError, \
     NotExistsXManError
@@ -55,16 +55,16 @@ def get_checkpoints_list_path(location_dir):
     return os.path.join(get_checkpoints_dir_path(location_dir), 'list.json')
 
 
-def get_note_path(location_dir, file_type: FileType):
-    return os.path.join(location_dir, 'note' + file_type.value)
-
-
 def __get_checkpoint_path(location_dir):
     current_time_ns = time.time_ns()
     current_time_s = current_time_ns // 10 ** 9  # Convert nanoseconds to seconds
     formatted_time = time.strftime("%Y-%m-%d__%H_%M_%S", time.gmtime(current_time_s))
-    fname = formatted_time + '--' + str(current_time_ns)[-9:]
+    fname = formatted_time + '--' + str(current_time_ns)[-9:] + '.cp'
     return os.path.join(get_checkpoints_dir_path(location_dir), fname)
+
+
+def get_note_path(location_dir, file_type: FileType):
+    return os.path.join(location_dir, 'note' + file_type.value)
 
 
 def get_dir_num(dir_path):
