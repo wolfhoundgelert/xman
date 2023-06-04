@@ -2,7 +2,8 @@ import os
 from typing import Optional, Type, Callable, Any, Tuple
 from copy import deepcopy
 
-from .error import NotExistsXManError, ArgumentsXManError, AlreadyExistsXManError
+from .error import NotExistsXManError, ArgumentsXManError, AlreadyExistsXManError, \
+    IllegalOperationXManError
 from . import util, filesystem, tree, confirm
 from .note import Note
 
@@ -142,6 +143,11 @@ class ExpStruct:
 
     def set_manual_status(self, status: str, resolution: str) -> 'ExpStruct':
         ExpStructStatus._check(status, resolution)
+        status_str = self.status.status_str
+        if status_str == ExpStructStatus.SUCCESS or status_str == ExpStructStatus.FAIL:
+            raise IllegalOperationXManError(f"`{self}` was already finalised with status "
+                                            f"`{status_str}` - you need to delete it manually with "
+                                            f"`delete_manual_status()` method at first!")
         self._data.manual_status = status
         self._data.manual_status_resolution = resolution
         self._save()
