@@ -7,6 +7,10 @@
 - Can't unpickle exp after re-oping in other notebook (DL2, hw_6-1, Group 1, Exp 1 and 2)
   + Try to use `dill` instead of `cloudpickle`
 
+- `What For` section before `Installation`:
+  - Case 1: GPU, checkpoints, spent hours for nothing when GPU was dropped by Google
+  - Case 2: Chaotic research without understanding
+
 
 
 ### BUGS:
