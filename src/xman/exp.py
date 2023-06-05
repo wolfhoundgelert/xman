@@ -124,8 +124,7 @@ class Exp(ExpStruct):
         if self._data.pipeline is None:
             raise NotExistsXManError(f"There's no pipeline in exp `{self}`!")
         if confirm.request(need_confirm, f"ATTENTION! Remove the pipeline of exp `{self}`\n"
-                                          f"(it will also delete the pipeline result, "
-                                         f"all checkpoints, and data)?"):
+                f"(it will also delete the pipeline result, all checkpoints, and data)?"):
             maker.delete_pipeline(self, self.__pipeline)
             self.__pipeline = None
             self._save()
@@ -135,8 +134,8 @@ class Exp(ExpStruct):
     def delete_checkpoints(self, need_confirm: bool = True, delete_custom_paths: bool = False)\
             -> Optional['Exp']:
         self._check_is_not_active()
-        if not confirm.request(need_confirm, f"ATTENTION! Do you want to delete `{self}` "
-                                              f"checkpoints?"):
+        if not confirm.request(need_confirm,
+                               f"ATTENTION! Do you want to delete `{self}` checkpoints?"):
             return None
         if delete_custom_paths:
             lst = self.checkpoints_mediator.get_checkpoint_paths_list(check_files_exist=True)
@@ -151,7 +150,7 @@ class Exp(ExpStruct):
             raise IllegalOperationXManError(f"The `{self}` already has a manual result - delete it "
                                             f"with `delete_manual_result()` method first!")
         pipeline_data = self._data.pipeline
-        if force_after_error:
+        if self.status.status_str == ExpStructStatus.ERROR and force_after_error:
             pipeline_data.started = False
             pipeline_data.error = None
             pipeline_data.error_stack = None
@@ -208,8 +207,8 @@ class Exp(ExpStruct):
     def delete_manual_result(self, need_confirm: bool = True) -> Optional['Exp']:
         if not self.has_manual_result:
             raise NotExistsXManError(f"There's no manual result in the `{self}`!")
-        if not confirm.request(need_confirm, f"ATTENTION! The manual result for the `{self}\nwill "
-                                              f"be deleted - proceed?"):
+        if not confirm.request(need_confirm,
+                f"ATTENTION! The manual result for the `{self}\nwill be deleted - proceed?"):
             return None
         filesystem.delete_manual_result(self.location_dir)
         return self
@@ -229,8 +228,7 @@ class Exp(ExpStruct):
     def clear(self, need_confirm: bool = True) -> Optional['Exp']:
         self._check_is_not_active()
         if not confirm.request(need_confirm,
-                                f"ATTENTION! The `{self}`\nwill be cleared as it just was "
-                                f"created - proceed?"):
+                f"ATTENTION! The `{self}`\nwill be cleared as it just was created - proceed?"):
             return None
         if self.has_pipeline:
             self.delete_pipeline(need_confirm=False)
