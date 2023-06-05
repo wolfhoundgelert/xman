@@ -219,9 +219,9 @@ class ExpAPI(ExpStructAPI):
         obj = self._obj.delete_checkpoints(need_confirm, delete_custom_paths)
         return None if obj is None else self
 
-    def start(self) -> 'ExpAPI':
+    def start(self, force_after_error: bool = False) -> 'ExpAPI':
         self._obj.update()
-        self._obj.start()
+        self._obj.start(force_after_error=force_after_error)
         return self
 
     def get_manual_result(self) -> Any:

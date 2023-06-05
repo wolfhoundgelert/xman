@@ -6,7 +6,7 @@ import re
 from enum import Enum
 from pathlib import Path
 from typing import Optional, Any
-import dill as pickle  # dill as pickle, cloudpickle as pickle, pickle
+import cloudpickle as pickle  # dill as pickle, cloudpickle as pickle, pickle
 
 from .error import ArgumentsXManError, IllegalOperationXManError, NotImplementedXManError, \
     NotExistsXManError
@@ -206,15 +206,15 @@ def load_pipeline_run_data(location_dir):
 def delete_pipeline_run_data(location_dir): __delete_file(__get_run_path(location_dir))
 
 
-def save_run_timestamp(location_dir):
+def save_pipeline_run_timestamp(location_dir):
     __save_to_file(time.time(), __get_run_time_path(location_dir), FileType.PICKLE)
 
 
-def load_run_timestamp(location_dir):
+def load_pipeline_run_timestamp(location_dir):
     return __load_from_file(__get_run_time_path(location_dir), FileType.PICKLE)
 
 
-def delete_run_timestamp(location_dir): __delete_file(__get_run_time_path(location_dir))
+def delete_pipeline_run_timestamp(location_dir): __delete_file(__get_run_time_path(location_dir))
 
 
 def save_pipeline_result(location_dir, pipeline_result):
@@ -296,26 +296,3 @@ def load_note(location_dir, file_type: FileType):
 
 
 def delete_note(location_dir, file_type): __delete_file(get_note_path(location_dir, file_type))
-
-
-# TODO Need to refine if it will be used!
-def __get_related_path(path, anchor_folder):
-    path = Path(path).resolve()
-    anchor_folder = Path(anchor_folder).resolve()
-    if anchor_folder in path.parents:
-        relative_path = path.relative_to(anchor_folder)
-        return str(Path(relative_path))
-    else:
-        path_parts = path.parts
-        folder_parts = anchor_folder.parts
-        # Find the common base path
-        i = 0
-        while i < min(len(path_parts), len(folder_parts)):
-            if path_parts[i] != folder_parts[i]:
-                break
-            i += 1
-        # Construct the dotted notation
-        dotted_notation = '../' * (len(folder_parts) - i)
-        related_path = Path(*path_parts[i:])
-        result = dotted_notation + str(related_path)
-        return str(Path(result))

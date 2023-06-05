@@ -4,21 +4,39 @@
 
 + For `exp.success()` and `exp.fail()` check there's no other success or fail status - need that guard
 
-- Can't unpickle exp after re-oping in other notebook (DL2, hw_6-1, Group 1, Exp 1 and 2)
-  + Try to use `dill` instead of `cloudpickle`
++ Can't unpickle exp after re-oping in other notebook (DL2, hw_6-1, Group 1, Exp 1 and 2)
+  + Try to use `dill` instead of `cloudpickle` - NO NEED, the issue was about `datasets` load its data from disk.
+  In such cases it's better to add to the `train` run-func all needed code:
+    ```
+    !pip install datasets
+    import datasets
+    dataset = datasets.load_dataset('ag_news')
+        
+    import nltk
+    nltk.download('punkt')
+    ```
+    
++ Opened under another account project doesn't recognize exp running in the first group as IN_PROGRESS and ACTIVE. Shows it as TO_DO. (exp 3.1 in DL2/hw_6-1)
+
++ Create exp with saving on storage, run exp and stop it manually in the cell. Start once again:
+  ```
+  IllegalOperationXManError: Can't recreate pipeline for exp `Exp 2 [IN_PROGRESS: IDLE] Baseline `mean` - {'aggregation_type': 'mean'}` - there's no `.run` data file! Use `save=True` for `make_pipeline()` method if you need to preserve `run_func` and `params` for other session.
+  ```
+  + Maybe it would be better if I didn't delete `.run` after an error, because I can tune some in imports and run. But need to delete `error` and `error_stack` on rerun, and review `start()`.
+
+- Make 2 exp-s, xman.start(). The second exp started, but the first one was expected.
+
+- `What For and Why` section before `Installation`:
+  - Case 1: GPU, checkpoints, spent hours for nothing when GPU was dropped by Google
+  - Case 2: Chaotic research without understanding
 
 
 
 ### BUGS:
 
-- Opened under another account project doesn't recognize exp running in the first group as IN_PROGRESS and ACTIVE. Shows it as TO_DO. (exp 3.1 in DL2/hw_6-1)
-
-- Create exp with saving on storage, run exp and stop in manually in the cell. Start once again:  
-  ```
-  IllegalOperationXManError: Can't recreate pipeline for exp `Exp 2 [IN_PROGRESS: IDLE] Baseline `mean` - {'aggregation_type': 'mean'}` - there's no `.run` data file! Use `save=True` for `make_pipeline()` method if you need to preserve `run_func` and `params` for other session.
-  ```
-  
-- Make 2 exp-s, xman.start(). The second exp started, but the first one was expected.f
+- Colab cash doesn't allow to get actual info about experiments "/content/drive/.shortcut-targets-by-id/1G9R8MCoshlzIuEOrmbNzHnDSWEZi-4-b"
+  - There also "/content/drive/.Trash-0"
+  - There also "/content/drive/.file-revisions-by-id"
 
 - Can't upload `xman` on pypi.org 
   +  Write a letter about `xman` repo to `support@pypi.org`
@@ -39,12 +57,12 @@
   - Each protected method with some logic should be covered by tests
   - Each private method with some logic should be covered by tests
 
-- Add `__str__` and `_repr_pretty_` to XMan, show there the credits, version, quick help and links to documentation.
+- Add `__str__` and `_repr_pretty_` to xMan, show there the credits, version, quick help and links to documentation.
 
 
 ### BACKLOG:
 
-- [LOW] Add `__str__` and `_repr_pretty_` to XMan, show there the credits, version, quick help and links to documentation.
+- [LOW] Add `__str__` and `_repr_pretty_` to xMan, show there the credits, version, quick help and links to documentation.
 
 - [LOW] How to solve the issue of multiple `update`-s in a chain `a.foo().bar().biz()`. I need to register each call in some `UpdateManager`, if it's the first call - set `is_chain` status to `True`, this status activates some other thread (e.g. by minimal timer) for setting `is_chain` back to `False`. Each of methods (foo, bar, biz) check `is_chain` flag, and if it's `True`, they skip `update`. In this case, the flag will be cleared right after the chain and the next chain starts again with `update`. I can add this logic to the root `super().update()` and it will return `False` if the chain were marked:
   ```

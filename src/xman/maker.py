@@ -95,9 +95,10 @@ def recreate_pipeline(exp):
 
 
 def delete_pipeline(exp: Exp, pipeline: Optional[Pipeline]):
+    filesystem.delete_pipeline_result(exp.location_dir)
     exp.delete_checkpoints(need_confirm=False, delete_custom_paths=True)
     filesystem.delete_pipeline_run_data(exp.location_dir)
-    filesystem.delete_run_timestamp(exp.location_dir)
+    filesystem.delete_pipeline_run_timestamp(exp.location_dir)
     if pipeline is not None:
         pipeline._destroy()
     exp._data.pipeline = None
