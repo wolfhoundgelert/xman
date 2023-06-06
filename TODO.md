@@ -1,41 +1,5 @@
 ### CURRENT:
 
-+ "Exp 1 [DONE]" -> "Exp 2.1 [DONE]" (add group number)
-
-+ For `exp.success()` and `exp.fail()` check there's no other success or fail status - need that guard
-
-+ Can't unpickle exp after re-oping in other notebook (DL2, hw_6-1, Group 1, Exp 1 and 2)
-  + Try to use `dill` instead of `cloudpickle` - NO NEED, the issue was about `datasets` load its data from disk.
-  In such cases it's better to add to the `train` run-func all needed code:
-    ```
-    !pip install datasets
-    import datasets
-    dataset = datasets.load_dataset('ag_news')
-        
-    import nltk
-    nltk.download('punkt')
-    ```
-    
-+ Opened under another account project doesn't recognize exp running in the first group as IN_PROGRESS and ACTIVE. Shows it as TO_DO. (exp 3.1 in DL2/hw_6-1)
-
-+ Create exp with saving on storage, run exp and stop it manually in the cell. Start once again:
-  ```
-  IllegalOperationXManError: Can't recreate pipeline for exp `Exp 2 [IN_PROGRESS: IDLE] Baseline `mean` - {'aggregation_type': 'mean'}` - there's no `.run` data file! Use `save=True` for `make_pipeline()` method if you need to preserve `run_func` and `params` for other session.
-  ```
-  + Maybe it would be better if I didn't delete `.run` after an error, because I can tune some in imports and run. But need to delete `error` and `error_stack` on rerun, and review `start()`.
-
-+ Make 2 exp-s, xman.start(). The second exp started, but the first one was expected.
-
-+ Possibility to mark some exp with some marker in `info()`. I want to mark best or interesting exps. And clean that marker if it's needed.
-  
-+ `What For and Why` section before `Installation`:
-  + Case 1: GPU, checkpoints, spent hours for nothing when GPU was dropped by Google
-  +Case 2: Chaotic research without understanding
-
-+ Add a note about issues with pickling to the `Running in parallel...` section
-
-+ Add to the readme a list of main functionality (commonly used methods of API)
-
 
 
 ### BUGS:
