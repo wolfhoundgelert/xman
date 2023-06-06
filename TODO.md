@@ -28,11 +28,13 @@
 
 + Possibility to mark some exp with some marker in `info()`. I want to mark best or interesting exps. And clean that marker if it's needed.
   
-- `What For and Why` section before `Installation`:
-  - Case 1: GPU, checkpoints, spent hours for nothing when GPU was dropped by Google
-  - Case 2: Chaotic research without understanding
++ `What For and Why` section before `Installation`:
+  + Case 1: GPU, checkpoints, spent hours for nothing when GPU was dropped by Google
+  +Case 2: Chaotic research without understanding
 
-- Add to the readme a list of main functionality (commonly used methods of API)
++ Add a note about issues with pickling to the `Running in parallel...` section
+
++ Add to the readme a list of main functionality (commonly used methods of API)
 
 
 
