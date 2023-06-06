@@ -7,7 +7,7 @@ from . import util, confirm, maker, filesystem
 
 class ExpStructBox(ExpStruct):
 
-    def info(self):
+    def info(self) -> str:
         text = super().info()
         for child in self.children():
             text += util.tab(f"\n\n{child.info()}")

@@ -15,6 +15,7 @@ class ExpData(ExpStructData):
     def __init__(self, name, descr):
         super().__init__(name, descr)
         self.pipeline: PipelineData = None
+        self.marker: str = None
 
 
 class ExpState:
@@ -88,7 +89,15 @@ class Exp(ExpStruct):
             self.__checkpoints_mediator = CheckpointsMediator(self.location_dir)
         return self.__checkpoints_mediator
 
-    def info(self):
+    @property
+    def marker(self) -> str: return self._data.marker
+
+    @marker.setter
+    def marker(self, value):
+        self._data.marker = value
+        self._save()
+
+    def info(self) -> str:
         text = super().info()
         if self.has_result:
             text += util.tab(f"\nResult:\n{util.tab(self.stringify_result())}")
@@ -131,8 +140,7 @@ class Exp(ExpStruct):
             return self
         return None
 
-    def delete_checkpoints(self, need_confirm: bool = True, delete_custom_paths: bool = False)\
-            -> Optional['Exp']:
+    def delete_checkpoints(self, need_confirm: bool = True, delete_custom_paths: bool = False) -> Optional['Exp']:
         self._check_is_not_active()
         if not confirm.request(need_confirm,
                                f"ATTENTION! Do you want to delete `{self}` checkpoints?"):
@@ -302,8 +310,9 @@ class Exp(ExpStruct):
 
     def __str__(self):
         state = f": {self.state}" if self.status.status_str == ExpStructStatus.IN_PROGRESS else ''
-        return f"Exp {self.group.num}.{self.num} [{self.status}{state}] " \
-               f"{self._data.name} - {self._data.descr}"
+        marker = '' if self.marker is None or self.marker == '' else self.marker + ' '
+        return (f"{marker}Exp {self.group.num}.{self.num} [{self.status}{state}] "
+                f"{self.name} - {self.descr}")
 
     def __is_active_by_time_delta(self):
         run_timestamp = filesystem.load_pipeline_run_timestamp(self.location_dir)

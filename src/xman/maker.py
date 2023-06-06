@@ -94,7 +94,7 @@ def recreate_pipeline(exp):
     return Pipeline(exp.location_dir, exp._data.pipeline, run_data)
 
 
-def delete_pipeline(exp: Exp, pipeline: Optional[Pipeline]):
+def delete_pipeline(exp: Exp, pipeline: Pipeline):
     filesystem.delete_pipeline_result(exp.location_dir)
     exp.delete_checkpoints(need_confirm=False, delete_custom_paths=True)
     filesystem.delete_pipeline_run_data(exp.location_dir)

@@ -55,7 +55,9 @@ def exps(
         is_ready_for_start: bool = None,
         status_or_list: str | List[str] = None,
         not_status_or_list: str | List[str] = None,
-        # TODO Implement:
+        has_marker: bool = None,
+        marker_or_list: str | List[str] = None,
+        # TODO ??? Implement:
         # str_in_name: str = None,
         # str_in_descr: str = None,
         # str_in_resolution: str = None,
@@ -83,6 +85,11 @@ def exps(
     if not_status_or_list is not None:
         not_status_list = __check_and_get_status_list(not_status_or_list)
         results.append([x for x in exps if x.status_str not in not_status_list])
+    if has_marker is not None:
+        results.append([x for x in exps if (x.marker is not None) == has_marker])
+    if marker_or_list is not None:
+        lst = marker_or_list if type(marker_or_list) == list else [marker_or_list]
+        results.append([x for x in exps if x.marker in lst])
     result = intersect(*results) if mode == Mode.AND else unite(*results)
     return sorted(result, key=__exp_key)
 

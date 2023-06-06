@@ -133,7 +133,7 @@ class ExpStruct:
 
     def tree(self, depth: int = None): tree.print_dir_tree(self.location_dir, depth)
 
-    def info(self):
+    def info(self) -> str:
         text = str(self)
         if self.status.resolution is not None:
             text += util.tab(f"\nResolution: {self.status.resolution}")
@@ -172,16 +172,16 @@ class ExpStruct:
             return self
         return None
 
-    def edit(self, name: Optional[str] = None, descr: Optional[str] = None):
+    def edit(self, name: str = None, descr: str = None):
         need_save = False
-        if self._data.name != name:
+        if self.name != name:
             if self._parent is not None and self._parent.has_child(name):
                 raise AlreadyExistsXManError(
                     f"There's another child with the name=`{name}` "
                     f"in the parent `{self._parent}`")
             self._data.name = name
             need_save = True
-        if self._data.descr != descr:
+        if self.descr != descr:
             self._data.descr = descr
             need_save = True
         if need_save:

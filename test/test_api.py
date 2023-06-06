@@ -219,7 +219,7 @@ def test__check_api():
 
 
 def test__ExpStruct():
-    excludes = ['parent', 'api']
+    excludes = ['parent', 'api', 'info']
     result = check_api(ExpStruct, ExpStructAPI, excludes)
     if result is not None:
         info, _, _ = result
@@ -228,7 +228,7 @@ def test__ExpStruct():
 
 
 def test__Exp():
-    excludes = ['parent', 'api']
+    excludes = ['parent', 'api', 'info']
     result = check_api(Exp, ExpAPI, excludes)
     if result is not None:
         info, _, _ = result
@@ -238,7 +238,7 @@ def test__Exp():
 
 def test__ExpGroup():
     excludes = ['parent', 'api', 'make_child', 'has_child', 'num_children', 'change_child_num',
-                'children_nums', 'child', 'children', 'delete_child', 'children_names']
+                'children_nums', 'child', 'children', 'delete_child', 'children_names', 'info']
     result = check_api(ExpGroup, ExpGroupAPI, excludes)
     if result is not None:
         info, _, _ = result
@@ -248,7 +248,7 @@ def test__ExpGroup():
 
 def test__ExpProj():
     excludes = ['parent', 'api', 'make_child', 'has_child', 'num_children', 'change_child_num',
-                'children_nums', 'child', 'children', 'delete_child', 'children_names']
+                'children_nums', 'child', 'children', 'delete_child', 'children_names', 'info']
     result = check_api(ExpProj, ExpProjAPI, excludes)
     if result is not None:
         info, _, _ = result

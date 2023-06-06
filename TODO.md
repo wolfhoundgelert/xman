@@ -26,9 +26,13 @@
 
 + Make 2 exp-s, xman.start(). The second exp started, but the first one was expected.
 
++ Possibility to mark some exp with some marker in `info()`. I want to mark best or interesting exps. And clean that marker if it's needed.
+  
 - `What For and Why` section before `Installation`:
   - Case 1: GPU, checkpoints, spent hours for nothing when GPU was dropped by Google
   - Case 2: Chaotic research without understanding
+
+- Add to the readme a list of main functionality (commonly used methods of API)
 
 
 
@@ -46,8 +50,6 @@
 
 
 ### TODO:
-
-- Possibility to mark some exp with some marker in `info()`. I want to mark best or interesting exps. And clean that marker if it's needed.
 
 - Documentation for each API method - py docstrings
 
