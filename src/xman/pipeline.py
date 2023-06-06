@@ -3,7 +3,7 @@ import threading
 from threading import Timer
 from typing import Any, Callable, Optional, List
 
-from . import filesystem
+from . import filesystem, platform
 from .config import PipelineConfig
 from .error import get_error_str, get_error_stack_str, NotExistsXManError
 
@@ -102,7 +102,6 @@ class Pipeline:
     def start(self):
         data = self.__data
         run_data = self.__run_data
-        data.started = True
         error = None
         self.__do_timestamp()
         try:
@@ -120,6 +119,7 @@ class Pipeline:
             raise error
 
     def _destroy(self):
+        filesystem.delete_pipeline_run_timestamp(self.__location_dir)
         if self.__timer is not None:
             self.__timer.cancel()
             self.__timer = None
@@ -140,5 +140,8 @@ class Pipeline:
         data.error_stack = get_error_stack_str(error)
 
     def __do_timestamp(self):
-        filesystem.save_run_timestamp(self.__location_dir)
+        if platform.is_jupyter_notebook and platform.check_jupyter_notebook_kernel_interrupted():
+            return
+        filesystem.save_pipeline_run_timestamp(self.__location_dir)
         self.__timer = threading.Timer(PipelineConfig.timer_interval, self.__do_timestamp)
+        self.__timer.start()

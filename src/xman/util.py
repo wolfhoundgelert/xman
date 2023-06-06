@@ -1,16 +1,18 @@
 from .error import OverrideXManError, ArgumentsXManError
 
+
 SECOND = 1
 MINUTE = 60 * SECOND
 HOUR = 60 * MINUTE
 DAY = 24 * HOUR
 
 
+TAB_NUM_SPACES = 4
+
+
 def tab(text, deep=1):
-    num_spaces = 4
-    t = ' ' * num_spaces * deep
-    text = text.replace('\n', f'\n{t}')
-    return f"{t}{text}"
+    t = ' ' * TAB_NUM_SPACES * deep
+    return text.replace('\n', f'\n{t}')
 
 
 def is_num(num_or_name): return type(num_or_name) is int and num_or_name >= 1

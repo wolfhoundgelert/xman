@@ -1,4 +1,4 @@
-__version__ = '0.1.0'  # TODO support auto setting from setup.py
+__version__ = '0.2.0'
 
 
 from .api import XManAPI

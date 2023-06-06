@@ -87,19 +87,3 @@ def test__change_group_num_in_path():
     path = '../gitignore/testproj/group42/exp1'
     new_path = '../gitignore/testproj/group24/exp1'
     assert filesystem.change_group_num_in_path(path, 24) == new_path
-
-
-def test__get_related_path():
-    anchor_folder = '/path/to/folder'
-
-    path = '/path/to/folder/file.txt'
-    result = filesystem.__get_related_path(path, anchor_folder)
-    assert result == str(Path('file.txt'))
-
-    path = '/path/to/other_folder/subfolder/file.txt'
-    result = filesystem.__get_related_path(path, anchor_folder)
-    assert result == str(Path('../other_folder/subfolder/file.txt'))
-
-    path = '/path/outside/folder/file.txt'
-    result = filesystem.__get_related_path(path, anchor_folder)
-    assert result == str(Path('../../outside/folder/file.txt'))

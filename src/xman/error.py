@@ -28,10 +28,6 @@ class AlreadyExistsXManError(XManError):
     pass
 
 
-class WasDestroyedXManError(XManError):
-    pass
-
-
 class ArgumentsXManError(XManError):
     pass
 
@@ -45,10 +41,6 @@ class NothingToDoXManError(XManError):
 
 
 class NotImplementedXManError(XManError):
-    pass
-
-
-class PlatformXManError(XManError):
     pass
 
 

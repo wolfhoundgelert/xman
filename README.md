@@ -1,11 +1,62 @@
 # xMan
 
-`xMan` (E**x**periment **Man**ager) is a `Python` library for effectively managing and organising experiments in `Jupyter Notebooks` on thе `Google Colab` platform or local machines, or right in the Python `REPL` (Read-Eval-Print Loop) interactive mode.
+`xMan` (E**x**periment **Man**ager) is a `Python` library for effective management and organising experiments in `Jupyter Notebooks` on thе `Google Colab` platform or local machines, or right in the Python `REPL` (Read-Eval-Print Loop) interactive mode.
 
 It offers the following key features:
 - ⭐ Keeping track of your experiments, providing a clear overview of your progress.
 - ⭐ Saving results in a centralised location, such as a shared Google Drive folder, with the option to use intermediate checkpoints.
-- ⭐ Running experiments in parallel across multiple Google Colab accounts, making it a powerful tool for AI, ML, NN, and DL students, learners, enthusiasts, researchers and their teams. 😍
+- ⭐ Rapid deployment and running experiments in parallel across multiple Google Colab accounts, making it a powerful tool for AI, ML, NN, and DL students, learners, enthusiasts, researchers and their teams. 😍
+
+In particular, provided:
+
+- Create, delete, rename, and move directories, and print directory tree with a depth limitation.
+
+- Create a new project, load existing projects specified by their directory paths, update and reload projects.
+
+- Print information about the project, specific groups or experiments, and retrieve various details such as location directory, directory tree, number, name, description, status, manual or automatic flag, etc.
+
+- All the information is saved in storage.
+
+- Retrieve groups and experiments by their numbers or names.
+
+- Manage groups and experiments - create, delete, edit, move, retrieve children and obtain various information about them.
+
+- Filter experiments and groups based on various parameters in different modes, with support for custom filters.
+
+- Retrieve experiments that are ready to start, initiate such experiments without manual checking, and support automatic start of the next experiment.
+
+- Support manual experiments and experiments with running pipelines, and view their results.
+
+- Set manual statuses and manual results for manual experiments.
+
+- Automatically set statuses for pipeline experiments.
+
+- Protection for currently running experiments.
+
+- Set a custom method for stringifying experiment results at the experiment, group, and project levels.
+
+- Set a custom result viewer for viewing experiment results at the experiment, group, and project levels.
+
+- Finalize experiments, groups, and projects after review, marking them with SUCCESS or FAIL statuses.
+
+- Add notes in txt, json, and pickle formats to experiments, groups, and project structures.
+
+- Save errors and error stacks in case of issues during pipeline execution.
+
+- Save checkpoints during pipeline execution and load them later or start the pipeline from a specific saved point.
+
+- Set markers on experiments to highlight specific experiments.
+
+And so on...
+
+## What for and why
+
+You are probably familiar with the following situations:
+
+1. You are looking for the optimal solution, just sorting through a lot of different network parameters and their combinations. After launching a dozen experiments, you find yourself losing track of what you've done and the corresponding results. Most importantly, you feel uncertain about which direction to pursue. It's a nightmare you'd rather forget. However, there's a way to salvage the situation. By structuring your experiments, conducting evaluative reviews, and keeping the results within easy reach, this tool will help you conserve effort and spare your nerves. You'll experience fewer chaotic launches, while significantly increasing the number of experiments. With a conscious approach, you can achieve exceptional model quality and bid farewell to the frustrations of the past. Explore [First glance](#first-glance) and [Performing experiments](#performing-experiments).
+
+
+2. You are hard at work on a project in Google Colab. Your network training requires substantial time and computational resources, relying on the GPU (a heartfelt thanks and appreciation to Google and the Colab team for making their infrastructure available to anyone ❤️). The training process has been going for the third hour, but, suddenly, disaster strikes – you've exhausted your daily GPU limit. Now, you face the daunting task of migrating your experiment to a new Colab account and redeploying everything from scratch. This process consumes considerable time and frays your nerves. You've not deployed under a second (let alone a third) account, making the prospect of working in parallel and avoiding idle time, because it seems overly complicated and bewildering. And it remains unclear how to piece everything together later in different Jupyter Notebooks. It's a nightmare best forgotten. But fear not! Now you can swiftly deploy under any account, even starting from a completely empty Jupyter Notebook. And don't forget to use checkpoints saving feature during your train execution. Simply refer to the [Pipelines with checkpoints](#pipelines-with-checkpoints) and [Running in parallel under different Google Colab accounts](#running-in-parallel-under-different-google-colab-accounts) section for seamless execution.
 
 
 
@@ -22,7 +73,8 @@ The `xMan` library can be downloaded from the `GitHub` [repository](https://gith
 </details>
 
 
-## First Glance
+
+## First glance
 <details><summary>Click to expand/collapse</summary>
 
 Let's assume that we work in Google Colab and want our experiments to be saved in Google Drive folder, which we can share lately among other Google Colab (and related Google Drive) accounts - it will be useful if we work in a team or/and want to execute experiments in parallel under different Google Colab accounts.
@@ -43,7 +95,7 @@ We can check our Google Drive directory:
 xman.dir_tree('./drive/MyDrive')
 ```
 
-Create a folder for our experiments specifying the path, name and description:
+Make a new project for our experiments specifying the path, name and description:
 ```python
 xman.make_proj('./drive/MyDrive/xman_exps', "My Proj Name", "My proj descr")
 ```
@@ -128,6 +180,7 @@ As you probably already noticed:
 </details>
 
 
+
 ## Sharing across Google Colab accounts
 <details><summary>Click to expand/collapse</summary>
 
@@ -159,7 +212,8 @@ xman.info()
 </details>
 
 
-## Performing Experiments
+
+## Performing experiments
 <details><summary>Click to expand/collapse</summary>
 
 A life cycle of any experiment, either it is `ML` experiment written in code or it is some live experiment performing on a physics lesson, can be described by statuses from the next workflow:
@@ -362,8 +416,11 @@ if cp_paths is not None:
 You can delete checkpoints with `xman.exp(2, 2).delete_checkpoints()`.
 
 </details>
+</details>
 
-### Running in parallel under different Google Colab accounts
+
+
+## Running in parallel under different Google Colab accounts
 <details><summary>Click to expand/collapse</summary>
 
 First, read the information about `Sharing across Google Colab accounts` in this document above. After you share your project, there are 2 ways of running experiments in parallel under different `Google Colab` accounts:
@@ -381,18 +438,30 @@ First, read the information about `Sharing across Google Colab accounts` in this
 
 All your results will be saved into the project shared `Google Drive` folder, so you can use as many accounts as you want. Regardless of which approach you'll choose, you can create any mess with or in your notebooks without worrying about it - all the results will be saved and organised in your project in one place. Sounds amazing, yeah? 😀 Just don't forget to duplicate your notebooks (not only share them) under different accounts to avoid conflicting between cell's output in the notebook's history.
 
-</details>
+> **Note:** `xMan` uses `cloudpickle` library for saving pipeline information for running exp in other runtimes. Sometimes `cloudpickle` can't resolve dependencies for saving and further extraction, e.g. some information from `datasets` or `nltk` libraries is placed to the storage. You have to perform such imports and initialisations in other runtime, or you can save them just into the `run_func` of your pipeline:
+   ```python
+   !pip install datasets
+   import datasets
+   dataset = datasets.load_dataset('ag_news')
+   
+   import nltk
+   nltk.download('punkt')
+   ```
 
 </details>
+
+
 
 ## What's next
 
-- Tests coverage
-- API Documentation coverage
-- CI/CD
+- Tests coverage.
+- API Documentation coverage.
+- CI/CD for the library releases.
 - `grid-search` implementation (there are some issues with storage space consumption).
 - `xman.guide_me()` will advise you what to do next (load proj, create group, create exp, finalise completed exps and so on). 
 - Project management control modes, e.g. you can activate `STRICT` mode, in this case you're not allowed to make a new exp group until you finalise with `success` or `fail` all exps from the previous one - it will help you to keep things from getting messed up.
+- UI forms.
+
 
 
 ## Conclusion

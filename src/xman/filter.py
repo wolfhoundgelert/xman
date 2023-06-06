@@ -30,6 +30,10 @@ def __check_and_get_status_list(status_or_list):
     return lst
 
 
+def __exp_key(exp): return exp.group.num, exp.num
+def __group_key(group): return group.num
+
+
 class Mode:
 
     AND = 'AND'
@@ -51,17 +55,19 @@ def exps(
         is_ready_for_start: bool = None,
         status_or_list: str | List[str] = None,
         not_status_or_list: str | List[str] = None,
-        # TODO Implement:
-        str_in_name: str = None,
-        str_in_descr: str = None,
-        str_in_resolution: str = None,
-        has_pipeline: bool = None,
-        pipeline_started: bool = None,
-        pipeline_error: bool = None,
-        pipeline_finished: bool = None,
-        has_manual_result: bool = None,
-        has_pipeline_result: bool = None,
-        has_result: bool = None,
+        has_marker: bool = None,
+        marker_or_list: str | List[str] = None,
+        # TODO ??? Implement:
+        # str_in_name: str = None,
+        # str_in_descr: str = None,
+        # str_in_resolution: str = None,
+        # has_pipeline: bool = None,
+        # pipeline_started: bool = None,
+        # pipeline_error: bool = None,
+        # pipeline_finished: bool = None,
+        # has_manual_result: bool = None,
+        # has_pipeline_result: bool = None,
+        # has_result: bool = None,
 ) -> List['Exp']:
     Mode._check_mode(mode)
     results = []
@@ -79,7 +85,13 @@ def exps(
     if not_status_or_list is not None:
         not_status_list = __check_and_get_status_list(not_status_or_list)
         results.append([x for x in exps if x.status_str not in not_status_list])
-    return intersect(*results) if mode == Mode.AND else unite(*results)
+    if has_marker is not None:
+        results.append([x for x in exps if (x.marker is not None) == has_marker])
+    if marker_or_list is not None:
+        lst = marker_or_list if type(marker_or_list) == list else [marker_or_list]
+        results.append([x for x in exps if x.marker in lst])
+    result = intersect(*results) if mode == Mode.AND else unite(*results)
+    return sorted(result, key=__exp_key)
 
 
 def groups(
@@ -99,4 +111,5 @@ def groups(
     if not_status_or_list is not None:
         not_status_list = __check_and_get_status_list(not_status_or_list)
         results.append([x for x in groups if x.status_str not in not_status_list])
-    return intersect(*results) if mode == Mode.AND else unite(*results)
+    result = intersect(*results) if mode == Mode.AND else unite(*results)
+    return sorted(result, key=__group_key)

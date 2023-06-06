@@ -2,7 +2,8 @@ import os
 from typing import Optional, Type, Callable, Any, Tuple
 from copy import deepcopy
 
-from .error import NotExistsXManError, ArgumentsXManError, AlreadyExistsXManError
+from .error import NotExistsXManError, ArgumentsXManError, AlreadyExistsXManError, \
+    IllegalOperationXManError
 from . import util, filesystem, tree, confirm
 from .note import Note
 
@@ -132,7 +133,7 @@ class ExpStruct:
 
     def tree(self, depth: int = None): tree.print_dir_tree(self.location_dir, depth)
 
-    def info(self):
+    def info(self) -> str:
         text = str(self)
         if self.status.resolution is not None:
             text += util.tab(f"\nResolution: {self.status.resolution}")
@@ -142,6 +143,11 @@ class ExpStruct:
 
     def set_manual_status(self, status: str, resolution: str) -> 'ExpStruct':
         ExpStructStatus._check(status, resolution)
+        status_str = self.status.status_str
+        if status_str == ExpStructStatus.SUCCESS or status_str == ExpStructStatus.FAIL:
+            raise IllegalOperationXManError(f"`{self}` was already finalised with status "
+                                            f"`{status_str}` - you need to delete it manually with "
+                                            f"`delete_manual_status()` method at first!")
         self._data.manual_status = status
         self._data.manual_status_resolution = resolution
         self._save()
@@ -166,16 +172,16 @@ class ExpStruct:
             return self
         return None
 
-    def edit(self, name: Optional[str] = None, descr: Optional[str] = None):
+    def edit(self, name: str = None, descr: str = None):
         need_save = False
-        if self._data.name != name:
+        if self.name != name:
             if self._parent is not None and self._parent.has_child(name):
                 raise AlreadyExistsXManError(
                     f"There's another child with the name=`{name}` "
                     f"in the parent `{self._parent}`")
             self._data.name = name
             need_save = True
-        if self._data.descr != descr:
+        if self.descr != descr:
             self._data.descr = descr
             need_save = True
         if need_save:

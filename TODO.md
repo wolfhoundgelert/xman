@@ -4,6 +4,10 @@
 
 ### BUGS:
 
+- Colab cash doesn't allow to get actual info about experiments "/content/drive/.shortcut-targets-by-id/1G9R8MCoshlzIuEOrmbNzHnDSWEZi-4-b"
+  - There also "/content/drive/.Trash-0"
+  - There also "/content/drive/.file-revisions-by-id"
+
 - Can't upload `xman` on pypi.org 
   +  Write a letter about `xman` repo to `support@pypi.org`
   - https://github.com/pypi/support/issues/2738
@@ -21,12 +25,12 @@
   - Each protected method with some logic should be covered by tests
   - Each private method with some logic should be covered by tests
 
-- Add `__str__` and `_repr_pretty_` to XMan, show there the credits, version, quick help and links to documentation.
+- Add `__str__` and `_repr_pretty_` to xMan, show there the credits, version, quick help and links to documentation.
 
 
 ### BACKLOG:
 
-- [LOW] Add `__str__` and `_repr_pretty_` to XMan, show there the credits, version, quick help and links to documentation.
+- [LOW] Add `__str__` and `_repr_pretty_` to xMan, show there the credits, version, quick help and links to documentation.
 
 - [LOW] How to solve the issue of multiple `update`-s in a chain `a.foo().bar().biz()`. I need to register each call in some `UpdateManager`, if it's the first call - set `is_chain` status to `True`, this status activates some other thread (e.g. by minimal timer) for setting `is_chain` back to `False`. Each of methods (foo, bar, biz) check `is_chain` flag, and if it's `True`, they skip `update`. In this case, the flag will be cleared right after the chain and the next chain starts again with `update`. I can add this logic to the root `super().update()` and it will return `False` if the chain were marked:
   ```
