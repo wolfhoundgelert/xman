@@ -17,8 +17,11 @@ if create_new:
 else:
     xman.load_proj(proj_dir)
 
+print([str(x._obj) for x in xman.exps()])
+
+
 # xman.dir_tree(proj_dir)
-xman.proj.info()
+# xman.proj.info()
 #
 #
 #

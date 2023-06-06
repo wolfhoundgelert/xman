@@ -24,7 +24,7 @@
   ```
   + Maybe it would be better if I didn't delete `.run` after an error, because I can tune some in imports and run. But need to delete `error` and `error_stack` on rerun, and review `start()`.
 
-- Make 2 exp-s, xman.start(). The second exp started, but the first one was expected.
++ Make 2 exp-s, xman.start(). The second exp started, but the first one was expected.
 
 - `What For and Why` section before `Installation`:
   - Case 1: GPU, checkpoints, spent hours for nothing when GPU was dropped by Google
