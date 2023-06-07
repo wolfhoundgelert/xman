@@ -11,8 +11,8 @@ TAB_NUM_SPACES = 4
 
 
 def tab(text, deep=1):
-    t = ' ' * TAB_NUM_SPACES * deep
-    return text.replace('\n', f'\n{t}')
+    t = ' ' * (TAB_NUM_SPACES * deep)
+    return t + text.replace('\n', f'\n{t}')
 
 
 def is_num(num_or_name): return type(num_or_name) is int and num_or_name >= 1

@@ -357,7 +357,7 @@ xman.exp(1, 1).info()
 #    Exp 1 [TO_DO *] My Exp 1 - My exp 1 descr    
 #        Resolution: Ready for start
 ```
-Pay attention on the `*` in the status `[TO_DO *]`, it says that the `exp` has a manual status and is considered as a manual exp.
+Pay attention on the `*` in the status `[TO_DO *]`, it says that's the status was set automatically.
 
 If some `exp` has a manual status, it can't be fed with an executable pipeline until the manual status is deleted. Use `xman.exp(...).delete_manual_status()` for deleting the manual status and making `exp` not manual again.
 

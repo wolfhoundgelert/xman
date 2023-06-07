@@ -2,7 +2,9 @@
 
 + Add the real project view to the readme.
 
-- `*` in the status means auto-status (remove resolution in this case). Fix in the documentation.
++ `*` in the status means auto-status (remove resolution in this case).
+  + Code
+  + Docs
 
 - Use `json` for data which is used for `info()` method and times. Use pickling only for necessary objects - such pipeline run data. It won't corrupt the project after changes in the pickling protocol.
 

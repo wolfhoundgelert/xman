@@ -18,4 +18,26 @@ if create_new:
 else:
     xman.load_proj(PROJ_DIR)
 
+def train(p1, p2, np1=None, np2=None):
+    print("train started")
+    import time
+    # time.sleep(2)
+    print("train is still in progress...")
+    result = f"p1={p1}, p2={p2}, np1={np1}, np2={np2}"
+    # time.sleep(2)
+    print(f"train finished with result `{result}`")
+    return result
+
+params = {
+    'p1': 1,
+    'p2': 2,
+    'np1': 3,
+    'np2': 4,
+}
+
+xman.exp(1, 1).make_pipeline(train, params).start()
+
+print('\n')
 xman.exp(1, 1).info()
+print('\n\n')
+xman.info()

@@ -100,7 +100,7 @@ class Exp(ExpStruct):
     def info(self) -> str:
         text = super().info()
         if self.has_result:
-            text += util.tab(f"\nResult:\n{util.tab(self.stringify_result())}")
+            text += '\n' + util.tab(f"Result:\n{util.tab(self.stringify_result())}")
         return text
 
     def stringify_result(self) -> str:

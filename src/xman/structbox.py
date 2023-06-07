@@ -10,7 +10,7 @@ class ExpStructBox(ExpStruct):
     def info(self) -> str:
         text = super().info()
         for child in self.children():
-            text += util.tab(f"\n\n{child.info()}")
+            text += '\n\n' + util.tab(f"{child.info()}")
         return text
 
     def update(self):

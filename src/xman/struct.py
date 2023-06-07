@@ -43,9 +43,9 @@ class ExpStructStatus:
                                      f"require setting resolutions!")
 
     @staticmethod
-    def _fit_parameters(status_obj, status_str, resolution, manual):
+    def _fit_parameters(status_obj, status_str, resolution, is_manual):
         return status_obj is not None and status_obj.status_str == status_str \
-                and status_obj.resolution == resolution and status_obj.manual == manual
+                and status_obj.resolution == resolution and status_obj.is_manual == is_manual
 
     @property
     def status_str(self) -> str: return self.__status_str
@@ -54,7 +54,7 @@ class ExpStructStatus:
     def resolution(self) -> str: return self.__resolution
 
     @property
-    def manual(self) -> bool: return self.__manual
+    def is_manual(self) -> bool: return self.__is_manual
 
     @property
     def workflow(self) -> Tuple[str | Tuple[str, str]]: return deepcopy(ExpStructStatus.__WORKFLOW)
@@ -71,13 +71,13 @@ class ExpStructStatus:
     def _repr_pretty_(self, p, cycle):
         p.text(str(self) if not cycle else '...')
 
-    def __init__(self, status: str, resolution: str = None, manual: bool = False):
+    def __init__(self, status: str, resolution: str = None, is_manual: bool = False):
         ExpStructStatus._check(status, resolution)
         self.__status_str = status
         self.__resolution = resolution
-        self.__manual = manual
+        self.__is_manual = is_manual
 
-    def __str__(self): return self.status_str + ' *' if self.manual else self.status_str
+    def __str__(self): return self.status_str if self.is_manual else self.status_str + ' *'
 
 
 class ExpStruct:
@@ -135,10 +135,11 @@ class ExpStruct:
 
     def info(self) -> str:
         text = str(self)
-        if self.status.resolution is not None:
-            text += util.tab(f"\nResolution: {self.status.resolution}")
+        if self.status.resolution is not None \
+                and (self.status.is_manual or self.status.status_str == ExpStructStatus.ERROR):
+            text += '\n' + util.tab(f"Resolution:\n{util.tab(self.status.resolution)}")
         if self.note.has_any:
-            text += util.tab(f"\nNotes: {self.note.get_existence_str()}")
+            text += '\n' + util.tab(f"Notes:\n{util.tab(self.note.get_existence_str())}")
         return text
 
     def set_manual_status(self, status: str, resolution: str) -> 'ExpStruct':
@@ -160,7 +161,7 @@ class ExpStruct:
         return self.set_manual_status(ExpStructStatus.FAIL, resolution)
 
     def delete_manual_status(self, need_confirm: bool = True) -> Optional['ExpStruct']:
-        if not self.status.manual:
+        if not self.status.is_manual:
             raise NotExistsXManError(f"There's no manual status in the struct `{self}`")
         if confirm.request(need_confirm,
                             f"ATTENTION! Do you want to delete the manual status "
