@@ -63,7 +63,7 @@ You are probably familiar with the following situations:
 ## How it looks on the real project
 <details><summary>Click to expand/collapse</summary>
 
-```python
+```
 Proj [SUCCESS] DL2/hw_6-1 - Homework. Neural network classification of texts
     Resolution:
         I conducted multiple groups of experiments, each consisting of several 
@@ -163,7 +163,7 @@ Proj [SUCCESS] DL2/hw_6-1 - Homework. Neural network classification of texts
                 Best accuracy: 0.916, epoch 3. Best loss: 0.040, epoch 10.
 ```
 
-**Since all results are stored in storage, you can use your own functions to visually represent information.**
+Since all results are stored in storage, you can use your own functions to visually represent information.
 
 </details>
 
