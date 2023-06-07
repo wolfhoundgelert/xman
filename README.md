@@ -60,6 +60,115 @@ You are probably familiar with the following situations:
 
 
 
+## How it looks on the real project
+<details><summary>Click to expand/collapse</summary>
+
+```python
+Proj [SUCCESS] DL2/hw_6-1 - Homework. Neural network classification of texts
+    Resolution:
+        I conducted multiple groups of experiments, each consisting of several 
+        experiments that changed a single parameter based on the requirements.
+
+        After reviewing and categorizing the results as "success" or "fail," I 
+        proceeded to the next group of experiments, using the best parameters 
+        from the previous group. The experiments were divided based on 
+        aggregation type: "max" or "mean."
+
+        By examining the successful experiments in chronological order 
+        (exp 1.2 -> 2.2 -> 3.2), the evolution of the search for the best model 
+        can be observed.
+
+        The best model is exp 3.2 (group 3, experiment 2) with results: 
+        "Best accuracy: 0.917, epoch 3. Best loss: 0.037, epoch 10." 
+        It utilizes the following parameters: 
+         {'aggregation_type': 'mean', 'num_epoch': 10, 'model_type': 'GRU'}.
+
+        Overall, the improvement in quality from the baseline to the best result
+        is minimal, only 11 thousandths. Consequently, discussing quality 
+        fluctuations is not warranted, as the convergence is not stable on a 
+        larger scale.
+
+        The optimal nature of the best model can be attributed to its superior 
+        performance during the initial training epochs (3rd and 4th epochs).
+
+        For this project, I utilized the xMan experiment manager:
+        https://github.com/wolfhoundgelert/xman. 
+        
+        If you're interested, please support the project by starring it on GitHub.
+
+        Thank you!
+		
+        :=+]
+    
+    Group 1 [SUCCESS] Baseline - Entry point for the further experiments
+        Resolution: Made baseline successfully: Best accuracy: 0.906, epoch 5 with `mean` aggregation
+        
+        Exp 1.1 [FAIL] Baseline `max` - {'aggregation_type': 'max'}
+            Resolution: Baseline with aggregation_type='max' wasn't so good as 'mean'.
+            Result:
+                Best accuracy: 0.905, epoch 4. Best loss: 0.204, epoch 5.
+        
+>>>>>>> Baseline Exp 1.2 [SUCCESS] Baseline `mean` - {'aggregation_type': 'mean'}
+            Resolution: Best baseline values: loss 0.160 and acc 0.906
+            Result:
+                Best accuracy: 0.906, epoch 5. Best loss: 0.160, epoch 5.
+    
+    Group 2 [SUCCESS] Convergence - More epochs for num_epoch
+        Resolution: Improved our baseline to best accuracy: 0.909, epoch 6 with {'aggregation_type': 'max', 'num_epoch': 10}
+        
+        Exp 2.1 [FAIL] Epochs 10 - {'aggregation_type': 'mean', 'num_epoch': 10}
+            Resolution: Nothing special
+            Result:
+                Best accuracy: 0.907, epoch 5. Best loss: 0.094, epoch 10.
+        
+        Exp 2.2 [SUCCESS] Epochs 10 and `max` - {'aggregation_type': 'max', 'num_epoch': 10}
+            Resolution: Some increasing on epoch 6
+            Result:
+                Best accuracy: 0.909, epoch 6. Best loss: 0.145, epoch 10.
+    
+    Group 3 [SUCCESS] GRU - Use GRU instead of RNN
+        Resolution: Good improvement to best accuracy: 0.917, epoch 3 with {'aggregation_type': 'mean', 'num_epoch': 10, 'model_type': 'GRU'}
+        
+        Exp 3.1 [FAIL] GRU and `max` - {'aggregation_type': 'max', 'num_epoch': 10, 'model_type': 'GRU'}
+            Resolution: Lost to `mean`
+            Result:
+                Best accuracy: 0.911, epoch 4. Best loss: 0.039, epoch 10.
+        
+>>>>>>> Best Exp 3.2 [SUCCESS] GRU and `mean` - {'aggregation_type': 'mean', 'num_epoch': 10, 'model_type': 'GRU'}
+            Resolution: Good improvement
+            Result:
+                Best accuracy: 0.917, epoch 3. Best loss: 0.037, epoch 10.
+    
+    Group 4 [FAIL] Dropout - Change dropout rate
+        Resolution: Nothing was improved
+        
+        Exp 4.1 [FAIL] Dropout 0.2 and `mean` - {'aggregation_type': 'mean', 'num_epoch': 10, 'model_type': 'GRU', 'dropout': 0.2}
+            Resolution: Nothing special
+            Result:
+                Best accuracy: 0.914, epoch 9. Best loss: 0.040, epoch 10.
+        
+        Exp 4.2 [FAIL] Dropout 0.3 and `mean` - {'aggregation_type': 'mean', 'num_epoch': 10, 'model_type': 'GRU', 'dropout': 0.3}    
+            Resolution: Nothing special
+            Result:
+                Best accuracy: 0.914, epoch 3. Best loss: 0.041, epoch 10.
+        
+        Exp 4.3 [FAIL] Dropout 0.2 and `max` - {'aggregation_type': 'max', 'num_epoch': 10, 'model_type': 'GRU', 'dropout': 0.2}    
+            Resolution: Nothing special
+            Result:
+                Best accuracy: 0.913, epoch 3. Best loss: 0.038, epoch 10.
+        
+        Exp 4.4 [FAIL] Dropout 0.3 and `max` - {'aggregation_type': 'max', 'num_epoch': 10, 'model_type': 'GRU', 'dropout': 0.3}
+            Resolution: Nothing special
+            Result:
+                Best accuracy: 0.916, epoch 3. Best loss: 0.040, epoch 10.
+```
+
+**Since all results are stored in storage, you can use your own functions to visually represent information.**
+
+</details>
+
+
+
 ## Installation
 <details><summary>Click to expand/collapse</summary>
 
