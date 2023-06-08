@@ -1,5 +1,4 @@
 import os
-import sys
 
 import pytest
 
@@ -15,8 +14,8 @@ import pytest
 from xman.error import AlreadyExistsXManError
 from xman.exp import Exp
 from xman.pipeline import CheckpointsMediator
-from xman import xman, filesystem
-from xman.filesystem import FileType
+from xman import xman, catalog
+from xman.catalog import FileType
 from xman import config
 import helper
 
@@ -66,7 +65,7 @@ def test__pipeline_with_checkpoints():
         helper.train_with_mediator_replace, helper.train_params, True).start()
     assert exp.result == helper.train_result
     exp.delete_checkpoints(need_confirm=False)
-    assert not filesystem.has_checkpoints_dir(exp.location_dir)
+    assert not catalog.has_checkpoints_dir(exp.location_dir)
     exp = helper.make_exp_from_nothing().make_pipeline_with_checkpoints(
         helper.train_with_mediator_custom_path, helper.train_params, True).start()
     assert os.path.exists(os.path.join(exp.location_dir, 'custom/first.cp'))
@@ -192,20 +191,20 @@ def test__note():
     assert exp.note is not None
     exp.note.pickle = 'Some object'
     exp.note.clear()
-    assert not filesystem.has(filesystem.get_note_path(exp.location_dir, FileType.PICKLE))
+    assert not catalog.has(catalog.get_note_path(exp.location_dir, FileType.PICKLE))
     exp.note.pickle = 'Another object'
     exp.clear()
-    assert not filesystem.has(filesystem.get_note_path(exp.location_dir, FileType.PICKLE))
+    assert not catalog.has(catalog.get_note_path(exp.location_dir, FileType.PICKLE))
 
 
 def test__note_txt():
     exp = helper.make_exp_from_nothing()
-    assert not filesystem.has(filesystem.get_note_path(exp.location_dir, FileType.TXT))
+    assert not catalog.has(catalog.get_note_path(exp.location_dir, FileType.TXT))
     exp.note.txt = "This is my note.\nNew line."
-    assert filesystem.has(filesystem.get_note_path(exp.location_dir, FileType.TXT))
+    assert catalog.has(catalog.get_note_path(exp.location_dir, FileType.TXT))
     assert exp.note.txt == "This is my note.\nNew line."
     exp.note.txt = None
-    assert not filesystem.has(filesystem.get_note_path(exp.location_dir, FileType.TXT))
+    assert not catalog.has(catalog.get_note_path(exp.location_dir, FileType.TXT))
     assert exp.note.txt is None
     assert len(exp.note.get_list()) == 0
     assert not exp.note.has_any
@@ -222,21 +221,21 @@ def test__note_txt():
 
 def test__note_json():
     exp = helper.make_exp_from_nothing()
-    assert not filesystem.has(filesystem.get_note_path(exp.location_dir, FileType.JSON))
+    assert not catalog.has(catalog.get_note_path(exp.location_dir, FileType.JSON))
     exp.note.json = {'name': 'Isaac', 'mood': 'apple'}
-    assert filesystem.has(filesystem.get_note_path(exp.location_dir, FileType.JSON))
+    assert catalog.has(catalog.get_note_path(exp.location_dir, FileType.JSON))
     assert exp.note.json['mood'] == 'apple'
     exp.note.json = None
-    assert not filesystem.has(filesystem.get_note_path(exp.location_dir, FileType.JSON))
+    assert not catalog.has(catalog.get_note_path(exp.location_dir, FileType.JSON))
     assert exp.note.json is None
 
 
 def test__note_pickle():
     exp = helper.make_exp_from_nothing()
-    assert not filesystem.has(filesystem.get_note_path(exp.location_dir, FileType.PICKLE))
+    assert not catalog.has(catalog.get_note_path(exp.location_dir, FileType.PICKLE))
     exp.note.pickle = CheckpointsMediator(exp.location_dir)
-    assert filesystem.has(filesystem.get_note_path(exp.location_dir, FileType.PICKLE))
+    assert catalog.has(catalog.get_note_path(exp.location_dir, FileType.PICKLE))
     assert exp.note.pickle.exp_location_dir == exp.location_dir
     exp.note.pickle = None
-    assert not filesystem.has(filesystem.get_note_path(exp.location_dir, FileType.PICKLE))
+    assert not catalog.has(catalog.get_note_path(exp.location_dir, FileType.PICKLE))
     assert exp.note.pickle is None

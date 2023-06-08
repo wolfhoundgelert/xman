@@ -6,6 +6,33 @@
   + Code
   + Docs
 
+- Remove using timestamp for data-s, use `os.path.getmtime()` instead
+  - delete for `.data`
+  - for `.run_time` use saving empty file and get time by `os.path.getmtime()` (check the `mtime` is different after rewriting empty files)
+
+- Rewrite all getters which get info from files: they should save the info to do not load twice, but they need to check `mtime`
+
+- Add `result_str` which will be saved in exp data (don't forget about `result_stringifier`) 
+
+- Use the `@dataclass` decorator for data objects:
+  ```python
+  from dataclasses import dataclass
+
+  @dataclass
+  class Person:
+      name: str
+      age: int
+      profession: str
+  
+  # Creating an instance of the data class
+  person = Person("John Doe", 30, "Engineer")
+  
+  # Accessing the fields of the data class
+  print(person.name)        # Output: John Doe
+  print(person.age)         # Output: 30
+  print(person.profession)  # Output: Engineer
+  ```
+
 - Use `json` for data which is used for `info()` method and times. Use pickling only for necessary objects - such pipeline run data. It won't corrupt the project after changes in the pickling protocol.
 
 

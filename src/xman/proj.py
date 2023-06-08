@@ -1,6 +1,7 @@
 from typing import List, Optional, Callable
 
-from . import filesystem, filter, exp_helper
+from . import catalog, filter, exp_helper
+from . import filesystem as fs
 from .error import NothingToDoXManError, NotExistsXManError, AlreadyExistsXManError, \
     ArgumentsXManError
 from .structbox import ExpStructBox
@@ -145,9 +146,9 @@ class ExpProj(ExpStructBox):
             raise AlreadyExistsXManError(f"Can't move the experiment because another experiment"
                                     f"already exist in the group number `{new_group_num_or_name}`!")
         dir_path = exp.location_dir
-        new_path = filesystem.change_group_num_in_path(dir_path, new_group.num)
-        new_path = filesystem.change_exp_num_in_path(new_path, new_exp_num)
-        filesystem.rename_or_move_dir(dir_path, new_path)
+        new_path = catalog.change_group_num_in_path(dir_path, new_group.num)
+        new_path = catalog.change_exp_num_in_path(new_path, new_exp_num)
+        fs.rename_or_move_dir(dir_path, new_path)
         group._remove_child(exp)
         # Also changes `num` as it's processing from the path:
         exp._change_location_dir(new_path)

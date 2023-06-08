@@ -4,7 +4,8 @@ from .error import AlreadyExistsXManError, ArgumentsXManError, IllegalOperationX
 from .exp import Exp, ExpData
 from .group import ExpGroup
 from .pipeline import PipelineData, PipelineRunData, Pipeline
-from . import util, filesystem, platform
+from . import util, catalog, platform
+from . import filesystem as fs
 from .proj import ExpProj
 from .struct import ExpStruct, ExpStructData
 
@@ -35,10 +36,10 @@ def recreate_proj(location_dir) -> Optional[ExpProj]:
 
 
 def make_and_save_struct_data(struct_cls, location_dir, name, descr):
-    filesystem.prepare_dir(location_dir) if struct_cls == ExpProj else \
-        filesystem.make_dir(location_dir, exist_ok=False)
+    catalog.prepare_dir(location_dir) if struct_cls == ExpProj else \
+        fs.make_dir(location_dir, exist_ok=False)
     data = __get_data_class(struct_cls)(name, descr)
-    filesystem.save_data_and_time(location_dir, data)
+    catalog.save_struct_data(location_dir, data)
 
 
 def get_child_class(parent_obj_or_cls):
@@ -54,7 +55,7 @@ def get_child_class(parent_obj_or_cls):
 
 def make_new_child(parent, name, descr, child_num) -> Optional[Exp | ExpGroup]:
     child_class = get_child_class(parent)
-    child_dir = filesystem.get_child_dir(parent, child_num)
+    child_dir = catalog.get_child_dir(parent, child_num)
     make_and_save_struct_data(child_class, child_dir, name, descr)
     child = child_class(child_dir, parent)
     if platform.is_colab:
@@ -63,12 +64,12 @@ def make_new_child(parent, name, descr, child_num) -> Optional[Exp | ExpGroup]:
 
 
 def recreate_child(parent, child_num):
-    location_dir = filesystem.get_child_dir(parent, child_num)
+    location_dir = catalog.get_child_dir(parent, child_num)
     return get_child_class(parent)(location_dir, parent)
 
 
 def delete_child(child: Exp | ExpGroup, need_confirm) -> bool:
-    if not filesystem.delete_dir(child.location_dir, need_confirm):
+    if not fs.delete_dir(child.location_dir, need_confirm):
         return False
     child._destroy()
     return True
@@ -80,12 +81,12 @@ def make_pipeline(exp, run_func, with_mediator, params, save_on_storage=False):
     exp._data.pipeline = PipelineData()
     run_data = PipelineRunData(run_func, with_mediator, params)
     if save_on_storage:
-        filesystem.save_pipeline_run_data(exp.location_dir, run_data)
+        catalog.save_pipeline_run_data(exp.location_dir, run_data)
     return Pipeline(exp.location_dir, exp._data.pipeline, run_data)
 
 
 def recreate_pipeline(exp):
-    run_data = filesystem.load_pipeline_run_data(exp.location_dir)
+    run_data = catalog.load_pipeline_run_data(exp.location_dir)
     if run_data is None:
         raise IllegalOperationXManError(f"Can't recreate pipeline for exp `{exp}` - "
                                         f"there's no `.run` data file! Use `save=True` for "
@@ -95,10 +96,10 @@ def recreate_pipeline(exp):
 
 
 def delete_pipeline(exp: Exp, pipeline: Pipeline):
-    filesystem.delete_pipeline_result(exp.location_dir)
+    catalog.delete_pipeline_result(exp.location_dir)
     exp.delete_checkpoints(need_confirm=False, delete_custom_paths=True)
-    filesystem.delete_pipeline_run_data(exp.location_dir)
-    filesystem.delete_pipeline_run_timestamp(exp.location_dir)
+    catalog.delete_pipeline_run_data(exp.location_dir)
+    catalog.delete_pipeline_run_time(exp.location_dir)
     if pipeline is not None:
         pipeline._destroy()
     exp._data.pipeline = None

@@ -1,8 +1,9 @@
-from typing import Optional, Type, List
+from typing import Type, List
 
 from .error import ArgumentsXManError, NotExistsXManError, AlreadyExistsXManError
 from .struct import ExpStruct, ExpStructStatus
-from . import util, confirm, maker, filesystem
+from . import util, confirm, maker, catalog
+from . import filesystem as fs
 
 
 class ExpStructBox(ExpStruct):
@@ -18,7 +19,7 @@ class ExpStructBox(ExpStruct):
             return
         self.__updating = True
         super().update()
-        nums = filesystem.get_children_nums(self)
+        nums = catalog.get_children_nums(self)
         for num in nums:
             if num not in self.__num_to_child:
                 child = maker.recreate_child(self, num)
@@ -63,7 +64,7 @@ class ExpStructBox(ExpStruct):
                 raise AlreadyExistsXManError(
                     f"A child with the num `{num}` already exists in the `{self}`!")
         else:
-            nums = filesystem.get_children_nums(self)
+            nums = catalog.get_children_nums(self)
             max_num = max(nums) if len(nums) else 0
             num = max_num + 1
         child = maker.make_new_child(self, name, descr, num)
@@ -88,14 +89,15 @@ class ExpStructBox(ExpStruct):
     def children_names(self) -> List[str]: return list(self.__name_to_child.keys())
 
     def change_child_num(self, num_or_name, new_num):
+        # TODO Move the logic to the `catalog.py`
         child = self.child(num_or_name)
         if self.has_child(new_num):
             raise AlreadyExistsXManError(f"Can't change number to `{new_num}` for `{child}` - "
                                             f"new number is already taken by other child!")
         dir_path = child.location_dir
-        child_dir_pattern = filesystem.dir_prefix(maker.get_child_class(self))
-        new_path = filesystem.change_num_in_path_by_pattern(dir_path, child_dir_pattern, new_num)
-        filesystem.rename_or_move_dir(dir_path, new_path)
+        child_dir_pattern = catalog.dir_prefix(maker.get_child_class(self))
+        new_path = catalog.change_num_in_path_by_pattern(dir_path, child_dir_pattern, new_num)
+        fs.rename_or_move_dir(dir_path, new_path)
         self._remove_child(child)
         # Also changes `num` as it's processing from the path:
         child._change_location_dir(new_path)

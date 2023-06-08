@@ -6,7 +6,7 @@ from .error import NotExistsXManError, IllegalOperationXManError, AlreadyExistsX
     UnpredictableLogicXManError, NothingToDoXManError
 from .pipeline import PipelineData, CheckpointsMediator, Pipeline
 from .struct import ExpStructData, ExpStruct, ExpStructStatus
-from . import util, confirm, platform, filesystem
+from . import util, confirm, platform, catalog
 from . import maker
 
 
@@ -45,12 +45,10 @@ class Exp(ExpStruct):
     def has_result(self) -> bool: return self.has_pipeline_result or self.has_manual_result
 
     @property
-    def has_pipeline_result(self) -> bool:
-        return filesystem.has(filesystem.get_pipeline_result_path(self.location_dir))
+    def has_pipeline_result(self) -> bool: return catalog.has_pipeline_result(self.location_dir)
 
     @property
-    def has_manual_result(self) -> bool:
-        return filesystem.has(filesystem.get_manual_result_path(self.location_dir))
+    def has_manual_result(self) -> bool: return catalog.has_manual_result(self.location_dir)
 
     @property
     def result(self) -> Optional[Any]:
@@ -140,7 +138,8 @@ class Exp(ExpStruct):
             return self
         return None
 
-    def delete_checkpoints(self, need_confirm: bool = True, delete_custom_paths: bool = False) -> Optional['Exp']:
+    def delete_checkpoints(self, need_confirm: bool = True,
+                           delete_custom_paths: bool = False) -> Optional['Exp']:
         self._check_is_not_active()
         if not confirm.request(need_confirm,
                                f"ATTENTION! Do you want to delete `{self}` checkpoints?"):
@@ -149,8 +148,8 @@ class Exp(ExpStruct):
             lst = self.checkpoints_mediator.get_checkpoint_paths_list(check_files_exist=True)
             if lst is not None:
                 for cp_path in lst:
-                    filesystem.delete_checkpoint(self.location_dir, cp_path)
-        filesystem.delete_checkpoints_dir(self.location_dir, need_confirm=False)
+                    catalog.delete_checkpoint(self.location_dir, cp_path)
+        catalog.delete_checkpoints_dir(self.location_dir, need_confirm=False)
         return self
 
     def start(self, force_after_error: bool = False) -> 'Exp':
@@ -164,7 +163,7 @@ class Exp(ExpStruct):
             pipeline_data.error_stack = None
             self.update()
         if self.is_ready_for_start:
-            if filesystem.has_checkpoints_dir(self.location_dir) and \
+            if catalog.has_checkpoints_dir(self.location_dir) and \
                     self.status.status_str == ExpStructStatus.TO_DO:
                 raise IllegalOperationXManError(f"`{self}` contains checkpoints folder - delete it "
                                                 f"first with `delete_checkpoints()` method!")
@@ -179,7 +178,7 @@ class Exp(ExpStruct):
                 self.__pipeline._destroy()
                 self.__pipeline = None
                 if pipeline_data.finished:
-                    filesystem.delete_pipeline_run_data(self.location_dir)
+                    catalog.delete_pipeline_run_data(self.location_dir)
         else:
             self._check_is_not_active()
             if self.is_manual:
@@ -198,18 +197,18 @@ class Exp(ExpStruct):
     def get_pipeline_result(self) -> Any:
         if not self.has_pipeline_result:
             raise IllegalOperationXManError(f"There's no pipeline result in the `{self}`!")
-        return filesystem.load_pipeline_result(self.location_dir)
+        return catalog.load_pipeline_result(self.location_dir)
 
     def get_manual_result(self) -> Any:
         if not self.has_manual_result:
             raise IllegalOperationXManError(f"There's no manual result in the `{self}`!")
-        return filesystem.load_manual_result(self.location_dir)
+        return catalog.load_manual_result(self.location_dir)
 
     def set_manual_result(self, result: Any) -> 'Exp':
         if self.has_manual_result:
             raise AlreadyExistsXManError(f"Already has a manual result! Delete it first with "
                                          f"`delete_manual_result()` method.")
-        filesystem.save_manual_result(self.location_dir, result)
+        catalog.save_manual_result(self.location_dir, result)
         return self
 
     def delete_manual_result(self, need_confirm: bool = True) -> Optional['Exp']:
@@ -218,7 +217,7 @@ class Exp(ExpStruct):
         if not confirm.request(need_confirm,
                 f"ATTENTION! The manual result for the `{self}\nwill be deleted - proceed?"):
             return None
-        filesystem.delete_manual_result(self.location_dir)
+        catalog.delete_manual_result(self.location_dir)
         return self
 
     def delete_all_manual(self, need_confirm: bool = True) -> Optional['Exp']:
@@ -230,7 +229,7 @@ class Exp(ExpStruct):
         self._data.manual_status = None
         self._data.manual_status_resolution = None
         if self.has_manual_result:
-            filesystem.delete_manual_result(self.location_dir)
+            catalog.delete_manual_result(self.location_dir)
         return self
 
     def clear(self, need_confirm: bool = True) -> Optional['Exp']:
@@ -241,11 +240,11 @@ class Exp(ExpStruct):
         if self.has_pipeline:
             self.delete_pipeline(need_confirm=False)
         if self.has_pipeline_result:
-            filesystem.delete_pipeline_result(self.location_dir)
+            catalog.delete_pipeline_result(self.location_dir)
         self.delete_checkpoints(need_confirm=False, delete_custom_paths=True)
         self.__checkpoints_mediator = None
         if self.has_manual_result:
-            filesystem.delete_manual_result(self.location_dir)
+            catalog.delete_manual_result(self.location_dir)
         self._data.manual_status = None
         self._data.manual_status_resolution = None
         self.result_stringifier = None
@@ -315,7 +314,7 @@ class Exp(ExpStruct):
                 f"{self.name} - {self.descr}")
 
     def __is_active_by_time_delta(self):
-        run_timestamp = filesystem.load_pipeline_run_timestamp(self.location_dir)
+        run_timestamp = catalog.load_pipeline_run_time(self.location_dir)
         if run_timestamp is None:
             return False
         active_buffer = PipelineConfig.active_buffer_colab if platform.is_colab \

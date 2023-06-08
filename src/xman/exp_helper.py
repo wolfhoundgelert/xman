@@ -1,8 +1,9 @@
+from typing import Union
+
 from . import util
-from .structbox import ExpStructBox
 
 
-def get_info_with_marked_exps(box: ExpStructBox) -> str:
+def get_info_with_marked_exps(box: Union['ExpProj', 'ExpGroup']) -> str:
     from .proj import ExpProj
     text = super(type(box), box).info()
     lst = box.filter_exps(has_marker=True)

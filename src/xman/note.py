@@ -1,67 +1,67 @@
 from typing import Any, List
 
-from . import filesystem
+from . import catalog
+from . import filesystem as fs
 
 
 class Note:
 
     @property
     def txt(self) -> str:
-        return filesystem.load_note(self.__location_dir, filesystem.FileType.TXT)
+        return catalog.load_note(self.__location_dir, fs.FileType.TXT)
 
     @txt.setter
     def txt(self, obj: Any):
-        file_type = filesystem.FileType.TXT
-        filesystem.delete_note(self.__location_dir, file_type) if obj is None \
-            else filesystem.save_note(self.__location_dir, obj, file_type)
+        file_type = fs.FileType.TXT
+        catalog.delete_note(self.__location_dir, file_type) if obj is None \
+            else catalog.save_note(self.__location_dir, obj, file_type)
 
     @property
     def json(self) -> Any:
-        return filesystem.load_note(self.__location_dir, filesystem.FileType.JSON)
+        return catalog.load_note(self.__location_dir, fs.FileType.JSON)
 
     @json.setter
     def json(self, obj: Any):
-        file_type = filesystem.FileType.JSON
-        filesystem.delete_note(self.__location_dir, file_type) if obj is None \
-            else filesystem.save_note(self.__location_dir, obj, file_type)
+        file_type = fs.FileType.JSON
+        catalog.delete_note(self.__location_dir, file_type) if obj is None \
+            else catalog.save_note(self.__location_dir, obj, file_type)
 
     @property
-    def pickle(self) -> Any:
-        return filesystem.load_note(self.__location_dir, filesystem.FileType.PICKLE)
+    def pickle(self) -> Any: return catalog.load_note(self.__location_dir, fs.FileType.PICKLE)
 
     @pickle.setter
     def pickle(self, obj: Any):
-        file_type = filesystem.FileType.PICKLE
-        filesystem.delete_note(self.__location_dir, file_type) if obj is None \
-            else filesystem.save_note(self.__location_dir, obj, file_type)
+        file_type = fs.FileType.PICKLE
+        catalog.delete_note(self.__location_dir, file_type) if obj is None \
+            else catalog.save_note(self.__location_dir, obj, file_type)
 
     @property
     def has_any(self):
-        for file_type in filesystem.FileType:
-            path = filesystem.get_note_path(self.__location_dir, file_type)
-            if filesystem.has(path):
+        for file_type in fs.FileType:
+            path = catalog.get_note_path(self.__location_dir, file_type)
+            if catalog.has(path):
                 return True
         return False
 
     def get_list(self) -> List[str]:
         result = []
-        for file_type in filesystem.FileType:
-            path = filesystem.get_note_path(self.__location_dir, file_type)
-            if filesystem.has(path):
+        for file_type in fs.FileType:
+            path = catalog.get_note_path(self.__location_dir, file_type)
+            if catalog.has(path):
                 result.append(path)
         return result
 
     def get_existence_str(self) -> str:
         result = ''
-        for file_type in filesystem.FileType:
-            path = filesystem.get_note_path(self.__location_dir, file_type)
-            result += f"{file_type.name} {filesystem.has(path)}, "
+        for file_type in fs.FileType:
+            path = catalog.get_note_path(self.__location_dir, file_type)
+            result += f"{file_type.name} {catalog.has(path)}, "
         return result.removesuffix(', ').lower()
 
     def clear(self):
-        filesystem.delete_note(self.__location_dir, filesystem.FileType.TXT)
-        filesystem.delete_note(self.__location_dir, filesystem.FileType.JSON)
-        filesystem.delete_note(self.__location_dir, filesystem.FileType.PICKLE)
+        catalog.delete_note(self.__location_dir, fs.FileType.TXT)
+        catalog.delete_note(self.__location_dir, fs.FileType.JSON)
+        catalog.delete_note(self.__location_dir, fs.FileType.PICKLE)
 
     def __init__(self, location_dir: str): self.__location_dir = location_dir
 

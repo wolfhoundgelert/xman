@@ -9,7 +9,7 @@ if is_colab:
     import os
     import re
 
-    from . import filesystem, confirm, maker
+    from . import catalog, confirm, maker
     from . import util
 
     def check_colab_forked_folders(exp_struct_box) -> bool:
@@ -28,7 +28,7 @@ if is_colab:
             (bool): `False` if forked folders were found and the response on the input was `No`, `True`
                 otherwise.
         """
-        dir_prefix = filesystem.dir_prefix(maker.get_child_class(exp_struct_box))
+        dir_prefix = catalog.dir_prefix(maker.get_child_class(exp_struct_box))
         regex = fr'^{dir_prefix}\d+ \(\d+\)$'
         folders = []
         for entry in os.scandir(exp_struct_box.location_dir):

@@ -3,7 +3,7 @@ import threading
 from threading import Timer
 from typing import Any, Callable, Optional, List
 
-from . import filesystem, platform
+from . import catalog, platform
 from .config import PipelineConfig
 from .error import get_error_str, get_error_stack_str, NotExistsXManError
 
@@ -36,45 +36,48 @@ class CheckpointsMediator:
 
         + Refine checkpoints on getting via mediator's method
         """
+        # TODO ??? Move the logic to the `catalog.py`
         cp_list = self.get_checkpoint_paths_list(check_files_exist=True)
         if replace and cp_list is not None:
             for cp_path in cp_list:
-                filesystem.delete_checkpoint(self.__exp_location_dir, cp_path)
-            filesystem.delete_checkpoints_list(self.__exp_location_dir)
+                catalog.delete_checkpoint(self.__exp_location_dir, cp_path)
+            catalog.delete_checkpoints_list(self.__exp_location_dir)
             cp_list = None
-        if not filesystem.has_checkpoints_dir(self.__exp_location_dir):
-            filesystem.make_checkpoints_dir(self.__exp_location_dir)
-        cp_path = filesystem.save_checkpoint(self.__exp_location_dir, checkpoint, custom_path)
+        if not catalog.has_checkpoints_dir(self.__exp_location_dir):
+            catalog.make_checkpoints_dir(self.__exp_location_dir)
+        cp_path = catalog.save_checkpoint(self.__exp_location_dir, checkpoint, custom_path)
         cp_list = [] if cp_list is None else cp_list
         cp_list.append(cp_path)
-        filesystem.save_checkpoints_list(self.__exp_location_dir, cp_list)
+        catalog.save_checkpoints_list(self.__exp_location_dir, cp_list)
         return cp_path if custom_path is None else custom_path
 
     def get_checkpoint_paths_list(self, check_files_exist: bool = True) -> Optional[List[str]]:
-        lst = filesystem.load_checkpoints_list(self.__exp_location_dir)
+        # TODO ??? Move the logic to the `catalog.py`
+        lst = catalog.load_checkpoints_list(self.__exp_location_dir)
         if lst is None or not check_files_exist:
             return lst
         missed = []
         for it in lst:
-            path = filesystem.resolve_checkpoint_path(self.__exp_location_dir, it)
+            path = catalog.resolve_checkpoint_path(self.__exp_location_dir, it)
             if path is None:
                 missed.append(it)
         if len(missed):
-            json_path = filesystem.get_checkpoints_list_path(self.__exp_location_dir)
+            json_path = catalog.get_checkpoints_list_path(self.__exp_location_dir)
             NotExistsXManError(f"Can't resolve some checkpoints paths - {missed}! You can fix paths"
                                f" right in the {json_path} or remove checkpoints via "
                                f"`exp.delete_checkpoints()` method of the experiment structure.")
         return lst
 
     def load_checkpoint(self, checkpoint_path: str) -> Optional[Any]:
-        path = filesystem.resolve_checkpoint_path(self.__exp_location_dir, checkpoint_path)
+        # TODO ??? Move the logic to the `catalog.py`
+        path = catalog.resolve_checkpoint_path(self.__exp_location_dir, checkpoint_path)
         if path is None:
             raise NotExistsXManError(f"Can't find checkpoint by the path `{checkpoint_path}`!")
-        return filesystem.load_checkpoint(path)
+        return catalog.load_checkpoint(path)
 
     def __init__(self, exp_location_dir: str):
         self.__exp_location_dir = exp_location_dir
-        self.__default_checkpoints_dir = filesystem.get_checkpoints_dir_path(exp_location_dir)
+        self.__default_checkpoints_dir = catalog.get_checkpoints_dir_path(exp_location_dir)
         # Check checkpoints are ok (paths can be lost during files or folders moving:
         self.get_checkpoint_paths_list(check_files_exist=True)
 
@@ -110,7 +113,7 @@ class Pipeline:
                 result = run_data.run_func(self.__mediator, **run_data.params)
             else:
                 result = run_data.run_func(**run_data.params)
-            filesystem.save_pipeline_result(self.__location_dir, result)
+            catalog.save_pipeline_result(self.__location_dir, result)
             data.finished = True
         except Exception as e:
             error = e
@@ -119,7 +122,7 @@ class Pipeline:
             raise error
 
     def _destroy(self):
-        filesystem.delete_pipeline_run_timestamp(self.__location_dir)
+        catalog.delete_pipeline_run_time(self.__location_dir)
         if self.__timer is not None:
             self.__timer.cancel()
             self.__timer = None
@@ -142,6 +145,6 @@ class Pipeline:
     def __do_timestamp(self):
         if platform.is_jupyter_notebook and platform.check_jupyter_notebook_kernel_interrupted():
             return
-        filesystem.save_pipeline_run_timestamp(self.__location_dir)
+        catalog.save_pipeline_run_time(self.__location_dir)
         self.__timer = threading.Timer(PipelineConfig.timer_interval, self.__do_timestamp)
         self.__timer.start()

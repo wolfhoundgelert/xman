@@ -1,6 +1,7 @@
 from typing import Any, Optional, Callable, List
 
-from . import tree, maker, filesystem
+from . import tree, maker
+from . import filesystem as fs
 from .error import NotImplementedXManError, IllegalOperationXManError
 from .group import ExpGroup
 from .note import Note
@@ -400,7 +401,8 @@ class ExpProjAPI(ExpStructAPI):
         exp = self._obj.exp(group_num_or_name, exp_num_or_name)
         return exp.api
 
-    def make_exp(self, group_num_or_name: int | str, name: str, descr: str, num: int = None) -> ExpAPI:
+    def make_exp(
+            self, group_num_or_name: int | str, name: str, descr: str, num: int = None) -> ExpAPI:
         self._obj.update()
         exp = self._obj.make_exp(group_num_or_name, name, descr, num)
         return exp.api
@@ -470,15 +472,15 @@ class XManAPI:
         tree.print_dir_tree(target_dir, depth, files_limit, files_first, sort_numbers)
 
     @staticmethod
-    def make_dir(dir_path: str, exist_ok: bool = True): filesystem.make_dir(dir_path, exist_ok)
+    def make_dir(dir_path: str, exist_ok: bool = True): fs.make_dir(dir_path, exist_ok)
 
     @staticmethod
     def delete_dir(dir_path: str, need_confirm: bool = True) -> bool:
-        return filesystem.delete_dir(dir_path, need_confirm)
+        return fs.delete_dir(dir_path, need_confirm)
 
     @staticmethod
     def rename_or_move_dir(dir_path: str, new_path: str):
-        filesystem.rename_or_move_dir(dir_path, new_path)
+        fs.rename_or_move_dir(dir_path, new_path)
 
     @property
     def location_dir(self) -> str:
@@ -552,7 +554,8 @@ class XManAPI:
         self.__check_proj()
         return self.__proj.exp(group_num_or_name, exp_num_or_name)
 
-    def make_exp(self, group_num_or_name: int | str, name: str, descr: str, num: int = None) -> ExpAPI:
+    def make_exp(
+            self, group_num_or_name: int | str, name: str, descr: str, num: int = None) -> ExpAPI:
         self.__check_proj()
         return self.__proj.make_exp(group_num_or_name, name, descr, num)
 

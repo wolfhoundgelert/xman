@@ -1,10 +1,10 @@
 import os
-from typing import Optional, Type, Callable, Any, Tuple
+from typing import Optional, Type, Callable, Any, Tuple, Union
 from copy import deepcopy
 
 from .error import NotExistsXManError, ArgumentsXManError, AlreadyExistsXManError, \
     IllegalOperationXManError
-from . import util, filesystem, tree, confirm
+from . import util, catalog, tree, confirm
 from .note import Note
 
 
@@ -57,7 +57,8 @@ class ExpStructStatus:
     def is_manual(self) -> bool: return self.__is_manual
 
     @property
-    def workflow(self) -> Tuple[str | Tuple[str, str]]: return deepcopy(ExpStructStatus.__WORKFLOW)
+    def workflow(self) -> Tuple[Union[str, Tuple[str, str]], ...]:
+        return deepcopy(ExpStructStatus.__WORKFLOW)
 
     @property
     def next(self) -> Optional[str]:
@@ -164,9 +165,9 @@ class ExpStruct:
         if not self.status.is_manual:
             raise NotExistsXManError(f"There's no manual status in the struct `{self}`")
         if confirm.request(need_confirm,
-                            f"ATTENTION! Do you want to delete the manual status "
-                            f"`{self._data.manual_status}`\nand its resolution "
-                            f"`{self._data.manual_status_resolution}`\nof exp `{self}`?"):
+                           f"ATTENTION! Do you want to delete the manual status "
+                           f"`{self._data.manual_status}`\nand its resolution "
+                           f"`{self._data.manual_status_resolution}`\nof exp `{self}`?"):
             self._data.manual_status = None
             self._data.manual_status_resolution = None
             self._save()
@@ -192,8 +193,7 @@ class ExpStruct:
         if self.__updating:
             return
         self.__updating = True
-        self._data, self.__time = filesystem.load_fresh_data_and_time(self.location_dir,
-                                                                      self._data, self.__time)
+        self._data = catalog.get_struct_data(self.location_dir)
         # Status should be updated at the end of the inherited updating hierarchy
         if type(self) == ExpStruct:
             self._update_status()
@@ -201,7 +201,7 @@ class ExpStruct:
 
     def _change_location_dir(self, new_location_dir):
         self.__location_dir = os.path.normpath(new_location_dir)
-        self.__num = filesystem.get_dir_num(new_location_dir)
+        self.__num = catalog.get_dir_num(new_location_dir)
 
     def _update_status(self):
         if self.is_manual:
@@ -216,7 +216,7 @@ class ExpStruct:
     # Printing in jupyter notebook - https://stackoverflow.com/a/41454816/9751954
     def _repr_pretty_(self, p, cycle): p.text(str(self) if not cycle else '...')
 
-    def _save(self): self.__time = filesystem.save_data_and_time(self.location_dir, self._data)
+    def _save(self): catalog.save_struct_data(self.location_dir, self._data)
 
     def _destroy(self):
         self._api._obj = None
@@ -233,7 +233,6 @@ class ExpStruct:
         self._change_location_dir(location_dir)
         self._parent: ExpStructBox = parent
         self._data: ExpStructData = None
-        self.__time = None
         self.__status = None
         self.__note: Note = None
         self.__updating = False
