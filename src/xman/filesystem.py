@@ -20,7 +20,7 @@ class FileType(Enum):
     PICKLE = '.pickle'
 
 
-def __get_mtime(file_path): return os.path.getmtime(file_path)
+# TODO `load` rename to `get`
 
 
 def __get_cached_mtime(file_path): return __file_path_to_mtime[file_path]
@@ -30,7 +30,7 @@ def __exists_in_cache(file_path): return file_path in __file_path_to_mtime
 
 
 def __save_to_cache(file_path, content):
-    __file_path_to_mtime[file_path] = __get_mtime(file_path)
+    __file_path_to_mtime[file_path] = get_mtime(file_path)
     __file_path_to_content[file_path] = content
 
 
@@ -76,8 +76,11 @@ def __delete_file(file_path):
 def exists(path: str) -> bool: return os.path.exists(path)
 
 
+def get_mtime(file_path): return os.path.getmtime(file_path)
+
+
 def save(file_path: str, file_type: FileType, content: Any):
-    if exists(file_path) and __get_mtime(file_path) == time.time():
+    if exists(file_path) and get_mtime(file_path) == time.time():
         time.sleep(1e-3)
     __save_to_file(file_path, file_type, content)
     __save_to_cache(file_path, content)
@@ -87,7 +90,7 @@ def load(file_path: str, file_type: FileType) -> Optional[Any]:
     if not exists(file_path):
         __delete_cache(file_path)
         return None
-    if __exists_in_cache(file_path) and __get_cached_mtime(file_path) == __get_mtime(file_path):
+    if __exists_in_cache(file_path) and __get_cached_mtime(file_path) == get_mtime(file_path):
         return __load_from_cache(file_path)
     content = __load_from_file(file_path, file_type)
     __save_to_cache(file_path, content)

@@ -11,6 +11,9 @@ from .filesystem import FileType
 from . import filesystem as fs
 
 
+# TODO `load` rename to `get`
+
+
 def __get_struct_data_path(location_dir): return os.path.join(location_dir, '.data')
 
 
@@ -154,8 +157,9 @@ def save_pipeline_run_time(location_dir):
     fs.save(__get_pipeline_run_time_path(location_dir), FileType.PICKLE, '')
 
 
-def load_pipeline_run_time(location_dir):
-    return fs.load(__get_pipeline_run_time_path(location_dir), FileType.PICKLE)
+def load_pipeline_run_time(location_dir) -> Optional[float]:
+    path = __get_pipeline_run_time_path(location_dir)
+    return fs.get_mtime(path) if has(path) else None
 
 
 def delete_pipeline_run_time(location_dir): fs.delete(__get_pipeline_run_time_path(location_dir))
