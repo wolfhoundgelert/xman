@@ -2,7 +2,7 @@ import sys
 
 
 is_colab = 'google.colab' in sys.modules
-is_jupyter_notebook = 'ipykernel' in sys.modules
+is_jupyter_notebook = 'ipykernel' in sys.modules and not is_colab
 
 
 if is_colab:
